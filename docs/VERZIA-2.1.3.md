@@ -1,5 +1,7 @@
 # ND TranskripThor 2.1.3
 
+Historický záznam. Aktuálne cesty, spúšťanie a výsledky overenia sú v [DEVELOPMENT.md](DEVELOPMENT.md) a [STATUS.md](STATUS.md).
+
 V časti **Nastavenia čakajúcich nahrávok → Zariadenie** je manuálny výber:
 
 - **CPU – kompatibilný režim** (predvolené aj pri chýbajúcej/neplatnej hodnote),
@@ -24,4 +26,4 @@ Pri chybe počas prepisu sa najskôr zachovajú dokončené úseky v existujúco
 
 Rozbaľte celý Windows ZIP a spustite `ND TranskripThor.exe`; `_internal` ponechajte vedľa EXE. Modely nie sú pribalené a existujúca cache sa zachováva. Pri prvom spustení tejto voľby zostane CPU aj na počítači s NVIDIA kartou.
 
-Postup zostavenia a závislosti sa nemenia: nainštalovať existujúce requirements, spustiť `python -m unittest discover -s outputs/zdroj -p "test*.py" -v` a zostaviť `outputs/zdroj/TranskripTHOR.spec` cez PyInstaller. Verzia EXE aj manifestu je 2.1.3. README na GitHube naďalej odkazuje na poslednú publikovanú verziu; 2.1.3 sa automaticky nepublikuje.
+Postup zostavenia a závislosti sa nemenia: nainštalovať existujúce requirements, spustiť `powershell -NoProfile -File scripts/test.ps1` a zostaviť `packaging/TranskripTHOR.spec` cez PyInstaller. Verzia EXE aj manifestu je 2.1.3. README na GitHube naďalej odkazuje na poslednú publikovanú verziu; 2.1.3 sa automaticky nepublikuje.

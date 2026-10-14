@@ -1,0 +1,43 @@
+name: Windows regression
+on:
+  push:
+    branches: [main, 'codex/**']
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      build:
+        description: Build and verify the Windows EXE
+        type: boolean
+        default: false
+permissions:
+  contents: read
+jobs:
+  regression:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12.10'
+          architecture: x64
+      - name: Install locked development dependencies
+        shell: pwsh
+        run: ./scripts/setup.ps1 -Mode development -Python (Get-Command python).Source
+      - name: All regression tests (no skipped tests)
+        shell: pwsh
+        run: ./scripts/test.ps1
+  build:
+    if: github.event_name == 'workflow_dispatch' && inputs.build
+    runs-on: windows-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12.10'
+          architecture: x64
+      - shell: pwsh
+        run: ./scripts/setup.ps1 -Mode build -Python (Get-Command python).Source
+      - shell: pwsh
+        run: ./scripts/build.ps1

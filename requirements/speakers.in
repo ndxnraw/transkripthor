@@ -1,0 +1,2 @@
+# Optional local voice clustering; independent of ordinary transcription.
+kaldi-native-fbank==1.22.3

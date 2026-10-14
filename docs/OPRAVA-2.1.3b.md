@@ -1,5 +1,7 @@
 # ND TranskripThor 2.1.3b – pretiahnutie súborov
 
+Historický záznam. Aktuálne cesty, spúšťanie a výsledky overenia sú v [DEVELOPMENT.md](DEVELOPMENT.md) a [STATUS.md](STATUS.md).
+
 ## Potvrdené zistenia a neistota
 
 V pôvodnom kóde lambda pre `<<Drop>>` vracala výsledok `accept_files()`, teda `None`. Nainštalované tkinterdnd2 0.4.3 a jeho Tcl kód používajú výsledok handlera ako DnD akciu; požadované sú napríklad `copy` a `refuse_drop`. Navyše `accept_files()` počas prepisu skončilo bez vysvetlenia a pôvodné porovnanie ciest nerozlišovalo duplicity podľa pravidiel Windows.

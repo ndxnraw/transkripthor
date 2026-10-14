@@ -1,0 +1,8 @@
+# Windows x64 / Python 3.12. Both existing ASR backends are retained.
+faster-whisper==1.2.1
+Pillow==12.3.0
+sounddevice==0.5.3
+tkinterdnd2==0.4.3
+torch==2.8.0
+transformers==4.55.4
+huggingface-hub==0.36.2

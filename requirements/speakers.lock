@@ -1,0 +1,2 @@
+# Windows x64 / CPython 3.12; exact wheel SHA-256 hashes.
+kaldi-native-fbank==1.22.3 --hash=sha256:cbbeea19fe6d584c54e93fe6615a7185b10e0d78fdb6471f9e44596018437c38

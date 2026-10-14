@@ -1,5 +1,7 @@
 # ND TranskripThor 2.1.2.bugfix
 
+Historický záznam. Aktuálne cesty, spúšťanie a výsledky overenia sú v [DEVELOPMENT.md](DEVELOPMENT.md) a [STATUS.md](STATUS.md).
+
 ## Zistenia
 
 Kontrola nainštalovaného Hugging Face Hub 0.36.2 potvrdila, že pôvodný počet dokončených súborov neukazoval prenos veľkého rozpracovaného súboru. Sledovanie veľkosti cieľovej cache navyše nemeralo sieťový prenos: knižnica zapisuje po blokoch a Xet môže používať vlastnú cache a medzipamäť. Hodnota 0 MB sama osebe nedokazuje nulový prenos.
@@ -36,4 +38,4 @@ Zostavené Windows EXE úspešne stiahlo a overilo WeSpeaker v novej cache. Pre�
 
 ## Zostavenie
 
-Použite existujúci Windows postup zostavenia a závislosti z `outputs/zdroj/requirements-models.txt`, vrátane `huggingface-hub==0.36.2`. Neaktualizujte túto knižnicu samostatne bez testov prenosu. Nové moduly `download_transport.py` a `download_worker.py` PyInstaller zahrnie cez importy; spúšťací bod už obsahuje `multiprocessing.freeze_support()` potrebný pre Windows EXE.
+Aktuálny Windows postup a uzamknuté závislosti sú v [DEVELOPMENT.md](DEVELOPMENT.md), vrátane `huggingface-hub==0.36.2`. Neaktualizujte túto knižnicu samostatne bez testov prenosu. Nové moduly `download_transport.py` a `download_worker.py` PyInstaller zahrnie cez importy; spúšťací bod už obsahuje `multiprocessing.freeze_support()` potrebný pre Windows EXE.

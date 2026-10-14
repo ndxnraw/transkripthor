@@ -1,4 +1,7 @@
-# ND TranskripThor 2.1.3b
+# ND TranskripThor – používateľský návod
+
+Tento návod opisuje aktuálny vývojový kód 2.1.3b. Publikované EXE v2.1.3b
+mu nemusí funkčne zodpovedať; stav je v [STATUS.md](STATUS.md).
 
 Oprava sťahovania, aktuálne výsledky overenia a známe obmedzenia: [verzia 2.1.3b](OPRAVA-2.1.3b.md).
 
@@ -16,7 +19,7 @@ na stiahnutie vybraných modelov. Po stiahnutí je dostupný režim Iba offline.
 
 Rozbaľte celý Windows ZIP a spustite **ND TranskripThor.exe**. Priečinok
 `_internal` musí zostať vedľa EXE. Python netreba inštalovať. Modely nie sú
-pribalené. Lokálna zostava tejto verzie je v `outputs/release210/ND TranskripThor`.
+pribalené. Nová zdrojová zostava vznikne v `dist/ND TranskripThor`.
 [Windows ZIP 2.1.3b](https://github.com/ndxnraw/TranskripThor/releases/download/v2.1.3b/ND-TranskripThor-2.1.3b-Windows.zip)
 · [Poznámky k vydaniu](https://github.com/ndxnraw/TranskripThor/releases/tag/v2.1.3b)
 
@@ -72,7 +75,7 @@ vytvoriť; pri páde počas exportu otvorte projekt vo fronte a zopakujte ulože
 Staré samotné TXT/SRT z verzie 1.x nemajú checkpoint a nemožno z nich bezpečne
 pokračovať. Zachovajte celý výstupný priečinok aj pôvodnú nahrávku.
 
-Nastavenia/fronta sú atómovo uložené v `%LOCALAPPDATA%\LokalnyPrepis`.
+Nastavenia sú atómový JSON a fronta je transakčná SQLite; uložené sú v `%LOCALAPPDATA%\LokalnyPrepis`.
 Poškodený JSON sa podľa možnosti odloží s príponou `.damaged-*`; aplikácia
 sa spustí s predvolenými hodnotami. Stav „spracúva sa“ sa po reštarte obnoví
 ako „prerušené“. Modelová cache zostáva v podpriečinku `models`.
@@ -110,50 +113,29 @@ Priradenia skontrolujte a ručne opravte; názov možno zmeniť aj v celom prepi
 
 ## Overenie a obmedzenia
 
-Vo verzii 2.1.0 prešlo 58 automatických testov. Zahŕňajú pôvodné funkcie, checkpointy a pád procesu,
-obnovu fronty/nastavení, chyby, editor nad 1 501 úsekmi, export a timestampy.
-Natívny Windows test preveril Small na CPU, prerušenie po prvom úseku,
-reštart aplikácie a dokončenie zvyšných úsekov bez zdvojenia uložených dát.
-Overené je aj obnovenie pôvodného modelu/jazyka projektu pri odlišných nastaveniach
-pre nové úlohy. Zostavené EXE 2.1.0 úspešne vytvorilo SQLite/TXT/SRT z lokálneho
-syntetického slovenského zvuku; skontrolované sú pribalené natívne knižnice.
-WeSpeaker bol vo verzii 2.0.0 spustený na syntetickom zvuku; nejde o meranie presnosti diarizácie.
+Aktuálne výsledky testov, čistého klonu a nového EXE sú v [STATUS.md](STATUS.md).
+Historické výsledky vydaní sú v samostatných poznámkach k opravám. Modely a GPU
+sa za overené označujú iba po skutočnej inferencii, nie na základe mockov.
 
 Chýba oprávnený reálny CZ/SK korpus s ručne skontrolovanou referenciou.
-Pripravený je [vyhodnocovací nástroj a presný zoznam ukážok](../outputs/zdroj/eval/README.md).
-Mock testy, syntetický zvuk a reálne merania sú oddelené. Presnosť pri hluku,
-menách a zmene jazyka uprostred vety zatiaľ nie je odmeraná. Zmena jazyka bez
-pauzy môže zostať v rámci jedného úseku nerozpoznaná.
+[Vyhodnocovací nástroj a zoznam ukážok](../src/eval/README.md) oddeľujú
+syntetický zvuk, mocky a skutočné meranie. Zmena jazyka bez pauzy môže zostať
+v jednom úseku nerozpoznaná. Rozlíšenie hlasov nie je identifikácia osôb.
 
-Rozmery loga a tlačidiel boli kontrolované v oboch vzhľadoch pri mierkach Tk 100/125/150/175/200 % na
-Windows; nejde o úplné testovanie všetkých monitorov a zmien systémového DPI.
-GPU nie je na tomto testovacom stroji dostupné. Audio sa dekóduje raz celé do
-RAM; dlhé nahrávky a Large/KInIT potrebujú viac pamäte. Zastavenie počká na
-aktuálny dekódovací/inferenčný krok alebo prenos súboru modelu. ETA je hrubý
-odhad z dokončeného postupu, nie sľúbený čas dokončenia.
+Dlhý zvuk používa diskovú PCM cache a blokové čítanie; large/KInIT stále
+vyžadujú dostatok RAM/VRAM. ASR beží v samostatnom riadenom procese.
+Bezpečne potvrdené checkpointy zostávajú po prerušení dostupné. ETA je hrubý
+odhad, nie sľúbený čas. Fyzické DPI, Explorer drop a screen reader vyžadujú
+manuálnu skúšku; automatická Tk matica ich nenahrádza.
 
 ## Vývoj a zostavenie
 
-Windows x64, Python 3.12:
-
-```powershell
-cd outputs/zdroj
-python -m pip install -r requirements.txt PyInstaller==6.22.3
-# Voliteľné rozlíšenie hlasov:
-python -m pip install -r requirements-speakers.txt
-python -m unittest discover -s . -p "test*.py"
-python prepis.py
-.\zostavit.cmd
-```
-
-Zostavenie kontroluje runtime a testy; výsledok je `dist/ND TranskripThor`.
-Zachované sú torch 2.8.0, transformers 4.55.4 a faster-whisper 1.2.1.
-Existujúce základné závislosti: sounddevice 0.5.3 (prehrávanie), tkinterdnd2 0.4.3
-(pretiahnutie súborov). Nepribaľujú sa váhy modelov.
-
-Verzia 2.1.0 nepridáva nový framework ani závislosti; zostáva pri Tk/ttk.
+Presné príkazy pre Windows x64/Python 3.12, uzamknuté závislosti, modely,
+nový počítač a pracovný cyklus sú v [DEVELOPMENT.md](DEVELOPMENT.md).
+Používajte `scripts/setup.ps1`, `run.ps1`, `test.ps1` a `build.ps1`.
+Výsledok je `dist/ND TranskripThor`; váhy modelov sa nepribaľujú.
 
 Debug CZ/SK: pred spustením nastavte `$env:ND_TRANSKRIPTHOR_DEBUG='1'`.
 Rotovaný log je `%LOCALAPPDATA%\LokalnyPrepis\asr-debug.log`; neobsahuje zvuk ani text prepisu.
 
-Created by Daniel Návojský using Codex | 2026
+Created by Daniel Návojský (ndxnraw) using Codex | 2026

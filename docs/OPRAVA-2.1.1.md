@@ -1,5 +1,7 @@
 # Oprava 2.1.1.bugfix
 
+Historický záznam. Aktuálne cesty, spúšťanie a výsledky overenia sú v [DEVELOPMENT.md](DEVELOPMENT.md) a [STATUS.md](STATUS.md).
+
 Sťahovanie už neukazuje iba počet dokončených súborov (napríklad 3/5).
 Každú sekundu zobrazí fyzickú veľkosť cache modelu, prírastok od spustenia,
 rýchlosť zápisu pri zmene veľkosti a čas bez nových dát. Staršie dáta v cache
