@@ -76,6 +76,7 @@ class SmallScreenTest(unittest.TestCase):
 
 
 class PlaybackLayoutTest(unittest.TestCase):
+    tk_scaling = 96 / 72
     setUp = test_editor_speakers.SpeakerEditingTest.setUp
 
     def test_wide_playback_and_details_buttons_remain_fully_visible(self):

@@ -27,6 +27,8 @@ class SpeakerEditingTest(unittest.TestCase):
             project.db.execute('UPDATE segments SET id=id+100')
             project.db.commit()
         self.root = tk.Tk()
+        if hasattr(self, 'tk_scaling'):
+            self.root.tk.call('tk', 'scaling', self.tk_scaling)
         self.root.geometry('1100x800')
         self.addCleanup(destroy_window, self.root)
         self.app = App(self.root, Path(self.temp.name)/'state')
