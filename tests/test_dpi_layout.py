@@ -91,7 +91,7 @@ class PlaybackLayoutTest(unittest.TestCase):
                    if isinstance(widget, ttk.Button) and widget['text'] in labels]
         self.assertEqual(len(buttons), 4)
         for button in buttons:
-            button.configure(width=28)
+            button.configure(width=40)
         self.root.update()
         for button in buttons:
             self.assertTrue(button.winfo_ismapped(), button['text'])
