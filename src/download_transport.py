@@ -44,7 +44,7 @@ def status_text(event, silent=0):
     return text
 
 
-def supervise(cache, model, emit, stop, limits=DownloadLimits(), worker=None, revision=None):
+def supervise(cache, model, emit, stop, limits=DownloadLimits(), worker=None, revision=None, verify_only=False):
     from download_worker import run_download
     context = multiprocessing.get_context('spawn')
     logger = diagnostic_logger(cache)
@@ -56,6 +56,8 @@ def supervise(cache, model, emit, stop, limits=DownloadLimits(), worker=None, re
                 raise InterruptedError(tr('download_transport.supervise.download_stopped_partial_files_remain_cached_select_download_again'))
             receiver, sender = context.Pipe(duplex=False)
             args = (str(cache), model, sender) if revision is None else (str(cache), model, sender, revision)
+            if verify_only:
+                args = (str(cache), model, sender, revision, True)
             process = context.Process(target=worker or run_download, args=args, daemon=True)
             event = dict(phase='connect',file=model)
             started = changed = last_ui = time.monotonic()

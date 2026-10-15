@@ -367,6 +367,7 @@ class App:
             messagebox.showinfo(tr('prepis.manage_models.model_manager'), tr('prepis.manage_models.wait_for_voice_grouping_to_finish'))
             return
         if self.model_dialog and self.model_dialog.window.winfo_exists():
+            self.model_dialog.refresh()
             return
         from model_dialog import ModelDialog
         self.model_dialog = ModelDialog(self, parent=self.models_page)
@@ -622,6 +623,8 @@ class App:
             self.update_selection()
             self.update_readiness()
             self.device_status.set(tr('pcm.model_released'))
+            if self.model_dialog and self.model_dialog.window.winfo_exists():
+                self.model_dialog.refresh()
             if getattr(self, 'close_after_asr', False):
                 self.close_after_asr = False
                 self.root.after_idle(self.close)

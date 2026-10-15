@@ -92,6 +92,43 @@ Reálne CUDA a plná KInIT inferencia, presnosť na oprávnenom CZ/SK korpuse,
 všetky fyzické systémové DPI/prepínanie monitorov, Explorer OLE drop
 a manuálny screen reader vyžadujú osobitné overenie. Automatické Tk/mock
 testy ich nenahrádzajú. GPU lock zatiaľ nie je overený. Historický audit
-F16–F21 zostáva podkladom na cielený funkčný audit (integrita starej cache,
-obnova inventára, dostupnosť voliteľných hlasov, váženie postupu/ETA,
+F18–F21 zostáva podkladom na cielený funkčný audit (dostupnosť voliteľných hlasov, váženie postupu/ETA,
 klasifikácia chýb a ticho). Upratanie nesľubuje opravu týchto tém.
+
+## F16/F17 – integrita a inventár (15. 10. 2026)
+
+Potvrdené v aktuálnom kóde pred opravou: štrukturálne úplná cache bez
+potvrdenia sa zobrazovala rovnako ako overená a návrat na existujúcu kartu
+Modely neobnovoval inventár. Tieto dve zistenia sú opravené.
+
+- Inventár rozlišuje chýbajúci, neúplný/zmenený, nájdený/neoverený a overený
+  model. Rýchla kontrola používa manifest, veľkosti a časy zmien; nehashuje
+  váhy pri štarte ani pri každom návrate na kartu. Stará úplná cache zostáva
+  použiteľná, bez falošného tvrdenia o overenej integrite.
+- Explicitné overenie je mimo UI, používa existujúci mechanizmus cache
+  a presný snapshot. Online kontroluje voči Hub metadátam bez sťahovania
+  váh; offline voči uloženým kontrolným súčtom. Bez dôveryhodných súčtov
+  vysvetlí potrebu online kontroly. Súbory sa pri tejto kontrole nemažú ani
+  nepresúvajú. Zastavenie alebo nesúlad nezanechá platné potvrdenie.
+- Zmena súboru počas hashovania sa odmietne. Správca obnovuje riadky aj po
+  chybe/zastavení operácie, po dávke a pri návrate na kartu. Zachová výber,
+  fokus, posun a rozbalenie skupín; výsledok pre starú cestu cache zahodí.
+- EN/SK texty sú v spoločných katalógoch. Závislosti, formáty projektov,
+  používateľské dáta a verzia sa nemenia.
+
+Pracovný regresný beh: **211 testov, OK, 196,910 s, bez preskočenia**.
+Pribudlo 14 testov: stavy cache a chýbajúce potvrdenie, digest, poškodenie
+rovnakej veľkosti, zmena metadát/ref/súboru, zrušenie a opakovanie, presná
+revízia a UI obnova vrátane výberu, posunu, chyby a starej cesty.
+Malé HTTP fixtures preverili faster-whisper, delený KInIT aj WeSpeaker cez
+skutočný lokálny prenos a procesový worker; explicitná kontrola nepoužila
+ďalšie prenosy váh. Nie je to stiahnutie veľkých modelov z verejného Hubu
+ani test inferencie/GPU. Existujúca Tk matica EN/SK, oba vzhľady a mierky
+100–200 % prešla; fyzické systémové DPI sa v tejto úlohe nemenilo.
+
+Pred synchronizáciou je povinný ešte build presného kandidátskeho commitu
+z čistého klonu s novou `.venv`, opakovaním celej sady a diagnostikou nového
+Windows EXE. Jeho SHA, logy a výsledok synchronizácie sa evidujú lokálne
+mimo Gitu a v závere úlohy; historické buildy nie sú dôkazom pre tento strom.
+Rýchla kontrola metadát nenahrádza explicitný hash pri podozrení na zmenu
+bajtov so zachovanými metadátami ani ochranu pred úpravou samotného potvrdenia.

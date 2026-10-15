@@ -3,7 +3,7 @@ import queue
 import threading
 import tkinter as tk
 from tkinter import ttk, messagebox
-from model_catalog import inventory, download, remove_model
+from model_catalog import inventory, download, remove_model, verify_model
 from responsive import MessageView, FlowFrame
 
 
@@ -30,6 +30,7 @@ class ModelDialog:
         self.events = queue.Queue()
         self.stop = threading.Event()
         self.busy = False
+        self.refresh_pending = False
         actions = FlowFrame(self.window)
         actions.pack(side='bottom', fill='x', padx=12, pady=6)
         ttk.Label(self.window, text=tr('model_dialog.init.models_on_this_computer'), style='Title.TLabel').pack(anchor='w', padx=12, pady=12)
@@ -46,7 +47,7 @@ class ModelDialog:
         self.description_label.pack(fill='x', padx=12, pady=8)
         self.tree.bind('<<TreeviewSelect>>', self.select)
         self.buttons = []
-        for label, command in [(tr('model_dialog.init.download'), self.download), (tr('model_dialog.init.remove'), self.remove), (tr('model_dialog.init.refresh'), self.refresh), (tr('pcm.release_model'), self.release_model)]:
+        for label, command in [(tr('model_dialog.init.download'), self.download), (tr('integrity.verify'), self.verify), (tr('model_dialog.init.remove'), self.remove), (tr('model_dialog.init.refresh'), self.refresh), (tr('pcm.release_model'), self.release_model)]:
             button = ttk.Button(actions, text=label, command=command)
             button.pack(side='left', padx=4)
             self.buttons.append(button)
@@ -77,18 +78,37 @@ class ModelDialog:
         self.stop.clear()
         for button in self.buttons:
             button.configure(state='disabled')
+        cache = self.app.cache
         def worker():
+            error = None
             try:
                 action()
-                self.events.put(('rows', inventory(self.app.cache)))
             except Exception as exc:
-                self.events.put(('status', str(exc)))
+                error = str(exc)
             finally:
+                try:
+                    self.events.put(('rows', (cache, inventory(cache))))
+                except Exception as exc:
+                    error = error or str(exc)
+                if error:
+                    self.events.put(('status', error))
                 self.events.put(('done', None))
         threading.Thread(target=worker, daemon=True).start()
 
     def refresh(self):
-        self.run(lambda: None)
+        if self.busy or self.in_use():
+            self.refresh_pending = True
+            return
+        self.refresh_pending = False
+        self.run(lambda: self.events.put(('status', tr('model_dialog.poll.local_availability_checked_downloading_does_not_send_recordings_or'))))
+
+    def verify(self):
+        selected = self.tree.selection()
+        if not selected or selected[0].startswith('group:'):
+            return
+        cache, offline = self.app.cache, self.app.offline.get()
+        self.run(lambda: verify_model(cache, selected[0], offline,
+                                     lambda kind, value: self.events.put((kind, value)), self.stop))
 
     def release_model(self):
         def release():
@@ -131,6 +151,13 @@ class ModelDialog:
                 if value:
                     self.progress.start(20)
             elif kind == 'rows':
+                cache, value = value
+                if cache != self.app.cache:
+                    self.refresh_pending = True
+                    continue
+                selection, focus = self.tree.selection(), self.tree.focus()
+                y, x = self.tree.yview()[0], self.tree.xview()[0]
+                opened = {key: self.tree.item(key, 'open') for key in self.tree.get_children()}
                 self.tree.delete(*self.tree.get_children())
                 from model_catalog import SPEAKER_MODEL
                 from prepis import MODELS
@@ -139,14 +166,22 @@ class ModelDialog:
                 self.tree.insert('', 'end', iid='group:speakers', text=tr('model_dialog.poll.optional_voice_grouping'), open=True)
                 for row in value:
                     self.tree.insert('group:speakers' if row['model'] == SPEAKER_MODEL else 'group:asr', 'end', iid=row['model'], text=names.get(row['model'], 'WeSpeaker'), values=(
-                        tr('model_dialog.poll.available') if row['available'] else tr('model_dialog.poll.missing_incomplete'), f'{row["size"]/1024**2:.1f} MB'))
-                self.status.set(tr('model_dialog.poll.local_availability_checked_downloading_does_not_send_recordings_or'))
+                        tr('integrity.state.' + row['state']), f'{row["size"]/1024**2:.1f} MB'))
+                for key, is_open in opened.items():
+                    if self.tree.exists(key): self.tree.item(key, open=is_open)
+                self.tree.selection_set([key for key in selection if self.tree.exists(key)])
+                if self.tree.exists(focus): self.tree.focus(focus)
+                self.tree.yview_moveto(y)
+                self.tree.xview_moveto(x)
+                self.select()
             elif kind == 'done':
                 self.progress.stop()
                 self.busy = False
                 for button in self.buttons:
                     button.configure(state='normal')
                 self.app.update_readiness()
+                if self.refresh_pending and not self.in_use():
+                    self.refresh()
             else:
                 self.status.set(value)
         self.poll_timer = self.window.after(100, self.poll)

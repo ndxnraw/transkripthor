@@ -59,6 +59,7 @@ def checked_name(name):
 
 
 def verify_file(path, size, digest, send, name):
+    before = Path(path).stat()
     if not re.fullmatch(r'[a-f0-9]{40}|[a-f0-9]{64}',digest):
         raise ValueError('Missing checksum')
     sha = hashlib.sha256() if len(digest)==64 else hashlib.sha1()
@@ -76,22 +77,28 @@ def verify_file(path, size, digest, send, name):
     if read != size or sha.hexdigest() != digest:
         raise IntegrityError('Checksum mismatch')
     send(dict(kind='progress',phase='verify',file=name,bytes=read,total=size))
+    after = Path(path).stat()
+    if (before.st_size, before.st_mtime_ns, before.st_ctime_ns) != (after.st_size, after.st_mtime_ns, after.st_ctime_ns):
+        raise IntegrityError(tr('integrity.changed'))
+    return after
 
 
-def run_download(cache, model, connection, revision=None):
+def run_download(cache, model, connection, revision=None, verify_only=False):
     from i18n import set_language
     set_language(os.environ.get('ND_UI_LANGUAGE', 'en'))
     try:
-        download_files(cache,model,connection.send, revision=revision)
+        download_files(cache,model,connection.send, revision=revision, verify_only=verify_only)
         connection.send(dict(kind='complete'))
     except Exception as exc:
         code, message, retry = safe_error(exc)
+        if verify_only and isinstance(exc, IntegrityError):
+            message, retry = tr('integrity.failed'), False
         connection.send(dict(kind='error',code=code,message=message,retry=retry))
     finally:
         connection.close()
 
 
-def download_files(cache, model, send, revision=None):
+def download_files(cache, model, send, revision=None, verify_only=False):
     # Set before import, and also set constants below: inherited environments or
     # frozen boot hooks must not silently reactivate a native transfer backend.
     os.environ['HF_HUB_DISABLE_XET']='1'
@@ -218,20 +225,22 @@ def download_files(cache, model, send, revision=None):
             if not isinstance(size,int) or size <= 0:
                 raise ValueError('Invalid size')
             send(dict(kind='progress',phase='connect',file=name,count=active['count']))
-            path=Path(hub.hf_hub_download(repo,name,revision=info.sha,cache_dir=str(base),etag_timeout=CONNECT_TIMEOUT))
+            path = snapshot/name if verify_only else Path(hub.hf_hub_download(repo,name,revision=info.sha,cache_dir=str(base),etag_timeout=CONNECT_TIMEOUT))
             stat=path.stat()
             saved=receipt.get(name,{})
-            if saved != dict(size=size,digest=digest,mtime=stat.st_mtime_ns):
+            if verify_only or saved != dict(size=size,digest=digest,mtime=stat.st_mtime_ns,ctime=stat.st_ctime_ns):
                 try:
-                    verify_file(path,size,digest,send,name)
+                    stat = verify_file(path,size,digest,send,name)
                 except IntegrityError:
+                    if verify_only:
+                        raise  # Explicit verification never moves/deletes model bytes.
                     # Keep evidence; only this corrupt file is moved, never a cache tree.
                     target=path.resolve()
                     if root.resolve() not in target.parents:
                         raise ValueError('Unsafe cache path')
                     target.rename(target.with_name(target.name+'.invalid-'+str(time.time_ns())))
                     raise
-            verified[name]=dict(size=size,digest=digest,mtime=path.stat().st_mtime_ns)
+            verified[name]=dict(size=size,digest=digest,mtime=stat.st_mtime_ns,ctime=stat.st_ctime_ns)
             from state import atomic_text
             atomic_text(receipt_path,json.dumps(dict(complete=False,files=verified)))
         if not complete_snapshot(snapshot,model,verify_receipt=False):
@@ -239,5 +248,7 @@ def download_files(cache, model, send, revision=None):
         from state import atomic_text
         send(dict(kind='progress',phase='finalize',file=model))
         atomic_text(receipt_path,json.dumps(dict(complete=True,files={item.rfilename:verified[item.rfilename] for item in files})))
+        if not complete_snapshot(snapshot, model):
+            raise IntegrityError(tr('integrity.changed'))
         if requested_revision is None:
             atomic_text(root/'refs'/revision,info.sha)

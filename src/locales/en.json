@@ -383,5 +383,16 @@
   "revision.missing": "Could not obtain model {model}, revision {revision}. Retry online or restore this snapshot from a trusted cache backup. If it is no longer available, start a new transcription; do not mix model revisions in this project.",
   "revision.download": "This project requires model {model}, revision {revision}, which is missing locally. Download this exact revision and continue? Choosing No leaves the project unchanged. You can also start a new transcription separately.",
   "revision.unknown": "This old project does not record its model revision. Safe continuation cannot be guaranteed. Preserve it and start a new transcription in a separate project.",
-  "revision.legacy": "Legacy project: full decoding settings were not recorded. Retaining its historical decoding behavior and exact model revision; identical output across library versions or devices is not guaranteed."
+  "revision.legacy": "Legacy project: full decoding settings were not recorded. Retaining its historical decoding behavior and exact model revision; identical output across library versions or devices is not guaranteed.",
+  "integrity.verify": "Verify integrity",
+  "integrity.state.missing": "Missing",
+  "integrity.state.incomplete": "Incomplete / changed",
+  "integrity.state.found": "Found / unverified",
+  "integrity.state.verified": "Integrity verified",
+  "integrity.incomplete": "The model is incomplete. Complete its download, then verify again.",
+  "integrity.online_required": "Trusted checksums are missing. Turn off offline mode and verify again to obtain metadata for this exact model revision. Recordings are not sent.",
+  "integrity.stopped": "Verification stopped. Model files were preserved.",
+  "integrity.changed": "The cache changed during verification. Finish other cache operations and verify again.",
+  "integrity.success": "Model integrity verified.",
+  "integrity.failed": "Integrity verification failed. Files were preserved. Retry the model download to repair the cache, then verify again."
 }

@@ -18,7 +18,7 @@ from download_worker import safe_error, verify_file, IntegrityError
 from model_catalog import cached_path, cache_folder, SLOVAK_MODEL, SPEAKER_MODEL, complete_snapshot
 
 
-def fixture_worker(cache,model,connection,revision=None):
+def fixture_worker(cache,model,connection,revision=None,verify_only=False):
     # Test-only metadata routing; the underlying HTTP stream, locks, integrity
     # validation, process watchdog and on-disk resume are production code.
     from huggingface_hub import file_download as fd
@@ -50,7 +50,7 @@ def fixture_worker(cache,model,connection,revision=None):
             shutil.copyfile(blob,dest)
         return str(dest)
     with patch.object(hub,'HfApi',Api),patch.object(hub,'hf_hub_download',get):
-        run_download(cache,model,connection,revision=revision)
+        run_download(cache,model,connection,revision=revision,verify_only=verify_only)
 
 
 def stuck_worker(cache,model,connection):
@@ -108,10 +108,36 @@ class TransferTest(unittest.TestCase):
     def tearDown(self):
         self.server.shutdown();self.server.server_close();self.temp.cleanup()
 
-    def run_transfer(self,model='small',limits=None,emit=None,revision=None):
+    def run_transfer(self,model='small',limits=None,emit=None,revision=None,verify_only=False):
         (self.cache/'fixture.json').write_text(json.dumps(dict(url=f'http://127.0.0.1:{self.server.server_port}',files={k:v.hex() for k,v in self.files.items()})))
         with patch.dict(os.environ,{'HF_HUB_DISABLE_XET':'0','HF_HUB_ENABLE_HF_TRANSFER':'1','NO_PROXY':'127.0.0.1,localhost'}):
-            supervise(self.cache,model,emit or (lambda k,v:self.events.append((k,v))),self.stop,limits or DownloadLimits(idle=5,verification_idle=5,attempts=2,backoff=.1),fixture_worker,revision=revision)
+            supervise(self.cache,model,emit or (lambda k,v:self.events.append((k,v))),self.stop,limits or DownloadLimits(idle=5,verification_idle=5,attempts=2,backoff=.1),fixture_worker,revision=revision,verify_only=verify_only)
+
+    def test_explicit_verification_legacy_cache_all_routes_without_weight_download(self):
+        from model_catalog import snapshot_state
+        for model in ('tiny', SLOVAK_MODEL, SPEAKER_MODEL):
+            with self.subTest(model=model):
+                if model == SLOVAK_MODEL:
+                    self.files = {'config.json':b'{}', 'tokenizer.json':b'{}', 'preprocessor_config.json':b'{}',
+                                  'model.safetensors.index.json':b'{"weight_map":{"a":"model-01.safetensors","b":"model-02.safetensors"}}',
+                                  'model-01.safetensors':b'first', 'model-02.safetensors':b'second'}
+                elif model == SPEAKER_MODEL:
+                    self.files = {'voxceleb_resnet34_LM.onnx':b'weights'}
+                self.run_transfer(model)
+                path = cached_path(self.cache, model)
+                (path/'.nd-verified.json').unlink()
+                self.assertEqual(snapshot_state(path, model), 'found')
+                before = list(self.requests)
+                self.run_transfer(model, revision='a'*40, verify_only=True)
+                self.assertEqual(self.requests, before)
+                self.assertEqual(snapshot_state(path, model), 'verified')
+                weight = next(name for name in self.files if not name.endswith('.json'))
+                (path/weight).write_bytes(b'corruption')
+                with self.assertRaisesRegex(RuntimeError, 'Files were preserved'):
+                    self.run_transfer(model, revision='a'*40, verify_only=True)
+                self.assertEqual((path/weight).read_bytes(), b'corruption')
+                self.assertEqual(snapshot_state(path, model), 'incomplete')
+                self.assertEqual(self.requests, before)
 
     def test_pinned_download_keeps_current_ref_for_both_backends(self):
         for model in ('tiny', SLOVAK_MODEL):

@@ -89,6 +89,23 @@ WeSpeaker používa commit `f0c48c298fd835726c27956a5d617bad7115627e`.
 Tiny použitý v starších skúškach má commit
 `d90ca5fe260221311c53c58e660288d3deb8d356`.
 
+Správca rozlišuje chýbajúci, neúplný/zmenený, nájdený/neoverený a overený
+model. Staršia štrukturálne úplná cache zostáva použiteľná, ale bez potvrdenia
+sa neoznačuje za overenú. **Verify integrity / Overiť integritu** číta všetky
+vybrané súbory mimo vlákna rozhrania. Online získa kontrolné súčty presnej
+lokálnej revízie z Hubu; nesťahuje váhy ani neposiela nahrávky. Offline použije
+kontrolné súčty z existujúceho potvrdenia. Bez nich treba jednorazové online
+overenie; kontrolný súčet vypočítaný len z aktuálnych bajtov nie je dôkazom
+správnosti starej cache. Zastavenie aj chyba ponechajú súbory na mieste.
+Poškodenie opravte tlačidlom Download / Stiahnuť a kontrolu zopakujte.
+
+Obnovenie inventára kontroluje štruktúru, veľkosti a časy zmien z potvrdenia,
+nečíta znova všetky váhy. Nie je to ochrana pred úmyselnou manipuláciou
+lokálneho používateľa s potvrdením a metadátami; pri pochybnostiach spustite
+explicitné online overenie. Návrat na kartu aj dokončenie správy modelov či
+dávky obnoví inventár so zachovaním výberu a posunu. Počas ASR/hlasov sa
+zápisové operácie a explicitná kontrola vzájomne vylučujú cez zámok cache.
+
 Predbežné stiahnutie presného modelu rovnakou cestou ako v aplikácii:
 
 ```powershell

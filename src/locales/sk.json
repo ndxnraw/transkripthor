@@ -383,5 +383,16 @@
   "revision.missing": "Nepodarilo sa získať model {model}, revíziu {revision}. Zopakujte úlohu online alebo obnovte tento snapshot z dôveryhodnej zálohy cache. Ak už nie je dostupný, spustite nový prepis; revízie v tomto projekte nemiešajte.",
   "revision.download": "Projekt vyžaduje model {model}, revíziu {revision}, ktorá nie je lokálne dostupná. Stiahnuť túto presnú revíziu a pokračovať? Voľba Nie zachová projekt nezmenený. Môžete tiež spustiť nový prepis samostatne.",
   "revision.unknown": "Starší projekt neobsahuje revíziu modelu. Bezpečné pokračovanie nemožno zaručiť. Zachovajte ho a spustite nový prepis v samostatnom projekte.",
-  "revision.legacy": "Starší projekt: úplné dekódovacie nastavenia sa neukladali. Zachovávam pôvodný spôsob dekódovania a presnú revíziu modelu; zhodný výsledok pri zmene knižníc či zariadenia nemožno zaručiť."
+  "revision.legacy": "Starší projekt: úplné dekódovacie nastavenia sa neukladali. Zachovávam pôvodný spôsob dekódovania a presnú revíziu modelu; zhodný výsledok pri zmene knižníc či zariadenia nemožno zaručiť.",
+  "integrity.verify": "Overiť integritu",
+  "integrity.state.missing": "Chýba",
+  "integrity.state.incomplete": "Neúplný / zmenený",
+  "integrity.state.found": "Nájdený / neoverený",
+  "integrity.state.verified": "Integrita overená",
+  "integrity.incomplete": "Model je neúplný. Dokončite jeho stiahnutie a zopakujte overenie.",
+  "integrity.online_required": "Chýbajú dôveryhodné kontrolné súčty. Vypnite režim offline a zopakujte overenie, ktoré získa metadata presnej revízie modelu. Nahrávky sa neodosielajú.",
+  "integrity.stopped": "Overenie zastavené. Súbory modelu zostali zachované.",
+  "integrity.changed": "Cache sa počas overovania zmenila. Dokončite ostatné operácie s cache a overenie zopakujte.",
+  "integrity.success": "Integrita modelu bola overená.",
+  "integrity.failed": "Overenie integrity zlyhalo. Súbory zostali zachované. Zopakujte stiahnutie modelu na opravu cache a potom overenie."
 }
