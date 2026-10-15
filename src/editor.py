@@ -95,7 +95,7 @@ class Editor:
         ttk.Label(export_bar, textvariable=self.export_state, style='Muted.TLabel').pack(side='left')
         playback = ttk.Frame(bottom)
         playback.pack(fill='x', pady=4)
-        details_toggle = ttk.Button(playback, text=tr('editor.init.segment_and_subtitles'), command=self.toggle_details)
+        details_toggle = ttk.Button(heading, text=tr('editor.init.segment_and_subtitles'), command=self.toggle_details)
         details_toggle.pack(side='right', padx=(4, 0))
         self.details = ttk.Frame(bottom)
         from transcript_blocks import TranscriptBlocks

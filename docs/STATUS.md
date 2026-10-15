@@ -64,6 +64,15 @@ Windows CI spúšťa povinnú celú sadu bez modelov/GPU; ručné spustenie umo�
 aj build s kontrolou EXE. CI má iba contents:read a nenahráva používateľské dáta.
 Výsledky vzdialeného CI sa overujú až po pushi; lokálny úspech ich nenahrádza.
 
+Prvé Windows CI pre commit `f5377db` dokončilo 196 testov s jediným zlyhaním:
+pri 200 % mierke sa v editore orezalo tlačidlo Pause (šírka 179, požadovaná
+203 bodov). Rozdielne rozmery/fontové metriky runnera odhalili pevný riadok
+prehrávania. Tlačidlo podrobností je teraz v hlavičke editora, takže neuberá
+miesto prehrávaniu ani nepridáva ďalší riadok na nízkej obrazovke. DPI matica zahŕňa aj 1280 × 768; ďalší
+regresný test simuluje širšie tlačidlá a overuje ich celé rozmery/dostupnosť.
+Pôvodné kontroly a všetkých 196 testov zostávajú povinné (spolu 197). Oprava nemení prehrávanie,
+ASR, projektové dáta ani verziu. Nový kandidát vyžaduje nové čisté overenie.
+
 Reálne CUDA a plná KInIT inferencia, presnosť na oprávnenom CZ/SK korpuse,
 všetky fyzické systémové DPI/prepínanie monitorov, Explorer OLE drop
 a manuálny screen reader vyžadujú osobitné overenie. Automatické Tk/mock

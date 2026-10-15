@@ -14,8 +14,8 @@ if __name__ == '__main__':
     suite = unittest.defaultTestLoader.discover(str(ROOT / 'tests'), pattern='test*.py')
     count = suite.countTestCases()
     print(f'Discovered {count} tests', flush=True)
-    if count < 196:
-        raise SystemExit('Regression coverage was lost (expected at least 196 tests).')
+    if count < 197:
+        raise SystemExit('Regression coverage was lost (expected at least 197 tests).')
     result = unittest.TextTestRunner(verbosity=2).run(suite)
     faulthandler.cancel_dump_traceback_later()
     raise SystemExit(not result.wasSuccessful() or bool(result.skipped) or result.testsRun != count)

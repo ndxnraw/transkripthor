@@ -6,7 +6,7 @@
   do EXE. `tests/` obsahuje všetky regresie; `packaging/` balenie;
   `scripts/` opakovateľné nástroje; `requirements/` vstupy, constraints a locky.
 - Používať projektové `.venv`: `scripts/setup.ps1`, `run.ps1`, `test.ps1`,
-  `build.ps1`. Testovanie musí objaviť aspoň 196 testov, dokončiť celý beh
+  `build.ps1`. Testovanie musí objaviť aspoň 197 testov, dokončiť celý beh
   a nemať preskočené testy. Mock ASR nie je skutočný test modelu/GPU.
 - Cesty odvodzovať od súboru, projektu alebo používateľského profilu.
   Žiadne hardcoded mená počítačov, používateľov, runtime asistenta, `work/`

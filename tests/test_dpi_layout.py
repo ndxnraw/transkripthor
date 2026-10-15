@@ -13,12 +13,13 @@ from model_dialog import ModelDialog
 from project import Project
 from ui import apply_theme
 from test_studio import destroy_window
+import test_editor_speakers
 
 
 class SmallScreenTest(unittest.TestCase):
     @patch.object(Editor, 'load_audio')
     def test_all_pages_small_screens_long_text_both_themes(self, _load):
-        for ui_language, screen in product(('en', 'sk'), ((1366, 768), (1536, 864))):
+        for ui_language, screen in product(('en', 'sk'), ((1280, 768), (1366, 768), (1536, 864))):
             for scale in (1, 1.25, 1.5, 1.75, 2):
                 with self.subTest(screen=screen, scale=scale), tempfile.TemporaryDirectory() as folder:
                     root = tk.Tk()
@@ -72,6 +73,32 @@ class SmallScreenTest(unittest.TestCase):
                             self.assertGreater(app.status_view.text.yview()[0], 0)
                     finally:
                         destroy_window(root)
+
+
+class PlaybackLayoutTest(unittest.TestCase):
+    setUp = test_editor_speakers.SpeakerEditingTest.setUp
+
+    def test_wide_playback_and_details_buttons_remain_fully_visible(self):
+        # Hosted Windows desktops can request wider buttons than this machine.
+        # Exercise that constraint without changing/ignoring any original test.
+        from i18n import tr
+        labels = {tr('editor.init.' + key) for key in ('segment', 'resume', 'pause', 'segment_and_subtitles')}
+        def descendants(widget):
+            for child in widget.winfo_children():
+                yield child
+                yield from descendants(child)
+        buttons = [widget for widget in descendants(self.editor.window)
+                   if isinstance(widget, ttk.Button) and widget['text'] in labels]
+        self.assertEqual(len(buttons), 4)
+        for button in buttons:
+            button.configure(width=28)
+        self.root.update()
+        for button in buttons:
+            self.assertTrue(button.winfo_ismapped(), button['text'])
+            self.assertGreaterEqual(button.winfo_width(), button.winfo_reqwidth(), button['text'])
+            self.assertGreaterEqual(button.winfo_rootx(), self.root.winfo_rootx(), button['text'])
+            self.assertLessEqual(button.winfo_rootx() + button.winfo_width(), self.root.winfo_rootx() + self.root.winfo_width(), button['text'])
+            self.assertLessEqual(button.winfo_rooty() + button.winfo_height(), self.root.winfo_rooty() + self.root.winfo_height(), button['text'])
 
 
 if __name__ == '__main__':
