@@ -117,7 +117,7 @@ Modely neobnovoval inventár. Tieto dve zistenia sú opravené.
   používateľské dáta a verzia sa nemenia.
 
 Pracovný regresný beh: **211 testov, OK, 196,910 s, bez preskočenia**.
-Pribudlo 14 testov: stavy cache a chýbajúce potvrdenie, digest, poškodenie
+Pribudlo 15 testov: stavy cache a chýbajúce potvrdenie, digest, poškodenie
 rovnakej veľkosti, zmena metadát/ref/súboru, zrušenie a opakovanie, presná
 revízia a UI obnova vrátane výberu, posunu, chyby a starej cesty.
 Malé HTTP fixtures preverili faster-whisper, delený KInIT aj WeSpeaker cez
@@ -125,6 +125,13 @@ skutočný lokálny prenos a procesový worker; explicitná kontrola nepoužila
 ďalšie prenosy váh. Nie je to stiahnutie veľkých modelov z verejného Hubu
 ani test inferencie/GPU. Existujúca Tk matica EN/SK, oba vzhľady a mierky
 100–200 % prešla; fyzické systémové DPI sa v tejto úlohe nemenilo.
+
+Čistý kandidát `573aa4e` prešiel 211 testmi (242,332 s), novým Windows
+buildom, zhodou 33 pribalených modulov a diagnostikou Tk/tkdnd, prekladov,
+ikon, natívnych importov a nového procesu. Následná kontrola doplnila
+automatické dokončenie obnovy odloženej počas rozlišovania hlasov: nie je
+potrebný ďalší odchod a návrat na kartu. Všetky 4 cielené UI regresie prešli;
+finálna sada má 212 testov. Tento posledný doplnok vyžaduje nový čistý build.
 
 Pred synchronizáciou je povinný ešte build presného kandidátskeho commitu
 z čistého klonu s novou `.venv`, opakovaním celej sady a diagnostikou nového

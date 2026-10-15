@@ -361,13 +361,13 @@ class App:
             messagebox.showerror(tr('prepis.labels.editor'), str(exc))
 
     def manage_models(self):
+        if self.model_dialog and self.model_dialog.window.winfo_exists():
+            self.model_dialog.refresh()
+            return
         if self.busy:
             return
         if any(editor.window.winfo_exists() and editor.speaker_busy for editor in self.editors):
             messagebox.showinfo(tr('prepis.manage_models.model_manager'), tr('prepis.manage_models.wait_for_voice_grouping_to_finish'))
-            return
-        if self.model_dialog and self.model_dialog.window.winfo_exists():
-            self.model_dialog.refresh()
             return
         from model_dialog import ModelDialog
         self.model_dialog = ModelDialog(self, parent=self.models_page)

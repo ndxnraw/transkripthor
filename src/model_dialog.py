@@ -155,6 +155,7 @@ class ModelDialog:
                 if cache != self.app.cache:
                     self.refresh_pending = True
                     continue
+                self.refresh_pending = False
                 selection, focus = self.tree.selection(), self.tree.focus()
                 y, x = self.tree.yview()[0], self.tree.xview()[0]
                 opened = {key: self.tree.item(key, 'open') for key in self.tree.get_children()}
@@ -184,6 +185,8 @@ class ModelDialog:
                     self.refresh()
             else:
                 self.status.set(value)
+        if self.refresh_pending and not self.busy and not self.in_use():
+            self.refresh()
         self.poll_timer = self.window.after(100, self.poll)
 
     def close(self):

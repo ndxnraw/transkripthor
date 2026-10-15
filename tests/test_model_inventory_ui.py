@@ -62,6 +62,20 @@ class InventoryUiTest(unittest.TestCase):
         dialog.poll()
         self.assertTrue(dialog.tree.exists('tiny'))
         self.app.busy = False
-        dialog.refresh()
+        dialog.poll()
         self.wait(dialog)
         self.assertFalse(dialog.refresh_pending)
+
+    def test_tab_return_during_voice_work_refreshes_when_it_finishes(self):
+        dialog = ModelDialog(self.app, parent=self.app.models_page)
+        self.app.model_dialog = dialog
+        self.wait(dialog)
+        self.app.editors.append(self.editor)
+        self.editor.speaker_busy = True
+        self.app.manage_models()
+        self.assertTrue(dialog.refresh_pending)
+        self.editor.speaker_busy = False
+        with patch('model_dialog.inventory', wraps=inventory) as read:
+            dialog.poll()
+            self.wait(dialog)
+            read.assert_called_once_with(self.app.cache)
