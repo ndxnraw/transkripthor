@@ -50,6 +50,7 @@ class FlowFrame(ttk.Frame):
     def __init__(self, parent, **kwargs):
         super().__init__(parent, **kwargs)
         self.pending = None
+        self.stretch = None
         self.bind('<Configure>', self.schedule)
         self.bind('<Map>', self.schedule)
 
@@ -63,15 +64,18 @@ class FlowFrame(ttk.Frame):
         if width < 100:
             return
         y = used = row_height = 0
+        children = self.winfo_children()
+        spare = max(0, width - sum(min(width, child.winfo_reqwidth()+8) for child in children))
         for widget in self.winfo_children():
             if widget.winfo_manager() == 'pack':
                 widget.pack_forget()
         for widget in self.winfo_children():
-            needed = min(width, widget.winfo_reqwidth()+8)
+            extra = spare if widget is self.stretch else 0
+            needed = min(width, widget.winfo_reqwidth()+8+extra)
             if used and used+needed > width:
                 y += row_height+4
                 used = row_height = 0
-            widget.place(x=used, y=y+2, width=min(widget.winfo_reqwidth(), width), height=widget.winfo_reqheight())
+            widget.place(x=used, y=y+2, width=min(widget.winfo_reqwidth()+extra, width), height=widget.winfo_reqheight())
             row_height = max(row_height, widget.winfo_reqheight())
             used += needed
         self.configure(height=y+row_height+4)

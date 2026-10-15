@@ -73,6 +73,21 @@ regresný test simuluje širšie tlačidlá a overuje ich celé rozmery/dostupno
 Pôvodné kontroly a všetkých 196 testov zostávajú povinné (spolu 197). Oprava nemení prehrávanie,
 ASR, projektové dáta ani verziu. Nový kandidát vyžaduje nové čisté overenie.
 
+Nasledujúce CI odhalilo aj orezanie Redo a širších prehrávacích tlačidiel.
+Editor preto používa šírku tlačidiel podľa textu namiesto pevného minima
+a zalamovací riadok prehrávania; pri dostatku miesta sa posuvník rozťahuje.
+Kompaktnejšie okraje tlačidiel a pole hlasu zamedzujú zbytočnému druhému
+riadku pri 200 % mierke. Matica pokrýva aj 1024 × 768.
+Regresia širších tlačidiel simuluje aj udalosť zmeny rozmerov kontajnera.
+Žiadna pôvodná kontrola rozmerov sa nevypína.
+Celá cielená DPI matica vrátane pôvodného StudioScaling testu prešla:
+3 testy, 68,987 s, bez preskočenia. Predchádzajúci čistý kandidát `824b5c4`
+prešiel všetkými 197 testmi (175,402 s), buildom, štartom nového EXE,
+reálnym Tiny CPU v dvoch procesových behoch a reálnym UI stop/restart/resume.
+Táto následná úprava rozloženia vyžaduje rovnaké overenie pred pushom;
+presný commit, logy, SHA-256 EXE a výsledok CI sa uchovávajú v lokálnom
+bode obnovy mimo Gitu. Stav vzdialených kontrol je dostupný v GitHub Actions.
+
 Reálne CUDA a plná KInIT inferencia, presnosť na oprávnenom CZ/SK korpuse,
 všetky fyzické systémové DPI/prepínanie monitorov, Explorer OLE drop
 a manuálny screen reader vyžadujú osobitné overenie. Automatické Tk/mock

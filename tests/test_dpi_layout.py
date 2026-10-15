@@ -19,7 +19,7 @@ import test_editor_speakers
 class SmallScreenTest(unittest.TestCase):
     @patch.object(Editor, 'load_audio')
     def test_all_pages_small_screens_long_text_both_themes(self, _load):
-        for ui_language, screen in product(('en', 'sk'), ((1280, 768), (1366, 768), (1536, 864))):
+        for ui_language, screen in product(('en', 'sk'), ((1024, 768), (1280, 768), (1366, 768), (1536, 864))):
             for scale in (1, 1.25, 1.5, 1.75, 2):
                 with self.subTest(screen=screen, scale=scale), tempfile.TemporaryDirectory() as folder:
                     root = tk.Tk()
@@ -50,7 +50,7 @@ class SmallScreenTest(unittest.TestCase):
                                 root.update()
                                 def inspect(widget):
                                     if isinstance(widget, (ttk.Entry, ttk.Combobox)):
-                                        self.assertTrue(widget.winfo_ismapped(), str(widget))
+                                        self.assertTrue(widget.winfo_ismapped(), (str(widget), widget.master.winfo_geometry(), widget.master.master.winfo_geometry(), widget.master.master.master.winfo_geometry()))
                                         self.assertGreaterEqual(widget.winfo_height(), widget.winfo_reqheight(), str(widget))
                                         self.assertLessEqual(widget.winfo_rootx()+widget.winfo_width(), root.winfo_rootx()+root.winfo_width(), str(widget))
                                         self.assertLessEqual(widget.winfo_rooty()+widget.winfo_height(), root.winfo_rooty()+root.winfo_height(), str(widget))
@@ -93,6 +93,9 @@ class PlaybackLayoutTest(unittest.TestCase):
         self.assertEqual(len(buttons), 4)
         for button in buttons:
             button.configure(width=40)
+        # A viewport resize must relayout controls using their new requests.
+        for parent in {button.master for button in buttons}:
+            parent.event_generate('<Configure>')
         self.root.update()
         for button in buttons:
             self.assertTrue(button.winfo_ismapped(), button['text'])
