@@ -10,6 +10,7 @@ if __name__ == '__main__':
     if sys.platform != 'win32':
         raise SystemExit('Run the required suite on Windows, not WSL/Linux.')
     sys.path[:0] = [str(ROOT / 'src'), str(ROOT / 'tests')]
+    faulthandler.enable(all_threads=True)
     faulthandler.dump_traceback_later(120, repeat=True)
     suite = unittest.defaultTestLoader.discover(str(ROOT / 'tests'), pattern='test*.py')
     count = suite.countTestCases()

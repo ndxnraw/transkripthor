@@ -18,7 +18,11 @@ import test_editor_speakers
 
 class SmallScreenTest(unittest.TestCase):
     @patch.object(Editor, 'load_audio')
-    def test_all_pages_small_screens_long_text_both_themes(self, _load):
+    @patch.object(ModelDialog, 'refresh')
+    def test_all_pages_small_screens_long_text_both_themes(self, _refresh, _load):
+        # Keep the layout fixture deterministic on every tab return, not only
+        # construction. Inventory workers are exercised by test_model_inventory_ui;
+        # this matrix deliberately destroys each window without waiting for I/O.
         for ui_language, screen in product(('en', 'sk'), ((1024, 768), (1280, 768), (1366, 768), (1536, 864))):
             for scale in (1, 1.25, 1.5, 1.75, 2):
                 with self.subTest(screen=screen, scale=scale), tempfile.TemporaryDirectory() as folder:
@@ -36,8 +40,7 @@ class SmallScreenTest(unittest.TestCase):
                         editor = Editor(app, target, parent=app.editor_page)
                         app.editors.append(editor)
                         editor.toggle_details()
-                        with patch.object(ModelDialog, 'refresh'):
-                            models = ModelDialog(app, parent=app.models_page)
+                        models = ModelDialog(app, parent=app.models_page)
                         app.model_dialog = models
                         long_text = ('Viacriadková chyba s dlhou cestou C:/nahrávky/' + 'nahrávka_'*25 + '\n')*12
                         for value in (app.status, app.selection_info, app.readiness, app.device_status,
@@ -69,6 +72,8 @@ class SmallScreenTest(unittest.TestCase):
                             self.assertLessEqual(app.author_label.winfo_rootx()+app.author_label.winfo_width(), root.winfo_rootx()+root.winfo_width())
                             self.assertLessEqual(app.author_label.winfo_rooty()+app.author_label.winfo_height(), root.winfo_rooty()+root.winfo_height())
                             self.assertEqual(app.status_view.text.get('1.0', 'end-1c'), long_text)
+                            self.assertEqual(models.status.get(), long_text)
+                            self.assertEqual(models.description.get(), long_text)
                             app.status_view.text.yview_moveto(1)
                             self.assertGreater(app.status_view.text.yview()[0], 0)
                     finally:

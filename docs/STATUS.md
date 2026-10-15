@@ -116,7 +116,10 @@ Modely neobnovoval inventár. Tieto dve zistenia sú opravené.
 - EN/SK texty sú v spoločných katalógoch. Závislosti, formáty projektov,
   používateľské dáta a verzia sa nemenia.
 
-Pracovný regresný beh: **211 testov, OK, 196,910 s, bez preskočenia**.
+Úplný čistý beh kandidáta `1e459ed`: **212 testov, OK, 221,185 s,
+bez preskočenia**, nové prostredie z lockov, Windows build, zhoda 33 modulov
+a úspešná diagnostika nového EXE (Tk/tkdnd, preklady, ikony, natívne importy
+a nový proces).
 Pribudlo 15 testov: stavy cache a chýbajúce potvrdenie, digest, poškodenie
 rovnakej veľkosti, zmena metadát/ref/súboru, zrušenie a opakovanie, presná
 revízia a UI obnova vrátane výberu, posunu, chyby a starej cesty.
@@ -126,12 +129,20 @@ skutočný lokálny prenos a procesový worker; explicitná kontrola nepoužila
 ani test inferencie/GPU. Existujúca Tk matica EN/SK, oba vzhľady a mierky
 100–200 % prešla; fyzické systémové DPI sa v tejto úlohe nemenilo.
 
-Čistý kandidát `573aa4e` prešiel 211 testmi (242,332 s), novým Windows
-buildom, zhodou 33 pribalených modulov a diagnostikou Tk/tkdnd, prekladov,
-ikon, natívnych importov a nového procesu. Následná kontrola doplnila
-automatické dokončenie obnovy odloženej počas rozlišovania hlasov: nie je
-potrebný ďalší odchod a návrat na kartu. Všetky 4 cielené UI regresie prešli;
-finálna sada má 212 testov. Tento posledný doplnok vyžaduje nový čistý build.
+Obnova odložená počas rozlišovania hlasov sa dokončí automaticky; ďalší
+odchod a návrat na kartu nie je potrebný. Prvý vzdialený CI beh kandidáta
+`1e459ed` skončil natívnym pádom Tk `0xC0000005` po úspešnej DPI matici,
+bez úplného súhrnu. Nepočíta sa za úspešné overenie; opakovanie je oddelený
+beh. Presná príčina natívneho pádu zatiaľ nie je potvrdená.
+
+Pri kontrole sa našiel problém testovacieho prípravku: mock obnovy modelov
+platil len pri vytvorení karty, automatický návrat už spúšťal worker počas
+matice, ktorá okná okamžite ruší. DPI test teraz izoluje obnovu počas celého
+behu, zachováva všetky pôvodné geometrické kontroly a navyše kontroluje
+zachovanie dlhých stavových textov. Štyri samostatné integračné testy naďalej
+vykonávajú skutočné obnovovanie inventára. Cielený beh: **6 testov, OK,
+72,906 s, bez preskočenia**. Spúšťač navyše zapína výpis všetkých vlákien
+pri natívnom páde. Sada má stále 212 testov; tento doplnok vyžaduje čistý build.
 
 Pred synchronizáciou je povinný ešte build presného kandidátskeho commitu
 z čistého klonu s novou `.venv`, opakovaním celej sady a diagnostikou nového
