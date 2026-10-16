@@ -160,3 +160,45 @@ Windows EXE. Jeho SHA, logy a výsledok synchronizácie sa evidujú lokálne
 mimo Gitu a v závere úlohy; historické buildy nie sú dôkazom pre tento strom.
 Rýchla kontrola metadát nenahrádza explicitný hash pri podozrení na zmenu
 bajtov so zachovanými metadátami ani ochranu pred úpravou samotného potvrdenia.
+
+## F18 – dostupnosť a význam zoskupovania hlasov (16. 10. 2026)
+
+Východiskový strom `a9955af` bol čistý. F16/F17 je synchronizované; jeho
+čistá zostava prešla 213 testmi, novým EXE a GitHub Windows CI. Tieto výsledky
+sú historické a nenahrádzajú overenie F18.
+
+Potvrdený problém: kontrola modelu bola až v obsluhe kliknutia a chýbajúci
+kaldi-native-fbank sa zistil až počas výpočtu embeddingov. Ručné priradenie,
+hromadné premenovanie, ochrana súbežných úprav a Undo už existovali.
+
+- Zoskupovanie sa sprístupní až po kontrole lokálneho modelu a importov
+  NumPy, ONNX Runtime s CPU providerom a kaldi-native-fbank. Dôvod chýbajúcej
+  súčasti aj technický detail sú viditeľné pred spustením. Kontrola pri
+  zobrazení podrobností beží mimo Tk, bez sťahovania a načítania váh.
+  Návrat k podrobnostiam/pomoc kontrolu zopakuje; kliknutie znovu preverí
+  dostupnosť, aby odstránenie cache medzi kontrolou a spustením neprešlo.
+- Pole hlasu ponúka existujúce označenia a zostáva voľne editovateľné.
+  Vymazanie priradenia, premenovanie, Undo/Redo aj uloženie fungujú bez modelu.
+- EN/SK pomoc, potvrdenie, stavové hlásenia a návod dôsledne opisujú
+  zoskupovanie podobných hlasov v existujúcich úsekoch. Nejde o identifikáciu
+  osôb ani presnú separáciu prekryvov či zmien hlasu vnútri jedného úseku.
+  Algoritmus, prah, váhy, používateľské označenia a ASR sa nemenia.
+- Závislosti a balenie nevyžadovali zmenu; build už obsahuje voliteľný runtime.
+
+Overenie: prvý úplný beh odhalil orezanie titulkových polí pri 1024×768/200 %.
+Pomoc bola presunutá vedľa statusu, bez oslabenia geometrických kontrol.
+Cielených 14 testov potom prešlo (91,903 s). Finálny pracovný strom:
+**219 testov, OK, 194,450 s, bez preskočenia**. Šesť nových regresií pokrýva
+chýbajúci/neúplný model, každý chýbajúci import aj natívnu DLL, CPU provider,
+blokovanie akcie, opakovanú kontrolu, zmenu cache, vlákno kontroly bez dirty
+stavu a ručné opravy s Undo/Redo, uložením a otvorením databázy. Pôvodné
+regresie úprav počas výpočtu a hromadného premenovania zostali zachované.
+Tk matica preverila EN/SK, oba vzhľady a 100/125/150/175/200 % mierky.
+
+Syntetické fixtures a mocky neoverujú presnosť WeSpeaker na reálnych hlasoch;
+referenčné meranie sa nevykonalo a algoritmus sa preto nemenil. Preflight
+nie je úplná validácia ONNX ani nový hash váh; slúži na včasnú kontrolu
+predpokladov. Fyzické systémové DPI a manuálny Narrator neboli skúšané.
+Pred pushom musí presný kandidát ešte prejsť čistým klonom, novou `.venv`,
+celou sadou a novým Windows EXE. SHA a výsledky tejto kontroly sa zaznamenajú
+lokálne mimo Gitu a v závere úlohy. Verzia sa nemení; nevzniká tag ani Release.

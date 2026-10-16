@@ -40,6 +40,17 @@ závislosti a štandardný `unittest` bez ďalšieho testovacieho frameworku.
 Voliteľné hlasy pridá `setup.ps1 -Speakers`; režim build ich zahŕňa vždy,
 pretože existujúca diagnostika EXE overuje aj tento runtime.
 
+Editor sprístupní **Group similar voices / Zoskupiť podobné hlasy** až po
+kontrole lokálnej cache a importov NumPy, ONNX Runtime (CPU provider) a
+kaldi-native-fbank. Kontrola pri otvorení podrobností beží mimo Tk vlákna,
+nesťahuje ani nenačítava váhy; pri spustení sa dostupnosť znovu preverí.
+Import kontroluje aj chýbajúce natívne DLL, nie iba prítomnosť balíka.
+Úspešný preflight nie je inferencia ani nové hashovanie váh: integritu
+kontroluje správca modelov, chybu pri vytvorení ONNX session zachytí worker.
+Ručné označenia a prepis fungujú aj bez voliteľných súčastí. Zoskupovanie
+existujúcich úsekov nie je identifikácia osôb ani separácia prekryvov.
+Algoritmus a prah sa pri F18 nemenia; ich zmena vyžaduje referenčné meranie.
+
 Výsledok je `dist/ND TranskripThor/ND TranskripThor.exe`; `_internal` musí
 zostať vedľa neho. Build vykoná celú regresnú sadu, porovná pribalený kód
 so zdrojmi a spustí izolovanú diagnostiku Tk, ikon, prekladov, tkdnd, natívnych

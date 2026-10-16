@@ -97,7 +97,16 @@ odmietnu. Mená hovoriacich sa uchovávajú v projekte; čistý TXT/SRT ich nepr
 ## Voliteľné hlasy
 
 V Správcovi modelov stiahnite **WeSpeaker ResNet34-LM**, potom v editore použite
-**Rozlíšiť hlasy**. Funkcia je štandardne vypnutá; bežný prepis model nenačítava.
+**Zoskupiť podobné hlasy** (English: **Group similar voices**). Funkcia je
+štandardne vypnutá; bežný prepis model nenačítava. Editor pred sprístupnením
+akcie kontroluje lokálny model aj načítanie voliteľných knižníc. Dôvod
+nedostupnosti zobrazí v podrobnostiach úseku. Zdrojová inštalácia doplní
+knižnice cez `scripts/setup.ps1 -Speakers`; v plnej zostave sú pribalené.
+Návrat k podrobnostiam alebo **Pomoc k hlasom** zopakuje kontrolu.
+V poli **Hlas úseku** vyberte existujúce označenie alebo napíšte vlastné;
+prázdne pole priradenie odstráni. **Premenovať hlas** zmení všetky výskyty
+označenia, aj mimo aktuálnej stránky či vyhľadávania. Tieto opravy fungujú
+bez modelu, podporujú Späť/Znova a zachovajú sa po uložení projektu.
 Model [WeSpeaker](https://huggingface.co/Wespeaker/wespeaker-voxceleb-resnet34-LM)
 má licenciu **CC BY 4.0**, autorstvo tím WeSpeaker; používa sa pôvodný ONNX súbor
 bez úpravy váh, revízia `f0c48c298fd835726c27956a5d617bad7115627e`.

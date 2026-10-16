@@ -59,6 +59,7 @@ class Editor:
         self.speaker_busy = False
         self.speaker_revisions = {}
         self.speaker_job = None
+        self.voice_check = None
         self.player = Player()
         outer = ttk.Frame(self.window, padding=8)
         outer.pack(fill='both', expand=True)
@@ -115,11 +116,20 @@ class Editor:
         voice.pack(fill='x')
         ttk.Label(voice, text=tr('editor.init.segment_speaker')).pack(side='left')
         self.speaker = tk.StringVar()
-        ttk.Entry(voice, textvariable=self.speaker, width=12).pack(side='left')
+        self.speaker_entry = ttk.Combobox(voice, textvariable=self.speaker, width=12,
+                                        postcommand=self.refresh_speaker_choices)
+        self.speaker_entry.pack(side='left')
         self.speaker.trace_add('write', self.speaker_changed)
         ttk.Button(voice, width=0, padding=(8, 2), text=tr('editor.init.rename_voice'), command=self.rename_speaker).pack(side='left', padx=4)
         self.speaker_button = ttk.Button(voice, width=0, padding=(8, 2), text=tr('editor.init.group_similar_voices'), command=self.diarize)
         self.speaker_button.pack(side='right')
+        self.speaker_button.configure(state='disabled')
+        voice_info = ttk.Frame(self.details)
+        voice_info.pack(fill='x')
+        ttk.Button(voice_info, width=0, padding=(8, 2), text=tr('voices.help_title'), command=self.voice_help).pack(side='right')
+        self.voice_status = tk.StringVar(value=tr('voices.checking'))
+        MessageView(voice_info, app, textvariable=self.voice_status, lines=1).pack(side='left', fill='x', expand=True)
+        self.details.bind('<Map>', lambda event: self.refresh_voice_availability() if event.widget == self.details else None)
         ttk.Button(playback, width=0, padding=(8, 2), text=tr('editor.init.segment'), command=self.play_segment).pack(side='left')
         ttk.Button(playback, width=0, padding=(8, 2), text=tr('editor.init.resume'), command=self.play).pack(side='left')
         ttk.Button(playback, width=0, padding=(8, 2), text=tr('editor.init.pause'), command=self.player.pause).pack(side='left')
@@ -509,6 +519,37 @@ class Editor:
             self.record_changes(changes)
             self.render()
 
+    def refresh_speaker_choices(self):
+        self.speaker_entry.configure(values=sorted({item.get('speaker', '') for item in self.segments
+                                                    if item.get('speaker')}))
+
+    def voice_help(self):
+        messagebox.showinfo(tr('voices.help_title'), tr('voices.help'), parent=self.window)
+        self.refresh_voice_availability()
+
+    def refresh_voice_availability(self):
+        if self.speaker_busy or self.voice_check is not None:
+            return
+        token, cache, events = object(), self.app.cache, self.events
+        self.voice_check = token
+        self.speaker_button.configure(state='disabled')
+        self.voice_status.set(tr('voices.checking'))
+        def check():
+            from speakers import availability
+            try:
+                result = availability(cache)
+            except Exception as exc:
+                result = (None, tr('voices.check_failed'), f'{type(exc).__name__}: {exc}')
+            # Do not keep Tk/editor objects alive in the worker after closing.
+            events.put(('voice_availability', (token, cache, result)))
+        threading.Thread(target=check, daemon=True).start()
+
+    def show_voice_availability(self, result):
+        path, reason, detail = result
+        self.voice_status.set(reason + ('\n' + detail if detail else ''))
+        self.speaker_button.configure(state='normal' if path and not self.speaker_busy else 'disabled')
+        return path
+
     def diarize(self):
         if self.app.busy or (self.app.model_dialog and self.app.model_dialog.window.winfo_exists() and self.app.model_dialog.busy):
             self.status.set(tr('editor.diarize.wait_for_transcription_or_model_operations_to_finish'))
@@ -516,10 +557,9 @@ class Editor:
         if self.speaker_busy or self.player.audio is None:
             self.status.set(tr('editor.diarize.wait_for_audio_preparation_or_voice_grouping_to_finish'))
             return
-        from model_catalog import cached_path, SPEAKER_MODEL
-        path = cached_path(self.app.cache, SPEAKER_MODEL)
+        from speakers import availability
+        path = self.show_voice_availability(availability(self.app.cache))
         if not path:
-            messagebox.showinfo(tr('editor.diarize.voice_grouping'), tr('editor.diarize.first_download_the_optional_wespeaker_model_in_models_no'), parent=self.window)
             return
         if not messagebox.askyesno(tr('editor.diarize.voice_grouping'), tr('editor.diarize.start_local_voice_grouping_this_replaces_current_assignments_it'), parent=self.window):
             return
@@ -567,7 +607,7 @@ class Editor:
                 changed += 1
         self.speaker_job = None
         self.speaker_busy = False
-        self.speaker_button.configure(state='normal')
+        self.refresh_voice_availability()
         if changed:
             self.dirty = True
             self.saved_state.set(tr('editor.apply_speakers.unsaved_changes'))
@@ -589,6 +629,14 @@ class Editor:
             kind, value = self.events.get_nowait()
             if kind.startswith('io_'):
                 self.complete_io(kind, value)
+            elif kind == 'voice_availability':
+                token, cache, result = value
+                if token is self.voice_check:
+                    self.voice_check = None
+                    if cache == self.app.cache:
+                        self.show_voice_availability(result)
+                    else:
+                        self.refresh_voice_availability()
             elif kind == 'loaded':
                 self.slider.configure(to=max(1, value))
                 self.status.set(tr('editor.poll.audio_ready_select_a_segment_and_press_segment'))
@@ -601,7 +649,7 @@ class Editor:
                         continue
                     self.speaker_job = None
                     self.speaker_busy = False
-                    self.speaker_button.configure(state='normal')
+                    self.refresh_voice_availability()
                 self.status.set(value)
         if not self.dragging:
             self.position.set(self.player.position / 16000)

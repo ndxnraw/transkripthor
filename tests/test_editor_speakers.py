@@ -58,7 +58,7 @@ class SpeakerEditingTest(unittest.TestCase):
             if not release.wait(10):
                 raise RuntimeError('Test worker timeout')
             return result if result is not None else [f'Hlas {s["id"]}' for s in segments]
-        patches = [patch('model_catalog.cached_path', return_value=self.folder),
+        patches = [patch('speakers.availability', return_value=(self.folder, 'Ready', '')),
                    patch('editor.messagebox.askyesno', return_value=True),
                    patch('speakers.assign_speakers', side_effect=assign),
                    patch('editor.threading.Thread', side_effect=thread_factory)]

@@ -6,6 +6,27 @@ No real-world identity inference; short turns/overlap require human review.
 """
 from i18n import tr
 from pathlib import Path
+import importlib
+
+
+def availability(cache):
+    """Local preflight, no weights loaded or downloaded; safe outside Tk thread."""
+    from model_catalog import cached_path, SPEAKER_MODEL
+    path = cached_path(cache, SPEAKER_MODEL)
+    if path is None:
+        return None, tr('voices.model_missing'), ''
+    for name, attributes in (('numpy', ('stack',)),
+                             ('onnxruntime', ('InferenceSession', 'SessionOptions')),
+                             ('kaldi_native_fbank', ('FbankOptions', 'OnlineFbank'))):
+        try:
+            module = importlib.import_module(name)
+            for attribute in attributes:
+                getattr(module, attribute)
+            if name == 'onnxruntime' and 'CPUExecutionProvider' not in module.get_available_providers():
+                raise RuntimeError('CPUExecutionProvider unavailable')
+        except Exception as exc:
+            return None, tr('voices.runtime_missing', component=name), f'{type(exc).__name__}: {exc}'
+    return path, tr('voices.ready'), ''
 
 
 class VoiceEncoder:
