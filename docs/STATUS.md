@@ -120,7 +120,7 @@ Modely neobnovoval inventár. Tieto dve zistenia sú opravené.
 bez preskočenia**, nové prostredie z lockov, Windows build, zhoda 33 modulov
 a úspešná diagnostika nového EXE (Tk/tkdnd, preklady, ikony, natívne importy
 a nový proces).
-Pribudlo 15 testov: stavy cache a chýbajúce potvrdenie, digest, poškodenie
+Pribudlo 16 testov: stavy cache a chýbajúce potvrdenie, digest, poškodenie
 rovnakej veľkosti, zmena metadát/ref/súboru, zrušenie a opakovanie, presná
 revízia a UI obnova vrátane výberu, posunu, chyby a starej cesty.
 Malé HTTP fixtures preverili faster-whisper, delený KInIT aj WeSpeaker cez
@@ -142,7 +142,17 @@ behu, zachováva všetky pôvodné geometrické kontroly a navyše kontroluje
 zachovanie dlhých stavových textov. Štyri samostatné integračné testy naďalej
 vykonávajú skutočné obnovovanie inventára. Cielený beh: **6 testov, OK,
 72,906 s, bez preskočenia**. Spúšťač navyše zapína výpis všetkých vlákien
-pri natívnom páde. Sada má stále 212 testov; tento doplnok vyžaduje čistý build.
+pri natívnom páde. Kandidát `ec2d600` lokálne dokončil 212 testov (194,479 s),
+ale jeho build bol prerušený pred dokončením, preto sa nepočíta za overené EXE.
+
+Doplnenie 16. 10.: druhý CI beh `1e459ed` dokončil 212 testov s jedným
+zlyhaním pôvodného 20-sekundového limitu procesového testu. Po chybe zostalo
+bežať pomocné vlákno a CI bol neskôr zrušený limitom úlohy. Testovací helper
+teraz v `finally` zastaví a ohraničene počká na svoj bridge; pôvodný limit
+aj všetky kontroly checkpointu zostali nezmenené. Nová regresia vynucuje
+prekročenie limitu a overuje ukončenie vlákna. Cielených 10 procesových
+testov prešlo za 19,801 s. Príčina pôvodného prekročenia 20 sekúnd nie je
+potvrdená; oprava čistenia ho nezamlčuje. Finálna sada má **213 testov**.
 
 Pred synchronizáciou je povinný ešte build presného kandidátskeho commitu
 z čistého klonu s novou `.venv`, opakovaním celej sady a diagnostikou nového

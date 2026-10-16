@@ -79,21 +79,39 @@ class ProcessTest(unittest.TestCase):
         thread = threading.Thread(target=supervise, args=(self.config, stop, events, 'test-run'),
             kwargs=dict(target=target, stop_seconds=.3, **limits))
         start = time.monotonic(); thread.start()
-        while thread.is_alive() or not events.empty():
-            if stop_after is not None and time.monotonic()-start > stop_after: stop.set()
-            self.assertLess(time.monotonic()-start, 20)
-            try: _, (run, kind, value) = events.get(timeout=.05)
-            except queue.Empty: continue
-            self.assertEqual(run, 'test-run'); records.append((kind,value))
-            if kind == 'job' and acknowledge:
-                identifier, changes, ack, result = value
-                self.assertEqual(identifier, 'one')
-                self.item.update(changes); result.append(True); ack.set()
-            elif kind == 'cpu_request' and acknowledge:
-                ack, result = value; result.append(accept); ack.set()
-        thread.join()
+        try:
+            while thread.is_alive() or not events.empty():
+                if stop_after is not None and time.monotonic()-start > stop_after: stop.set()
+                self.assertLess(time.monotonic()-start, 20,
+                                f'ASR events before deadline: {[kind for kind, _ in records]}')
+                try: _, (run, kind, value) = events.get(timeout=.05)
+                except queue.Empty: continue
+                self.assertEqual(run, 'test-run'); records.append((kind,value))
+                if kind == 'job' and acknowledge:
+                    identifier, changes, ack, result = value
+                    self.assertEqual(identifier, 'one')
+                    self.item.update(changes); result.append(True); ack.set()
+                elif kind == 'cpu_request' and acknowledge:
+                    ack, result = value; result.append(accept); ack.set()
+        finally:
+            # A failed assertion must not strand a non-daemon bridge or child
+            # waiting for acknowledgements from a test that has already ended.
+            if thread.is_alive(): stop.set()
+            thread.join(8)
+            self.assertFalse(thread.is_alive(), 'ASR test bridge did not stop')
         self.assertEqual(sum(k=='finished' for k,v in records), 1)
         return records
+
+    def test_deadline_failure_stops_bridge_without_relaxing_limit(self):
+        ended = threading.Event()
+        def waiting(config, stop, events, run, **limits):
+            stop.wait()
+            ended.set()
+        with patch('test_asr_process.supervise', side_effect=waiting), \
+             patch('test_asr_process.time.monotonic', side_effect=[0, 21]):
+            with self.assertRaisesRegex(AssertionError, 'not less than 20'):
+                self.run_process()
+        self.assertTrue(ended.is_set())
 
     def test_real_process_crash_checkpoint_and_repeat_resume(self):
         self.config['crash'] = True
