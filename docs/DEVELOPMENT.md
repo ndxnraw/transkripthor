@@ -161,6 +161,22 @@ držte mimo zdrojov (napríklad v `work/`), nie vedľa sledovaného príkladu.
 
 ## Používateľské údaje a chyby
 
+Priebeh F19 používa samostatné IPC udalosti fázy a dĺžky nahrávok. Pracovný
+proces najprv číta dĺžky kontajnerov cez existujúci PyAV; dekódovanie ich
+spresní počtom PCM vzoriek. Neznáma dĺžka neblokuje prepis, ale až do jej
+zistenia sa neuvádza percento celej dávky. Vážené percento znamená pokrytie
+časovej osi bezpečnými checkpointmi (vrátane preskočeného ticha), nie presnosť
+textu ani počet úspešných súborov. Vybavené položky sa uvádzajú osobitne ako
+úspešné, chybové a prerušené; chyba nepridáva dokončenie zvuku.
+
+ETA extrapoluje zostávajúcu časovú os podľa aktuálneho tempa ASR. Nezahŕňa
+sťahovanie, prípravu ani export a nie je zárukou času dokončenia dávky.
+Vzorky sa resetujú pri zmene fázy, súboru alebo dĺžky. Potrebné sú aspoň
+tri rastúce vzorky, desať sekúnd a posun 2 % dávky. Po 30 sekundách bez
+nového checkpointu je odhad neistý; samotné plynutie času neznižuje množstvo
+zostávajúcej práce. Chyba, zastavenie a dokončenie nezobrazujú zavádzajúcu
+nulovú ETA. Veľmi dlhý chunk môže preto dočasne zobrazovať neistý odhad.
+
 Predvolený profil je `%LOCALAPPDATA%\LokalnyPrepis`; nastavenia, fronta,
 modely a zámky zostávajú kompatibilné. `--profile` vyberie samostatný profil.
 Výstupný adresár si volí používateľ. Projekt potrebuje celú zložku s databázou,

@@ -401,5 +401,21 @@
   "voices.checking": "Kontrolujem lokálne súčasti zoskupovania hlasov…",
   "voices.check_failed": "Zoskupovanie hlasov sa nepodarilo overiť. Otvorte Pomoc k hlasom na opakovanie kontroly; ručné priradenia zostávajú dostupné.",
   "voices.help_title": "Pomoc k hlasom",
-  "voices.help": "Zoskupiť podobné hlasy porovnáva existujúce úseky prepisu lokálne na CPU. Neidentifikuje osoby ani presne neoddeľuje prekrývajúce sa hlasy alebo zmenu hlasu uprostred úseku. Krátke úseky môžu zostať neurčené. Skontrolujte každé priradenie.\n\nVyberte úsek a v poli Hlas úseku zvoľte existujúce označenie alebo napíšte vlastné. Prázdne pole priradenie odstráni. Premenovať hlas zmení každý výskyt aktuálneho označenia; existujúci názov označenia zlúči. Späť/Znova zahŕňa aj tieto úpravy. Zachovajte ich uložením projektu.\n\nWeSpeaker je voliteľný (CC BY 4.0, bez tokenu). Stiahnite alebo opravte ho v Modeloch. Zdrojová inštalácia potrebuje aj scripts/setup.ps1 -Speakers. Bežný prepis nepotrebuje tento model ani jeho voliteľné súčasti. Zatvorenie pomoci zopakuje kontrolu dostupnosti."
+  "voices.help": "Zoskupiť podobné hlasy porovnáva existujúce úseky prepisu lokálne na CPU. Neidentifikuje osoby ani presne neoddeľuje prekrývajúce sa hlasy alebo zmenu hlasu uprostred úseku. Krátke úseky môžu zostať neurčené. Skontrolujte každé priradenie.\n\nVyberte úsek a v poli Hlas úseku zvoľte existujúce označenie alebo napíšte vlastné. Prázdne pole priradenie odstráni. Premenovať hlas zmení každý výskyt aktuálneho označenia; existujúci názov označenia zlúči. Späť/Znova zahŕňa aj tieto úpravy. Zachovajte ich uložením projektu.\n\nWeSpeaker je voliteľný (CC BY 4.0, bez tokenu). Stiahnite alebo opravte ho v Modeloch. Zdrojová inštalácia potrebuje aj scripts/setup.ps1 -Speakers. Bežný prepis nepotrebuje tento model ani jeho voliteľné súčasti. Zatvorenie pomoci zopakuje kontrolu dostupnosti.",
+  "progress.phase.probing": "Zisťujem dĺžky",
+  "progress.phase.preparing": "Príprava",
+  "progress.phase.loading": "Načítavam model",
+  "progress.phase.downloading": "Sťahujem model",
+  "progress.phase.hashing": "Kontrolujem nahrávku",
+  "progress.phase.decoding": "Dekódujem zvuk",
+  "progress.phase.vad": "Detegujem reč",
+  "progress.phase.transcribing": "Prepisujem",
+  "progress.phase.saving": "Ukladám/exportujem",
+  "progress.phase.confirming": "Čakám na potvrdenie CPU",
+  "progress.phase.stopping": "Zastavujem",
+  "progress.phase.finished": "Dávka ukončená",
+  "progress.unknown": "neznáme dĺžky",
+  "progress.download": "Sťahovanie",
+  "progress.preparation": "Príprava",
+  "progress.summary": "Postup zvuku: {coverage} | Vybavené {handled}/{total}: úspešne {success}, chyby {failed}, prerušené {stopped}. Uplynulo {minutes}:{seconds:02d}. {phase}. Zostáva prepis (bez prípravy): {eta}"
 }

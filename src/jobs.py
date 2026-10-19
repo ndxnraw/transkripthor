@@ -73,6 +73,7 @@ def transcribe_job(model, source, target, settings, stop, emit, resume=False, re
                 with project.db:
                     project.put('execution_history', history + [dict(next_chunk=project.get('next_chunk', 0), runtime=runtime)])
         preparing = project.phase() == 'preparing'
+        emit('phase', 'hashing')
         emit('status', tr('jobs.transcribe_job.preparing_audio_checking_the_recording'))
         if preparing:
             project.preparation_stage('hashing')
@@ -90,6 +91,8 @@ def transcribe_job(model, source, target, settings, stop, emit, resume=False, re
         if not preparing:
             project.verify(digest, settings)
             if project.get('complete'):
+                emit('duration', project.get('samples', 0) / SAMPLE_RATE)
+                emit('phase', 'saving')
                 export_original()
                 return True
         else:
@@ -97,10 +100,12 @@ def transcribe_job(model, source, target, settings, stop, emit, resume=False, re
             if saved_digest is not None and saved_digest != digest:
                 raise ValueError(tr('jobs.transcribe_job.the_recording_does_not_match_the_saved_project_start'))
             project.preparation_stage('decoding', digest)
+        emit('phase', 'decoding')
         emit('status', tr('jobs.transcribe_job.preparing_audio_decoding_the_recording'))
         audio = None
         try:
             audio = decode_audio(str(source), sampling_rate=SAMPLE_RATE, folder=Path(target)/'.pcm-cache', stop=stop)
+            emit('duration', len(audio) / SAMPLE_RATE)
             after = Path(source).stat()
             if (before.st_size, before.st_mtime_ns) != (after.st_size, after.st_mtime_ns):
                 raise ValueError(tr('jobs.transcribe_job.the_source_recording_changed_during_preparation_start_a_new'))
@@ -113,6 +118,7 @@ def transcribe_job(model, source, target, settings, stop, emit, resume=False, re
                     raise ValueError(tr('jobs.transcribe_job.decoded_audio_length_changed_start_a_new_transcription'))
             else:
                 project.preparation_stage('vad')
+                emit('phase', 'vad')
                 emit('status', tr('jobs.transcribe_job.preparing_audio_detecting_speech'))
                 spans = speech_spans(audio, VadOptions(max_speech_duration_s=config.max_speech_segment_duration,
                     min_silence_duration_ms=config.min_silence_duration_ms, speech_pad_ms=config.speech_pad_ms), stop)
@@ -127,6 +133,7 @@ def transcribe_job(model, source, target, settings, stop, emit, resume=False, re
             next_chunk = project.get('next_chunk')
             record_runtime()
             project.start_transcription()
+            emit('phase', 'transcribing')
             emit('status', tr('jobs.transcribe_job.transcribing_speech'))
             emit('progress', 100 * (plan[next_chunk-1][1] / max(1, len(audio))) if next_chunk else 0)
             for index in range(next_chunk, len(plan)):
@@ -149,6 +156,7 @@ def transcribe_job(model, source, target, settings, stop, emit, resume=False, re
                     selected_device = 'cpu'
                     apply_settings(model, decoding)
                     record_runtime()
+                    emit('phase', 'transcribing')
                     saved = transcribe_chunk(model, chunk, language, previous, config, start, stop, decoding)
                 if stop.is_set():
                     # Entire unfinished chunk is retried. Never checkpoint a partial decoder iterator.
@@ -160,6 +168,7 @@ def transcribe_job(model, source, target, settings, stop, emit, resume=False, re
                 for segment in saved:
                     emit('segment', segment)
                 emit('progress', min(99, end / max(1, len(audio)) * 100))
+            emit('phase', 'saving')
             emit('status', tr('jobs.transcribe_job.saving_the_completed_transcript_and_subtitles'))
             project.finish()
             export_original()

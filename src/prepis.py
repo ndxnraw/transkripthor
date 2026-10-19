@@ -14,7 +14,7 @@ from tkinter import ttk, filedialog, messagebox
 from ui import build_ui, update_files
 from speech_models import ModelManager, SLOVAK_MODEL, route, DEVICES, GPUError
 from mixed_language import MIXED_LANGUAGE, transcribe_mixed
-from state import StateStore, queue_item, ProgressClock
+from state import StateStore, queue_item, ProgressClock, BatchProgress
 from jobs import job_settings, transcribe_job, reserve_output
 from project import Project
 
@@ -99,6 +99,8 @@ class App:
         self.batch_index = 0
         self.file_progress = 0
         self.clock = None
+        self.batch_measure = BatchProgress([])
+        self.phase = 'preparing'
         self.batch_mode = 'pending'
         self.events = queue.Queue(maxsize=512)
         self.stop = threading.Event()
@@ -439,6 +441,8 @@ class App:
         self.progress['value'] = 0
         self.percent.set('0 %')
         self.clock = ProgressClock(time.monotonic())
+        self.batch_measure = BatchProgress(self.batch_ids)
+        self.phase = 'probing'
         self.batch_index = self.file_progress = 0
         self.save_state()
         args = ([item['source'] for item in selected_items], self.output.get(), language, model, self.offline.get(), DEVICES.get(self.device_choice.get(), 'cpu'))
@@ -454,6 +458,7 @@ class App:
 
     def cancel(self):
         self.stop.set()
+        self.set_phase('stopping')
         self.status.set(tr('prepis.cancel.stopping_after_the_current_step_partial_text_will_be'))
         self.stop_button.configure(state='disabled')
 
@@ -494,6 +499,19 @@ class App:
         from asr_process import supervise
         supervise(self.asr_config, self.stop, self.events, self.asr_run, outcome=self.asr_outcome)
 
+    def set_phase(self, phase):
+        if phase != self.phase and self.clock:
+            self.clock.samples.clear()
+        self.phase = phase
+        self.progress_label.set(tr('ui_layout.build_ui.recording') if phase in ('transcribing', 'saving')
+                                else tr('progress.download' if phase == 'downloading' else 'progress.preparation'))
+        self.progress.stop()
+        measured = phase in ('transcribing', 'saving')
+        self.progress.configure(mode='determinate' if measured else 'indeterminate', value=self.file_progress if measured else 0)
+        self.percent.set(f'{int(self.file_progress)} %' if measured else '…')
+        if not measured:
+            self.progress.start(20)
+
     def poll(self):
         if not self.busy:
             try:
@@ -520,10 +538,18 @@ class App:
                 reason, stopped = value
                 items = [dict(item, state='interrupted', error=reason) if item['id'] in self.batch_ids and item['state'] == 'processing' else item for item in self.items]
                 self.replace_queue(items)
+                for item in items:
+                    if item['state'] == 'interrupted':
+                        self.batch_measure.state(item['id'], 'interrupted')
+                for identifier, state in list(self.batch_measure.states.items()):
+                    if state == 'processing':
+                        self.batch_measure.state(identifier, 'interrupted')
                 self.status.set(reason)
                 activity.append(reason)
                 continue
             if kind == 'download_state':
+                latest_progress = None
+                self.set_phase('downloading' if value else 'loading')
                 self.progress.stop()
                 self.progress.configure(mode='indeterminate' if value else 'determinate', value=0)
                 self.percent.set('…' if value else '0 %')
@@ -531,17 +557,35 @@ class App:
                     self.progress.start(20)
             elif kind == 'status':
                 latest_status = value
-            elif kind == 'progress':
-                latest_progress = value
-                self.file_progress = value
+            elif kind == 'phase':
+                latest_progress = None
+                self.set_phase(value)
+                latest_status = tr('progress.phase.'+value)
+            elif kind == 'duration':
+                identifier, seconds = value
+                self.batch_measure.duration(identifier, seconds)
                 if self.clock:
-                    self.clock.update((self.batch_index + value/100) / max(1, len(self.batch_ids)), time.monotonic())
+                    self.clock.samples.clear()  # A changed denominator is not ASR work.
+            elif kind == 'progress':
+                latest_progress = value if self.phase in ('transcribing', 'saving') else None
+                self.file_progress = value
+                if self.batch_index < len(self.batch_ids):
+                    self.batch_measure.progress(self.batch_ids[self.batch_index], value)
+                fraction = self.batch_measure.fraction()
+                if self.clock and self.phase == 'transcribing' and fraction is not None:
+                    self.clock.update(fraction, time.monotonic())
             elif kind == 'batch_index':
                 self.batch_index = value
+                if value < len(self.batch_ids):
+                    self.batch_measure.state(self.batch_ids[value], 'processing')
                 self.file_progress = 0
+                latest_progress = 0
+                if self.clock:
+                    self.clock.samples.clear()
             elif kind == 'device':
                 self.device_status.set(tr('prepis.labels.device') + value)
             elif kind == 'cpu_request':
+                self.set_phase('confirming')
                 ack, answer = value
                 try:
                     accepted = not self.stop.is_set() and self.confirm_cpu()
@@ -562,6 +606,10 @@ class App:
                 try:
                     items = [dict(item, **changes) if item['id'] == identifier else item for item in self.items]
                     result.append(self.replace_queue(items))
+                    if result[-1] and 'state' in changes:
+                        self.batch_measure.state(identifier, changes['state'])
+                        if changes['state'] == 'completed' and self.batch_index < len(self.batch_ids) and identifier == self.batch_ids[self.batch_index]:
+                            self.file_progress = latest_progress = 100
                 finally:
                     if not result:
                         result.append(False)
@@ -576,6 +624,12 @@ class App:
             if outcome.get('reason'):
                 reason = outcome['reason']
                 self.replace_queue([dict(item, state='interrupted', error=reason) if item['id'] in self.batch_ids and item['state'] == 'processing' else item for item in self.items])
+                for item in self.items:
+                    if item['state'] == 'interrupted':
+                        self.batch_measure.state(item['id'], 'interrupted')
+                for identifier, state in list(self.batch_measure.states.items()):
+                    if state == 'processing':
+                        self.batch_measure.state(identifier, 'interrupted')
                 latest_status = reason
         if latest_status is not None and self.status.get() != latest_status:
             self.status.set(latest_status)
@@ -586,13 +640,22 @@ class App:
             self.percent.set(f'{int(latest_progress)} %')
         if self.clock:
             now = time.monotonic()
-            fraction = min(1, (self.batch_index + self.file_progress/100) / max(1, len(self.batch_ids)))
-            if float(self.batch_progress['value']) != fraction * 100:
-                self.batch_progress['value'] = fraction * 100
-            remaining = self.clock.remaining(now)
+            fraction = self.batch_measure.fraction()
+            self.batch_progress['value'] = 0 if fraction is None else fraction * 100
+            counts = self.batch_measure.counts()
+            remaining = (self.clock.remaining(now) if self.phase == 'transcribing'
+                         and not self.stop.is_set() and not counts['failed'] and not finished else None)
             elapsed = int(now - self.clock.started)
-            eta = tr('prepis.poll.about', p0=int(remaining) // 60, p1=int(remaining) % 60) if remaining is not None else tr('prepis.poll.calculating')
-            timing = tr('prepis.poll.batch_elapsed_remaining', p0=fraction, p1=elapsed // 60, p2=elapsed % 60, p3=eta)
+            estimate = max(1, round(remaining)) if remaining is not None else None
+            eta = tr('prepis.poll.about', p0=estimate // 60, p1=estimate % 60) if estimate is not None else tr('prepis.poll.calculating')
+            if finished or self.stop.is_set():
+                eta = '—'
+            coverage = tr('progress.unknown') if fraction is None else f'{fraction:.0%}'
+            phase = 'finished' if finished else 'stopping' if self.stop.is_set() else self.phase
+            timing = tr('progress.summary', coverage=coverage, handled=sum(counts.values()),
+                        total=len(self.batch_ids), success=counts['completed'], failed=counts['failed'],
+                        stopped=counts['interrupted'], minutes=elapsed//60, seconds=elapsed%60,
+                        phase=tr('progress.phase.'+phase), eta=eta)
             if self.timing.get() != timing:
                 self.timing.set(timing)
         for widget, lines in ((self.preview, preview), (self.activity, activity)):

@@ -202,3 +202,40 @@ predpokladov. Fyzické systémové DPI a manuálny Narrator neboli skúšané.
 Pred pushom musí presný kandidát ešte prejsť čistým klonom, novou `.venv`,
 celou sadou a novým Windows EXE. SHA a výsledky tejto kontroly sa zaznamenajú
 lokálne mimo Gitu a v závere úlohy. Verzia sa nemení; nevzniká tag ani Release.
+
+## F19 – priebeh dávky a odhad času (19. 10. 2026)
+
+Východiskový strom `07e2eb5` bol čistý a synchronizovaný. Potvrdené pôvodné
+chyby: rovnaká váha krátkeho a dlhého súboru, syntetických 100 % aj po chybe
+a ETA odpočítavaná počas stagnácie bez nového checkpointu.
+
+- Dĺžky sa zisťujú cez existujúci PyAV v pracovnom procese; po dekódovaní
+  sa spresnia podľa PCM vzoriek. Neznáme dĺžky sa nezamieňajú za rovnakú váhu.
+  Dávka používa časovú váhu a zvlášť počíta úspešné, chybové a prerušené
+  položky. Chyba nezvyšuje priebeh; už uložený čiastočný postup zostáva.
+- Stabilné udalosti fázy oddeľujú zisťovanie dĺžok, načítanie/sťahovanie,
+  hashovanie, dekódovanie, VAD, prepis, export a zastavovanie. Príprava má
+  neurčitý indikátor. Číselný priebeh zvuku sa nemení prenosovými udalosťami.
+- ETA používa iba rastúce checkpointy v prepise, neodpočítava prácu počas
+  čakania. Po 30 s bez postupu je neistá. Zmena súboru, fázy či dĺžky resetuje
+  meranie; obnovený checkpoint sa nepovažuje za čerstvo vykonanú prácu.
+  Text výslovne nezahŕňa prípravu. Pri chybe/zastavení sa neuvádza nulová ETA.
+- EN/SK rozhranie a vývojový návod opisujú význam pokrytia časovej osi.
+  Kontajnery môžu mať len približnú dĺžku; finálny údaj opraví dekódovanie.
+  Závislosti, projekty, používateľské dáta, ASR algoritmus a verzia sa nemenia.
+
+Overenie pred kandidátskym buildom: prvý beh odhalil prepísanie indikátora
+sťahovania resetom percent v jednej dávke udalostí. Oprava prešla celou sadou
+**227 testov, OK, 226,944 s, bez preskočenia**, vrátane DPI matice EN/SK,
+oboch vzhľadov a mierok 100–200 %. Následné spresnenie neurčitých prípravných
+fáz a prerušenia procesu prešlo **9 cielenými testmi, OK, 1,440 s**.
+Finálna sada má **228 testov**. Nové regresie pokrývajú pomer dĺžok 1:999,
+neznáme/nulové/neplatné a opravené dĺžky, skutočné metadáta malých WAV,
+stagnáciu, obnovenie, chyby, zastavenie a nezávislosť sťahovania od dávky.
+
+Ide o testy riadenia priebehu s mock ASR a malými syntetickými súbormi,
+nie meranie presnosti ETA na dlhom reálnom CPU/GPU prepise. Výpočet závisí
+od aktuálneho tempa a môže byť neistý počas dlhého chunku. Systémové DPI sa
+nemenilo. Pred pushom sa vyžaduje čistý klon presného commitu, nová `.venv`,
+všetkých 228 testov a nové overené Windows EXE; SHA a výsledky sa evidujú
+lokálne mimo Gitu a v závere úlohy. Bez zmeny verzie, tagu alebo vydania.

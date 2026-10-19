@@ -401,5 +401,21 @@
   "voices.checking": "Checking local voice grouping components…",
   "voices.check_failed": "Voice grouping could not be checked. Open Voice help to check again; manual assignments remain available.",
   "voices.help_title": "Voice help",
-  "voices.help": "Group similar voices compares existing transcript segments locally on CPU. It does not identify people or precisely separate overlapping voices or speaker changes within a segment. Short segments can remain unassigned. Review every assignment.\n\nSelect a segment and choose an existing label or type your own in Segment voice. An empty label clears that assignment. Rename voice changes every occurrence of the current label; choosing an existing name merges the labels. Undo/Redo includes these edits. Save the project to keep them.\n\nWeSpeaker is optional (CC BY 4.0, no token). Download or repair it in Models. Source installations also need scripts/setup.ps1 -Speakers. Normal transcription needs neither this model nor its optional components. Closing this help checks availability again."
+  "voices.help": "Group similar voices compares existing transcript segments locally on CPU. It does not identify people or precisely separate overlapping voices or speaker changes within a segment. Short segments can remain unassigned. Review every assignment.\n\nSelect a segment and choose an existing label or type your own in Segment voice. An empty label clears that assignment. Rename voice changes every occurrence of the current label; choosing an existing name merges the labels. Undo/Redo includes these edits. Save the project to keep them.\n\nWeSpeaker is optional (CC BY 4.0, no token). Download or repair it in Models. Source installations also need scripts/setup.ps1 -Speakers. Normal transcription needs neither this model nor its optional components. Closing this help checks availability again.",
+  "progress.phase.probing": "Reading durations",
+  "progress.phase.preparing": "Preparing",
+  "progress.phase.loading": "Loading model",
+  "progress.phase.downloading": "Downloading model",
+  "progress.phase.hashing": "Checking recording",
+  "progress.phase.decoding": "Decoding audio",
+  "progress.phase.vad": "Detecting speech",
+  "progress.phase.transcribing": "Transcribing",
+  "progress.phase.saving": "Saving/exporting",
+  "progress.phase.confirming": "Waiting for CPU confirmation",
+  "progress.phase.stopping": "Stopping",
+  "progress.phase.finished": "Batch ended",
+  "progress.unknown": "unknown durations",
+  "progress.download": "Download",
+  "progress.preparation": "Preparation",
+  "progress.summary": "Audio covered: {coverage} | Handled {handled}/{total}: successful {success}, errors {failed}, interrupted {stopped}. Elapsed {minutes}:{seconds:02d}. {phase}. Transcription remaining (excluding preparation): {eta}"
 }
