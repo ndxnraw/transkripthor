@@ -197,7 +197,8 @@ with Project(sys.argv[1], create=True) as project:
         with Project(self.target, create=True) as project:
             project.initialize(self.source, {}, self.settings, [], 0)
             project.finish()
-            self.assertIn('contains no text', project.editor_problem())
+            self.assertIn('No speech found', project.editor_problem())
+            self.assertEqual(project.get('result'), dict(outcome='no_speech', segment_count=0))
 
 
 if __name__ == '__main__':

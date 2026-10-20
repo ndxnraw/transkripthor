@@ -104,12 +104,14 @@ class ExportPairTest(unittest.TestCase):
         editor.text.delete('1.0', 'end')
         editor.text.insert('1.0', 'Uložená oprava.')
         with patch.object(Project, 'export', side_effect=PermissionError('access denied')), \
-             patch('editor.messagebox.showerror') as error:
+             patch('editor.show_error') as error:
             self.assertTrue(save_editor(editor))
             self.assertFalse(editor.dirty)
             self.assertIn('saved', editor.saved_state.get())
             self.assertIn('incomplete', editor.export_state.get())
-            self.assertEqual(error.call_args.args[0], 'TXT/SRT export')
+            self.assertEqual(error.call_args.args[1], 'TXT/SRT export')
+            self.assertEqual(error.call_args.args[2]['category'], 'permission')
+            self.assertIn('access denied', error.call_args.args[2]['details'])
         with Project(self.folder) as project:
             revision = project.get('editor_export')['revision']
             self.assertEqual(project.segments()[0]['text'], 'Uložená oprava.')
@@ -128,7 +130,7 @@ class ExportPairTest(unittest.TestCase):
             self.assertTrue((location/'titulky.opravene.srt').is_file())
         # A database failure must not claim success or attempt export.
         with patch.object(Project, 'edit', side_effect=OSError('database full')), \
-             patch.object(Project, 'retry_export') as export, patch('editor.messagebox.showerror'):
+             patch.object(Project, 'retry_export') as export, patch('editor.show_error'):
             self.assertFalse(save_editor(editor))
             self.assertTrue(editor.dirty)
             export.assert_not_called()

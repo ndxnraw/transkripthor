@@ -1,5 +1,6 @@
 """Transactional checkpoint per complete audio chunk; editable full transcript."""
 from i18n import tr
+from app_errors import ProjectConflict
 import hashlib
 import json
 import sqlite3
@@ -23,7 +24,7 @@ def fingerprint(source, stop=None):
             digest.update(block)
     after = path.stat()
     if (before.st_size, before.st_mtime_ns) != (after.st_size, after.st_mtime_ns):
-        raise ValueError(tr('project.fingerprint.the_recording_changed_while_being_read'))
+        raise ProjectConflict(tr('project.fingerprint.the_recording_changed_while_being_read'))
     return dict(size=after.st_size, sha256=digest.hexdigest())
 
 
@@ -34,7 +35,7 @@ class Project:
             self.folder.mkdir(parents=True, exist_ok=True)
         path = self.folder / 'projekt.sqlite3'
         if not create and not path.is_file():
-            raise ValueError(tr('project.init.projekt_sqlite_is_missing_older_txt_srt_files_do'))
+            raise ProjectConflict(tr('project.init.projekt_sqlite_is_missing_older_txt_srt_files_do'))
         from ownership import Lease
         self.lease = Lease(self.folder/'.project.lock')
         self.db = sqlite3.connect(path, timeout=15)
@@ -55,7 +56,7 @@ class Project:
     def _ensure_storage(self, fresh):
         if self.db.execute("SELECT 1 FROM sqlite_master WHERE name='transcript_storage'").fetchone():
             if self.db.execute('SELECT version FROM transcript_storage').fetchone() != (1,):
-                raise ValueError(tr('project.ensure_storage.unsupported_transcript_storage_version'))
+                raise ProjectConflict(tr('project.ensure_storage.unsupported_transcript_storage_version'))
             return
         with self.db:
             self.db.execute('BEGIN IMMEDIATE')
@@ -117,7 +118,7 @@ class Project:
         # Recover only an empty legacy shell. Never reset existing transcript data.
         if self.get('schema') is None:
             if self.db.execute('SELECT COUNT(*) FROM segments').fetchone()[0] or self.db.execute('SELECT COUNT(*) FROM metadata').fetchone()[0]:
-                raise ValueError(tr('project.begin_preparation.project_metadata_is_incomplete_preserve_the_project_and_start'))
+                raise ProjectConflict(tr('project.begin_preparation.project_metadata_is_incomplete_preserve_the_project_and_start'))
             with self.db:
                 for key, value in dict(schema=1, source=str(path), source_stat=identity,
                         settings=settings, phase='preparing', preparation_stage='hashing',
@@ -125,12 +126,12 @@ class Project:
                     self.put(key, value)
         else:
             if self.get('schema') != 1 or self.get('settings') != settings:
-                raise ValueError(tr('project.begin_preparation.the_model_language_or_settings_have_changed_restore_the'))
+                raise ProjectConflict(tr('project.begin_preparation.the_model_language_or_settings_have_changed_restore_the'))
             if self.phase() == 'preparing':
                 if self.get('source') != str(path) or self.get('source_stat') != identity:
-                    raise ValueError(tr('project.begin_preparation.the_source_recording_has_changed_since_preparation_started_start'))
+                    raise ProjectConflict(tr('project.begin_preparation.the_source_recording_has_changed_since_preparation_started_start'))
                 if self.get('next_chunk', 0) or self.db.execute('SELECT COUNT(*) FROM segments').fetchone()[0]:
-                    raise ValueError(tr('project.begin_preparation.invalid_project_preparation_state_start_a_new_transcription_in'))
+                    raise ProjectConflict(tr('project.begin_preparation.invalid_project_preparation_state_start_a_new_transcription_in'))
 
     def preparation_stage(self, stage, digest=None):
         with self.db:
@@ -158,7 +159,7 @@ class Project:
             return tr('project.editor_problem.recording_preparation_was_interrupted_transcription_has_not_started_select')
         rows = self.segments()
         if not rows:
-            return (tr('project.editor_problem.transcription_is_complete_but_contains_no_text_speech_may')
+            return (tr('result.no_speech') + '\n' + tr('result.no_speech_help')
                     if self.get('complete') else tr('project.editor_problem.no_text_has_been_saved_in_this_project_yet'))
         if any(not isinstance(s.get('text'), str) or not isinstance(s.get('start'), (int, float))
                or not isinstance(s.get('end'), (int, float)) or not 0 <= s['start'] < s['end'] for s in rows):
@@ -167,20 +168,20 @@ class Project:
 
     def verify(self, digest, settings):
         if self.get('schema') != 1 or self.get('fingerprint') != digest:
-            raise ValueError(tr('project.verify.the_recording_does_not_match_the_saved_project_start'))
+            raise ProjectConflict(tr('project.verify.the_recording_does_not_match_the_saved_project_start'))
         if self.get('settings') != settings:
-            raise ValueError(tr('project.verify.the_model_language_or_settings_have_changed_restore_the'))
+            raise ProjectConflict(tr('project.verify.the_model_language_or_settings_have_changed_restore_the'))
 
     def segments(self, view='current', revision=None):
         if view == 'revision':
             layers, seen = [], set()
             while True:
                 if revision in seen:
-                    raise ValueError('Invalid transcript revision chain')
+                    raise ProjectConflict('Invalid transcript revision chain')
                 seen.add(revision)
                 row = self.db.execute('SELECT data FROM transcript_revisions WHERE id=?', (revision,)).fetchone()
                 if row is None:
-                    raise ValueError(tr('project.segments.the_requested_saved_revision_does_not_exist'))
+                    raise ProjectConflict(tr('project.segments.the_requested_saved_revision_does_not_exist'))
                 data = json.loads(row[0])
                 if isinstance(data, list):
                     result = {item['id']: item for item in data}
@@ -191,9 +192,9 @@ class Project:
                 result.update((item['id'], item) for item in changes)
             return [result[key] for key in sorted(result)]
         if view not in ('current', 'original'):
-            raise ValueError(tr('project.segments.invalid_transcript_selection'))
+            raise ProjectConflict(tr('project.segments.invalid_transcript_selection'))
         if view == 'original' and not self.original_available():
-            raise ValueError(tr('project.segments.the_original_model_output_cannot_be_verified_in_this'))
+            raise ProjectConflict(tr('project.segments.the_original_model_output_cannot_be_verified_in_this'))
         table = 'original_segments' if view == 'original' else 'segments'
         return [dict(json.loads(data), id=identifier) for identifier, data in
                 self.db.execute(f'SELECT id, data FROM {table} ORDER BY id')]
@@ -202,7 +203,7 @@ class Project:
         with self.db:
             self.db.execute('BEGIN IMMEDIATE')
             if self.get('next_chunk') != index:
-                raise ValueError(tr('project.commit_chunk.invalid_resume_point_the_segment_was_already_saved_or'))
+                raise ProjectConflict(tr('project.commit_chunk.invalid_resume_point_the_segment_was_already_saved_or'))
             identifier = self.db.execute('SELECT COALESCE(MAX(id), -1)+1 FROM segments').fetchone()[0]
             for segment in segments:
                 self.db.execute('INSERT INTO original_segments VALUES (?, ?)',
@@ -233,7 +234,7 @@ class Project:
                 cursor = self.db.execute('UPDATE segments SET data=? WHERE id=?',
                                          (json.dumps(segment, ensure_ascii=False), segment['id']))
                 if cursor.rowcount != 1:
-                    raise ValueError(tr('project.edit.the_segment_being_edited_no_longer_exists_in_the'))
+                    raise ProjectConflict(tr('project.edit.the_segment_being_edited_no_longer_exists_in_the'))
             current = self.segments()
             previous = self.db.execute('SELECT MAX(id) FROM transcript_revisions').fetchone()[0]
             if previous is None:
@@ -250,11 +251,17 @@ class Project:
     def retry_export(self):
         request = self.get('editor_export')
         if not request:
-            raise ValueError(tr('project.retry_export.save_the_project_changes_first'))
+            raise ProjectConflict(tr('project.retry_export.save_the_project_changes_first'))
         return self.export(SubtitleOptions(**request['options']), view='revision', revision=request['revision'])
+
+    def result(self):
+        table = 'original_segments' if self.original_available() else 'segments'
+        count = self.db.execute('SELECT COUNT(*) FROM '+table).fetchone()[0]
+        return dict(outcome='transcribed' if count else 'no_speech', segment_count=count)
 
     def finish(self):
         with self.db:
+            self.put('result', self.result())
             self.put('complete', True)
             self.put('phase', 'complete')
 
@@ -265,10 +272,10 @@ class Project:
             return [tr('project.export.the_original_model_output_cannot_be_verified_in_this')]
         if view == 'revision' and revision is None:
             if not corrected:
-                raise ValueError(tr('project.export.select_a_saved_revision_to_export_corrections'))
+                raise ProjectConflict(tr('project.export.select_a_saved_revision_to_export_corrections'))
             revision = self.db.execute('SELECT MAX(id) FROM transcript_revisions').fetchone()[0]
         if view not in ('original', 'revision'):
-            raise ValueError(tr('project.export.export_requires_the_original_or_a_saved_revision'))
+            raise ProjectConflict(tr('project.export.export_requires_the_original_or_a_saved_revision'))
         request = self.get('editor_export')
         if view == 'revision' and request and request['revision'] == revision:
             with self.db:

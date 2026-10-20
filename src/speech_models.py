@@ -216,6 +216,7 @@ class ModelManager:
             if snapshot is None:
                 raise ValueError(tr('revision.offline', model=requested, revision=revision))
         errors = []
+        cause = None
         for target in [selected]:
             try:
                 if target == 'cuda' and device(requested) != 'cuda':
@@ -235,6 +236,7 @@ class ModelManager:
             except InterruptedError:
                 raise
             except Exception as exc:
+                cause = exc
                 errors.append(f'{requested} ({target}): {exc}')
                 emit('log', errors[-1])
                 release_memory()
@@ -244,7 +246,7 @@ class ModelManager:
                     raise GPUError(str(exc)) from exc
                 if target != 'cuda' or not hardware_error(exc):
                     break
-        raise RuntimeError(tr('speech_models.get.could_not_load_the_selected_model_check_cache_and') + '\n'.join(errors))
+        raise RuntimeError(tr('speech_models.get.could_not_load_the_selected_model_check_cache_and') + '\n'.join(errors)) from cause
 
     def close(self):
         if isinstance(self.model, LocalAdapter):

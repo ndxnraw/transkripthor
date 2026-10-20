@@ -7,6 +7,7 @@ import time
 from dataclasses import dataclass
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
+from app_errors import CategorizedError
 
 
 @dataclass(frozen=True)
@@ -63,6 +64,7 @@ def supervise(cache, model, emit, stop, limits=DownloadLimits(), worker=None, re
             started = changed = last_ui = time.monotonic()
             signature = None
             failure = None
+            category = 'network'
             complete = False
             try:
                 process.start()
@@ -78,6 +80,12 @@ def supervise(cache, model, emit, stop, limits=DownloadLimits(), worker=None, re
                                 break
                             if message['kind'] == 'error':
                                 failure = (message['message'],message['retry'])
+                                code = message['code']
+                                category = ('disk' if code == 'os_28' else 'permission' if code in ('os_13', 'os_1')
+                                            else 'model' if code in ('integrity', 'metadata') or code.startswith('http_4') and code not in ('http_408', 'http_429')
+                                            else 'memory' if code == 'internal_MemoryError'
+                                            else 'network' if code in ('connection', 'timeout', 'tls', 'incomplete') or code.startswith('http_')
+                                            else 'unknown')
                                 logger.warning('failure attempt=%s code=%s',attempt+1,message['code'])
                                 break
                             event = message
@@ -121,7 +129,7 @@ def supervise(cache, model, emit, stop, limits=DownloadLimits(), worker=None, re
                 return
             message, retry = failure
             if not retry or attempt+1 == limits.attempts:
-                raise RuntimeError(message)
+                raise CategorizedError(category, message)
             delay = limits.backoff * 2**attempt
             emit('status',tr('download_transport.supervise.retry_in_s_completed_files_will_be_kept', p0=message, p1=attempt + 2, p2=limits.attempts, p3=delay))
             if stop.wait(delay):

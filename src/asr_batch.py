@@ -7,6 +7,7 @@ from speech_models import ModelManager, GPUError
 from project import Project
 from jobs import job_settings, transcribe_job
 from jobs import reserve_output
+from app_errors import classify, explanation
 
 
 def recording_duration(source):
@@ -46,7 +47,14 @@ class BatchRunner:
             raise InterruptedError(tr('prepis.request_cpu.cpu_fallback_cancelled_saved_segments_were_preserved'))
 
     def work(self, files, folder, language, model_name, offline, selected_device='cpu'):
-        emit = lambda kind, value: self.events.put((kind, value))
+        context = 'unknown'
+        def emit(kind, value):
+            nonlocal context
+            if kind == 'phase':
+                context = {'hashing': 'input', 'decoding': 'input', 'loading': 'model',
+                           'transcribing': 'model', 'vad': 'model',
+                           'saving': 'disk', 'preparing': 'conflict'}.get(value, 'unknown')
+            self.events.put((kind, value))
         def update(identifier, **changes):
             ack = threading.Event()
             result = []
@@ -109,6 +117,7 @@ class BatchRunner:
                     else:
                         language, model_name = requested_language, requested_model
                         revision = None
+                    context = 'model'
                     try:
                         ensure_model(self.cache, model_name, offline, emit, self.stop, revision=revision)
                     except Exception as exc:
@@ -125,31 +134,39 @@ class BatchRunner:
                         settings = job_settings(model_name, language)
                         settings.update(model_revision=revision, decoding=effective_settings(self.model))
                     if not target:
+                        context = 'disk'
                         target = str(reserve_output(folder, Path(file).stem))
-                    update(identifier, state='processing', project=str(target), error='')
+                    update(identifier, state='processing', project=str(target), error='', error_category='', outcome='')
+                    outcome = {}
                     def file_emit(kind, value):
+                        if kind == 'result':
+                            outcome.update(value)
                         emit(kind, (identifier, value) if kind == 'duration' else value)
+                    context = 'input'
                     complete = transcribe_job(self.model, file, target, settings,
                                               self.stop, file_emit, resume=resume, recover_gpu=recover, selected_device=selected_device)
-                    update(identifier, state='completed' if complete else 'interrupted')
+                    update(identifier, state='completed' if complete else 'interrupted',
+                           outcome=outcome.get('outcome', '') if complete else '', segment_count=outcome.get('segment_count', 0))
                     done += int(complete)
                     emit('log', f'{tr('prepis.work.saved') if complete else tr('prepis.work.partial_transcript')}: {target}')
                 except InterruptedError:
-                    update(identifier, state='interrupted')
+                    update(identifier, state='interrupted', outcome='')
                     break
                 except Exception as exc:
                     failed += 1
-                    update(identifier, state='failed', error=str(exc))
-                    emit('log', tr('prepis.work.file_error', p0=Path(file).name, p1=exc))
+                    issue = classify(exc, context)
+                    update(identifier, state='failed', outcome='', error=issue['details'], error_category=issue['category'])
+                    emit('log', tr('prepis.work.file_error', p0=Path(file).name, p1=explanation(issue)))
             emit('status', tr('prepis.work.completed_errors', p0=tr('prepis.work.stopped') if self.stop.is_set() else tr('prepis.work.completed'), p1=done, p2=len(files), p3=failed))
         except InterruptedError:
             emit('status', tr('prepis.work.loading_interrupted'))
         except Exception as exc:
+            issue = classify(exc, context)
             if current is None:
                 for identifier in self.batch_ids:
-                    update(identifier, state='failed', error=str(exc))
+                    update(identifier, state='failed', outcome='', error=issue['details'], error_category=issue['category'])
             emit('status', tr('prepis.work.could_not_start_transcription'))
-            emit('error', str(exc) + tr('prepis.work.allow_model_downloads_on_first_use_turn_off_offline'))
+            emit('error', issue)
         finally:
             self.model = None
             self.models.close()

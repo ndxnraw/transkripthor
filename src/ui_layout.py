@@ -36,7 +36,7 @@ class RecordingList(ttk.Treeview):
         for index, item in enumerate(items):
             key = item['id']
             symbols = {'waiting': '○', 'processing': '▶', 'completed': '✓', 'interrupted': 'Ⅱ', 'failed': '!'}
-            values = (Path(item['source']).name, f"{symbols.get(item['state'], '•')} {tr('queue.'+item['state'])}")
+            values = (Path(item['source']).name, f"{symbols.get(item['state'], '•')} {tr('result.no_speech') if item.get('outcome') == 'no_speech' else tr('queue.'+item['state'])}")
             if not self.exists(key):
                 self.insert('', 'end', iid=key, values=values, tags=(item['state'],))
             elif tuple(self.item(key, 'values')) != values:

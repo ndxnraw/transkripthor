@@ -6,6 +6,7 @@ import re
 import uuid
 import sqlite3
 import math
+from app_errors import CATEGORIES
 from pathlib import Path
 
 STATES = ('waiting', 'processing', 'completed', 'interrupted', 'failed')
@@ -125,6 +126,12 @@ class StateStore:
                 state=status if status in STATES else 'waiting',
                 project=item.get('project') if isinstance(item.get('project'), str) else '',
                 error=item.get('error') if isinstance(item.get('error'), str) else ''))
+            if item.get('error_category') in CATEGORIES:
+                result[-1]['error_category'] = item['error_category']
+            if item.get('outcome') in ('no_speech', 'transcribed'):
+                result[-1]['outcome'] = item['outcome']
+                count = item.get('segment_count', 0)
+                result[-1]['segment_count'] = max(0, count) if isinstance(count, int) else 0
         # The old JSON is kept as an untouched migration backup. A transaction
         # either publishes the whole normalized queue or leaves it available.
         if not initialized:

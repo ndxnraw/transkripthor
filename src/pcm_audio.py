@@ -107,7 +107,7 @@ def decode_audio(source, sampling_rate=RATE, *, folder=None, stop=None):
                     raise InterruptedError(tr('pcm.stopped'))
                 data = frame.to_ndarray().astype('<i2', copy=False)
                 if shutil.disk_usage(audio.directory).free < data.nbytes + RESERVE:
-                    raise OSError(tr('pcm.space', path=str(audio.directory.parent)))
+                    raise OSError(errno.ENOSPC, tr('pcm.space', path=str(audio.directory.parent)))
                 output.write(data.tobytes())
                 audio.samples += data.size
             output.flush()

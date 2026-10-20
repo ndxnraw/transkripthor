@@ -65,8 +65,9 @@ class DesktopTest(unittest.TestCase):
                         self.app.open_editor()
                         constructor.assert_not_called()
                         self.assertEqual(info.call_args.args[1], expected)
-                    with self.assertRaisesRegex(ValueError, 'project|preparation|Transcription'):
+                    with self.assertRaises(ValueError) as error:
                         Editor(self.app, str(target))
+                    self.assertEqual(str(error.exception), expected)
         self.assertEqual(self.app.editors, [])
 
     @unittest.skipUnless(sys.platform == 'win32', 'Native Windows painting')

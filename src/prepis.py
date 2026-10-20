@@ -14,6 +14,7 @@ from tkinter import ttk, filedialog, messagebox
 from ui import build_ui, update_files
 from speech_models import ModelManager, SLOVAK_MODEL, route, DEVICES, GPUError
 from mixed_language import MIXED_LANGUAGE, transcribe_mixed
+from app_errors import classify, explanation, show_error
 from state import StateStore, queue_item, ProgressClock, BatchProgress
 from jobs import job_settings, transcribe_job, reserve_output
 from project import Project
@@ -230,7 +231,9 @@ class App:
         if item:
             detail = item['source']
             if item.get('error'):
-                detail += tr('prepis.labels.error') + item['error']
+                detail += '\n' + explanation(dict(category=item.get('error_category', 'unknown')))
+            elif item.get('outcome') == 'no_speech':
+                detail += '\n' + tr('result.no_speech') + ': ' + tr('result.no_speech_help')
             elif item['state'] == 'interrupted':
                 detail += tr('prepis.update_selection.resuming_will_use_the_saved_project_settings')
             # Keep the queue usable even for lengthy backend errors; full details remain accessible.
@@ -265,7 +268,13 @@ class App:
             except Exception as exc:
                 text += tr('prepis.show_item_info.cannot_read_project') + str(exc)
         if item.get('error'):
-            text += tr('prepis.labels.error_paragraph') + item['error'] + tr('prepis.show_item_info.check_the_file_model_and_free_disk_space_if')
+            show_error(self.root, tr('prepis.show_item_info.recording_details'),
+                       dict(category=item.get('error_category', 'unknown'), details=item['error']))
+            return
+        if item.get('outcome') == 'no_speech':
+            text += '\n' + tr('result.no_speech') + ': ' + tr('result.no_speech_help')
+        if item.get('outcome'):
+            text += '\n' + tr('result.segments', count=item.get('segment_count', 0))
         messagebox.showinfo(tr('prepis.show_item_info.recording_details'), text, parent=self.root)
 
     def page_changed(self, _event=None):
@@ -692,7 +701,7 @@ class App:
                 self.close_after_asr = False
                 self.root.after_idle(self.close)
         for error in errors:
-            messagebox.showerror(tr('prepis.labels.transcription_error'), error)
+            show_error(self.root, tr('prepis.labels.transcription_error'), error if isinstance(error, dict) else classify(RuntimeError(error)))
         self.root.after(50 if self.busy or not self.events.empty() else 250, self.poll)
 
     def close(self):

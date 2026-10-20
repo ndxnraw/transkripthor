@@ -239,3 +239,42 @@ od aktuálneho tempa a môže byť neistý počas dlhého chunku. Systémové DP
 nemenilo. Pred pushom sa vyžaduje čistý klon presného commitu, nová `.venv`,
 všetkých 228 testov a nové overené Windows EXE; SHA a výsledky sa evidujú
 lokálne mimo Gitu a v závere úlohy. Bez zmeny verzie, tagu alebo vydania.
+
+## F20/F21 – konkrétne chyby a výsledok bez reči (20. 10. 2026)
+
+Východiskový strom `0094f6e` bol čistý; vzdialená `main` zodpovedala tomuto
+commitu. Potvrdená bola všeobecná rada o internete/menšom modeli a chýbajúci
+samostatný výsledok prázdneho prepisu vo fronte.
+
+- Spoločná vrstva chýb rozlišuje vstup, disk, oprávnenia, pamäť, GPU, model,
+  sieť a konflikt projektu; neznáme príčiny označuje osobitne. Používa typy,
+  kódy a kontext, nie preložené texty. EN/SK správy uvádzajú ďalší krok.
+- Fronta uchováva kategóriu oddelene od technických podrobností. Podrobnosti
+  sú v rozbaliteľnom dialógu; používa ho aj správca modelov a zápis/export
+  editora. Zachovaný je stav uloženého projektu pri neúspešnom exporte.
+  Bežné poverenia a HTTP adresy sa z diagnostiky odstraňujú.
+- IPC prenáša nové voliteľné polia; stará fronta ostáva kompatibilná.
+  Modelový loader zachováva pôvodnú príčinu; nedostatok miesta pri PCM
+  má explicitný OS kód. Potvrdenie GPU → CPU sa nemení.
+- Dokončené projekty a fronta uchovávajú výsledok `no_speech` a počet úsekov.
+  „Reč sa nenašla“ vysvetľuje aj možnosť nerozpoznanej reči, nie iba ticha.
+  Prázdny TXT/SRT neobsahuje diagnostické vety. Prerušenie ani poškodený
+  vstup sa za tento výsledok nevydávajú; obnovenie výsledok znovu oznámi.
+
+Pridaných sedem regresií: všetky kategórie a vnorené príčiny, odstránenie
+poverení, reálny PyAV/VAD nad syntetickým tichom, poškodený súbor, uloženie/
+obnova fronty, zobrazenie výsledku a oddelené rozbaliteľné podrobnosti.
+Staršie testy nových hlásení boli aktualizované s ponechaním dátových kontrol.
+Prvý beh odhalil kompatibilitu normalizácie fronty a whitelist IPC; opravené.
+Druhý celý beh dokončil 235 testov za 202,536 s bez preskočenia s jedinou
+chybou starého očakávania dialógu exportu. Test teraz navyše kontroluje
+kategóriu oprávnení a technickú príčinu. Následných 21 cielených testov chýb,
+exportu a procesového ASR prešlo za 15,467 s bez preskočenia.
+
+Pred pushom sa vyžaduje úplný úspešný beh 235 testov presného kandidáta
+v čistom klone s novou `.venv` a nové Windows EXE s diagnostikou. SHA
+a konečné výsledky sa zaznamenajú lokálne mimo Gitu a v závere úlohy.
+Skutočné vyčerpanie RAM/GPU ani zaplnenie disku sa nevykonáva; tieto chyby
+sú simulované. Syntetické ticho nie je meranie presnosti na reálnom korpuse.
+Fyzické DPI Windows ani Narrator neboli manuálne overené. Bez zmeny verzie,
+závislostí, tagu a GitHub Release.

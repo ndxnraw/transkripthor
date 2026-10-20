@@ -224,7 +224,7 @@ def supervise(config, stop, events, run, *, target=worker, ack_seconds=ACK_SECON
                     raise ValueError('ASR request identifier missing')
                 if kind == 'job' and (not isinstance(value, (list, tuple)) or len(value) != 2 or
                         value[0] not in config['batch_ids'] or not isinstance(value[1], dict) or
-                        not set(value[1]).issubset({'state', 'project', 'error'})):
+                        not set(value[1]).issubset({'state', 'project', 'error', 'error_category', 'outcome', 'segment_count'})):
                     raise ValueError('Invalid ASR job update')
                 ack, answer = threading.Event(), []
                 emit(kind, (*value, ack, answer) if kind == 'job' else (ack, answer))

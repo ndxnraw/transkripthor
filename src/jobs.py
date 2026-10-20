@@ -1,5 +1,6 @@
 """Checkpoint orchestration around the existing Whisper implementations."""
 from i18n import tr
+from app_errors import ProjectConflict
 from dataclasses import asdict
 from pathlib import Path
 from datetime import datetime
@@ -55,6 +56,12 @@ def transcribe_job(model, source, target, settings, stop, emit, resume=False, re
     from pcm_audio import decode_audio, speech_spans
     from faster_whisper.vad import VadOptions
     with Project(target, create=not resume) as project:
+        def report_result():
+            result = project.result()
+            emit('result', result)
+            if result['outcome'] == 'no_speech':
+                emit('log', tr('result.no_speech') + ': ' + tr('result.no_speech_help'))
+
         def export_original():
             for warning in project.export(view='original'):
                 emit('log', warning)
@@ -94,11 +101,12 @@ def transcribe_job(model, source, target, settings, stop, emit, resume=False, re
                 emit('duration', project.get('samples', 0) / SAMPLE_RATE)
                 emit('phase', 'saving')
                 export_original()
+                report_result()
                 return True
         else:
             saved_digest = project.get('fingerprint')
             if saved_digest is not None and saved_digest != digest:
-                raise ValueError(tr('jobs.transcribe_job.the_recording_does_not_match_the_saved_project_start'))
+                raise ProjectConflict(tr('jobs.transcribe_job.the_recording_does_not_match_the_saved_project_start'))
             project.preparation_stage('decoding', digest)
         emit('phase', 'decoding')
         emit('status', tr('jobs.transcribe_job.preparing_audio_decoding_the_recording'))
@@ -108,14 +116,14 @@ def transcribe_job(model, source, target, settings, stop, emit, resume=False, re
             emit('duration', len(audio) / SAMPLE_RATE)
             after = Path(source).stat()
             if (before.st_size, before.st_mtime_ns) != (after.st_size, after.st_mtime_ns):
-                raise ValueError(tr('jobs.transcribe_job.the_source_recording_changed_during_preparation_start_a_new'))
+                raise ProjectConflict(tr('jobs.transcribe_job.the_source_recording_changed_during_preparation_start_a_new'))
             if stop.is_set():
                 return False
             config = MixedConfig(**settings['segmentation'])
             if not preparing:
                 plan = project.get('plan')
                 if len(audio) != project.get('samples'):
-                    raise ValueError(tr('jobs.transcribe_job.decoded_audio_length_changed_start_a_new_transcription'))
+                    raise ProjectConflict(tr('jobs.transcribe_job.decoded_audio_length_changed_start_a_new_transcription'))
             else:
                 project.preparation_stage('vad')
                 emit('phase', 'vad')
@@ -172,6 +180,7 @@ def transcribe_job(model, source, target, settings, stop, emit, resume=False, re
             emit('status', tr('jobs.transcribe_job.saving_the_completed_transcript_and_subtitles'))
             project.finish()
             export_original()
+            report_result()
             emit('progress', 100)
             return True
         except InterruptedError:

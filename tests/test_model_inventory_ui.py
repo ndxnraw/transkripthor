@@ -44,11 +44,14 @@ class InventoryUiTest(unittest.TestCase):
         dialog = ModelDialog(self.app, parent=self.app.models_page)
         self.app.model_dialog = dialog
         self.wait(dialog)
-        with patch('model_dialog.inventory', wraps=inventory) as read:
+        with patch('model_dialog.inventory', wraps=inventory) as read, patch('model_dialog.show_error') as details:
             dialog.run(lambda: (_ for _ in ()).throw(ValueError('specific failure')))
             self.wait(dialog)
             read.assert_called_once_with(self.app.cache)
-        self.assertEqual(dialog.status.get(), 'specific failure')
+        self.assertIn('model', dialog.status.get())
+        self.assertNotIn('specific failure', dialog.status.get())
+        self.assertEqual(details.call_args.args[2]['category'], 'model')
+        self.assertIn('specific failure', details.call_args.args[2]['details'])
         self.assertTrue(dialog.tree.exists('tiny'))
 
     def test_stale_cache_result_is_discarded_and_refresh_is_deferred(self):

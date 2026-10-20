@@ -1,5 +1,6 @@
 """Complete transcript editor, paged presentation, local audio playback."""
 from i18n import tr
+from app_errors import classify, show_error
 from pathlib import Path
 import queue
 import threading
@@ -467,7 +468,7 @@ class Editor:
                     warnings = project.retry_export()
                 self.events.put(('io_done', warnings))
             except Exception as exc:
-                self.events.put(('io_error', str(exc)))
+                self.events.put(('io_error', classify(exc, 'disk')))
         # Closing is explicitly refused while this thread owns an unfinished write.
         self.io_thread = threading.Thread(target=run, daemon=False)
         self.io_thread.start()
@@ -491,12 +492,11 @@ class Editor:
             self.status.set(tr('editor.retry_export.the_txt_srt_pair_is_available_through_open_export') + ' '.join(value))
         elif self.io_is_save and not self.io_saved:
             self.export_state.set(tr('editor.io_failed'))
-            messagebox.showerror(tr('editor.save.save'), value, parent=self.window)
+            show_error(self.window, tr('editor.save.save'), value)
         else:
             self.export_state.set(tr('editor.retry_export.export_incomplete_you_can_retry'))
-            text = tr('editor.retry_export.saved_project_data_is_preserved_txt_srt_export_could') + value
             self.status.set(tr('editor.retry_export.the_project_remains_saved_retry_export_after_resolving_the'))
-            messagebox.showerror(tr('editor.labels.txt_srt_export'), text, parent=self.window)
+            show_error(self.window, tr('editor.labels.txt_srt_export'), value)
 
     def rename_speaker(self):
         self.capture()

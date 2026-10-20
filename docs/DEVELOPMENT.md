@@ -161,6 +161,23 @@ držte mimo zdrojov (napríklad v `work/`), nie vedľa sledovaného príkladu.
 
 ## Používateľské údaje a chyby
 
+F20/F21 používa spoločné `app_errors.py`: stabilné kategórie vstup, disk,
+oprávnenia, pamäť, GPU, model, sieť, konflikt a neznáma príčina. Rozhodujú typy
+výnimiek, OS/SQLite kódy a kontext operácie; preložené hlásenia sa neparsujú.
+Príčiny obalených výnimiek ostávajú dostupné v technických podrobnostiach.
+Adresy HTTP, bežné tokeny a heslá sa z nich odstraňujú. Neznáma chyba sa
+nezamieňa automaticky za sieť. Potvrdenie prechodu GPU → CPU zostáva zachované.
+Fronta ukladá kategóriu oddelene od podrobností; správca modelov a uloženie/
+export v editore používajú rovnaký rozbaliteľný dialóg. Stav projektu uloženého
+pred zlyhaním exportu zostáva oddelený od chyby exportu.
+
+Dokončený prepis bez textových úsekov má výsledok `no_speech` a počet 0,
+uložený v projekte aj vo fronte. Zobrazuje „Reč sa nenašla“ a vysvetlenie:
+nejde o dôkaz, že v zdroji objektívne nie je reč. TXT/SRT zostávajú prázdne,
+nevkladajú sa do nich diagnostické vety. Prerušenie a chyba dekódovania tento
+výsledok nevytvárajú. Staršie projekty sa vyhodnotia pri obnovení; nevytvára
+sa falošný originál a používateľské opravy sa nemenia.
+
 Priebeh F19 používa samostatné IPC udalosti fázy a dĺžky nahrávok. Pracovný
 proces najprv číta dĺžky kontajnerov cez existujúci PyAV; dekódovanie ich
 spresní počtom PCM vzoriek. Neznáma dĺžka neblokuje prepis, ale až do jej

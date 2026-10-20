@@ -1,4 +1,5 @@
 from i18n import tr
+from app_errors import classify, explanation, show_error
 import queue
 import threading
 import tkinter as tk
@@ -83,15 +84,17 @@ class ModelDialog:
             error = None
             try:
                 action()
+            except InterruptedError as exc:
+                self.events.put(('status', str(exc)))
             except Exception as exc:
-                error = str(exc)
+                error = classify(exc, 'model')
             finally:
                 try:
                     self.events.put(('rows', (cache, inventory(cache))))
                 except Exception as exc:
-                    error = error or str(exc)
+                    error = error or classify(exc, 'model')
                 if error:
-                    self.events.put(('status', error))
+                    self.events.put(('issue', error))
                 self.events.put(('done', None))
         threading.Thread(target=worker, daemon=True).start()
 
@@ -145,6 +148,10 @@ class ModelDialog:
             if kind == 'released':
                 self.app.device_status.set(tr('pcm.model_released'))
                 self.status.set(tr('pcm.model_released'))
+                continue
+            if kind == 'issue':
+                self.status.set(explanation(value))
+                show_error(self.window, tr('error.details'), value)
                 continue
             if kind == 'download_state':
                 self.progress.stop()
