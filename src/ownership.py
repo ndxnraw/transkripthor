@@ -37,7 +37,10 @@ class Lease:
                     handle = kernel.CreateFileW(self.key, 0xC0000000, 7, None, 4, 0, None)
                     if handle == ctypes.c_void_p(-1).value:
                         raise ctypes.WinError(ctypes.get_last_error())
-                    stream = os.fdopen(msvcrt.open_osfhandle(handle, os.O_RDWR), 'r+b')
+                    # A competing byte lock can reject initialization. Do not
+                    # buffer a rejected write and retry it during close(), which
+                    # would mask OwnershipError and break instance forwarding.
+                    stream = os.fdopen(msvcrt.open_osfhandle(handle, os.O_RDWR), 'r+b', buffering=0)
                 else:
                     stream = open(self.key, 'a+b')
                 try:

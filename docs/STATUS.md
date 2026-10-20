@@ -271,6 +271,14 @@ chybou starého očakávania dialógu exportu. Test teraz navyše kontroluje
 kategóriu oprávnení a technickú príčinu. Následných 21 cielených testov chýb,
 exportu a procesového ASR prešlo za 15,467 s bez preskočenia.
 
+Prvý čistý kandidát `cfd529a` dokončil 235 testov za 200,740 s s jediným
+zlyhaním súbežného spustenia. Diagnostika ho reprodukovala 6-krát z 30:
+pri inicializácii byte locku zlyhal bufferovaný zápis a `close()` zopakoval
+flush, čím prekryl `OwnershipError` výnimkou `PermissionError`. Windows
+stream zámku teraz zapisuje bez bufferovania; existujúci súbežný test
+následne prešiel 30-krát z 30 za 6,994 s. Nejde o vypnutie zámku ani
+uvoľnenie testových podmienok. Kandidát pred touto opravou nebol pushnutý.
+
 Pred pushom sa vyžaduje úplný úspešný beh 235 testov presného kandidáta
 v čistom klone s novou `.venv` a nové Windows EXE s diagnostikou. SHA
 a konečné výsledky sa zaznamenajú lokálne mimo Gitu a v závere úlohy.
