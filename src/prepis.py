@@ -351,22 +351,39 @@ class App:
         if not item.get('project'):
             messagebox.showinfo(tr('prepis.labels.editor'), tr('prepis.open_editor.this_item_has_no_saved_transcript_project_yet'))
             return
+        self.open_project(item['project'])
+
+    def choose_project(self):
+        path = filedialog.askopenfilename(parent=self.root, title=tr('project.open'),
+            filetypes=[(tr('project.file_type'), '*.sqlite3')])
+        if path:
+            if Path(path).name != 'projekt.sqlite3':
+                messagebox.showinfo(tr('project.open'), tr('project.choose_database'), parent=self.root)
+                return
+            self.open_project(str(Path(path).parent))
+
+    def open_project(self, folder):
         from editor import Editor
+        folder = str(Path(folder).resolve())
+        if any(item['state'] == 'processing' and item.get('project') and
+               Path(item['project']).resolve() == Path(folder) for item in self.items):
+            messagebox.showinfo(tr('project.open'), tr('prepis.open_editor.stop_transcription_before_editing_to_avoid_concurrent_changes'), parent=self.root)
+            return
         try:
-            with Project(item['project']) as project:
+            with Project(folder) as project:
                 problem = project.editor_problem()
             if problem:
                 messagebox.showinfo(tr('prepis.labels.editor'), problem, parent=self.root)
                 return
             for editor in self.editors:
-                if editor.window.winfo_exists() and editor.folder == item['project']:
+                if editor.window.winfo_exists() and Path(editor.folder).resolve() == Path(folder):
                     self.workspace_tabs.select(self.editor_page)
                     return
             for editor in self.editors:
                 if editor.window.winfo_exists() and not editor.close():
                     return
             self.editor_empty.pack_forget()
-            self.editors.append(Editor(self, item['project'], parent=self.editor_page))
+            self.editors.append(Editor(self, folder, parent=self.editor_page))
             self.workspace_tabs.select(self.editor_page)
         except Exception as exc:
             messagebox.showerror(tr('prepis.labels.editor'), str(exc))

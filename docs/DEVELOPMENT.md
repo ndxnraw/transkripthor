@@ -161,6 +161,21 @@ držte mimo zdrojov (napríklad v `work/`), nie vedľa sledovaného príkladu.
 
 ## Používateľské údaje a chyby
 
+**Open project / Otvoriť projekt** v hlavičke otvorí `projekt.sqlite3`
+z existujúceho priečinka bez pridania položky do fronty. Prenášajte celý
+priečinok projektu, nie samotné TXT/SRT. Platia existujúce zámky, kontrola
+platnosti údajov a upozornenie na neuložené úpravy pred výmenou editora.
+
+V ponuke **Segment and subtitles / Úsek a titulky** editora je akcia
+**Locate original recording / Nájsť pôvodnú nahrávku**. Na pozadí overí
+SHA-256 a veľkosť oproti uloženému odtlačku; až potom transakčne zmení cestu.
+Nezmení originál, opravy, časovú os ani ASR nastavenia. Nahrávku nekopíruje
+ani nepresúva. Prekódovaný alebo obsahovo zmenený súbor nie je totožná kópia.
+Starý projekt bez odtlačku nemožno bezpečne pripojiť k náhradnej nahrávke.
+Text a export zostávajú dostupné aj bez zvuku; stav prehrávania sa zobrazuje
+v informačnej ploche editora. Fronta zostáva nezávislá: otvorenie ani oprava
+cesty v projekte automaticky nespustí prepis a neprepíše položky fronty.
+
 F20/F21 používa spoločné `app_errors.py`: stabilné kategórie vstup, disk,
 oprávnenia, pamäť, GPU, model, sieť, konflikt a neznáma príčina. Rozhodujú typy
 výnimiek, OS/SQLite kódy a kontext operácie; preložené hlásenia sa neparsujú.

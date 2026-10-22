@@ -286,3 +286,39 @@ Skutočné vyčerpanie RAM/GPU ani zaplnenie disku sa nevykonáva; tieto chyby
 sú simulované. Syntetické ticho nie je meranie presnosti na reálnom korpuse.
 Fyzické DPI Windows ani Narrator neboli manuálne overené. Bez zmeny verzie,
 závislostí, tagu a GitHub Release.
+
+## F22 – samostatné otvorenie projektu a oprava cesty (22. 10. 2026)
+
+Východiskový strom `70525c0` bol čistý a zhodný so vzdialenou `main`;
+predchádzajúci Windows CI prešiel. Editor už ponechával text dostupný po
+chybe zvuku, ale chýbalo otvorenie mimo fronty a overené pripojenie súboru.
+
+- Otvoriť projekt v hlavičke vyberá `projekt.sqlite3`; používa rovnakú
+  validáciu, zámok a ochranu neuložených zmien ako otvorenie z fronty.
+  Nevytvára položku fronty ani nespúšťa prepis.
+- Ponuka Úsek a titulky obsahuje Nájsť pôvodnú nahrávku. Existujúci worker
+  overí veľkosť a SHA-256; až po zhode transakčne uloží cestu. Odtlačok,
+  originál, úpravy, checkpointy, časovanie a ASR nastavenia sa nemenia.
+- Nezhodný súbor, prerušená kontrola alebo chýbajúci odtlačok cestu nemenia.
+  Bez zvuku je dostupná editácia a TXT/SRT; samostatný stav vysvetľuje
+  obmedzenie prehrávania a hlasov. EN/SK katalógy aj návod sú doplnené.
+
+Tri nové regresie prešli za 1,995 s: Unicode presunutá kópia, nezmenené
+metadáta/originál, nesprávny súbor rovnakej veľkosti, chýbajúci odtlačok,
+zrušenie hashovania a reálny Tk tok odobratia z fronty → otvorenie → úprava
+bez zvuku → uloženie → opätovné otvorenie → odmietnutie → pripojenie.
+Použitý je malý syntetický WAV s reálnym dekódovaním, nie ASR meranie.
+
+Prvý celý beh 238 testov odhalil 20 DPI zlyhaní pre nové riadky editora.
+Oprava nezaberá ďalšie riadky; druhý cielený beh odhalil skryté tlačidlo
+v prázdnom paneli. Otvorenie je teraz v hlavičke. Samostatná finálna DPI
+matica (2 testy, 74,441 s, OK) overila EN/SK, oba vzhľady, Tk mierky 100–200 %
+a malé obrazovky. Kontroly neboli oslabené; zahŕňajú aj nový ovládací prvok
+a zmenu tlačidla na ponuku. Medzibeh celej sady bol prerušený počas DPI
+diagnostiky; nie je deklarovaný ako úspešný.
+
+Pred pushom je povinný celý beh 238 testov bez preskočenia a nové Windows
+EXE z čistého klonu presného kandidáta s novou `.venv`. Výsledok, SHA
+a kontrolný súčet zostavy sa evidujú lokálne mimo Gitu a v závere úlohy.
+Fyzické systémové DPI, Narrator ani zvukový výstup reproduktorov sa manuálne
+neoverovali. Bez zmeny verzie, závislostí, tagu a vydania.

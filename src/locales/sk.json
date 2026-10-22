@@ -440,5 +440,16 @@
   "error.close": "Zavrieť",
   "result.no_speech": "Reč sa nenašla",
   "result.no_speech_help": "Neboli rozpoznané žiadne textové úseky. Zvuk môže obsahovať ticho, hluk alebo reč, ktorú model nerozpoznal. Pred novým prepisom prehrajte a skontrolujte zdroj, jazyk a model.",
-  "result.segments": "Textové úseky: {count}"
+  "result.segments": "Textové úseky: {count}",
+  "project.open": "Otvoriť projekt…",
+  "project.file_type": "Projekt prepisu",
+  "project.choose_database": "Vyberte súbor projekt.sqlite3 v priečinku projektu.",
+  "project.locate_audio": "Nájsť pôvodnú nahrávku…",
+  "project.audio_no_fingerprint": "Projekt nemá uložený odtlačok zvuku. Náhradnú nahrávku nemožno overiť. Text môžete naďalej upravovať a exportovať.",
+  "project.audio_mismatch": "Vybraná nahrávka nemá zhodný SHA-256 odtlačok a veľkosť. Projekt sa nezmenil. Vyberte nezmenenú kópiu pôvodnej nahrávky.",
+  "project.audio_checking": "Overujem a pripravujem zvuk… Text môžete naďalej upravovať.",
+  "project.audio_wait": "Počkajte na dokončenie práce so zvukom, ukladania alebo zoskupovania hlasov.",
+  "project.audio_unavailable": "Zvuk nie je dostupný: prehrávanie a zoskupovanie hlasov nefungujú. Text môžete upravovať a exportovať alebo nájsť pôvodnú nahrávku.",
+  "project.audio_rejected": "Náhradnú nahrávku sa nepodarilo použiť. Pôvodne načítaný zvuk zostáva dostupný; pozrite podrobnosti.",
+  "project.audio_ready": "Overený zvuk je pripravený na prehrávanie."
 }

@@ -440,5 +440,16 @@
   "error.close": "Close",
   "result.no_speech": "No speech found",
   "result.no_speech_help": "No text segments were recognized. The audio may contain silence, noise or speech the model did not recognize. Play and check the source, language and model before trying a new transcription.",
-  "result.segments": "Text segments: {count}"
+  "result.segments": "Text segments: {count}",
+  "project.open": "Open project…",
+  "project.file_type": "Transcript project",
+  "project.choose_database": "Select the projekt.sqlite3 file inside the project folder.",
+  "project.locate_audio": "Locate original recording…",
+  "project.audio_no_fingerprint": "This project has no stored audio fingerprint. A replacement cannot be verified. You can still edit and export the text.",
+  "project.audio_mismatch": "The selected recording does not match the saved SHA-256 fingerprint and size. The project was not changed. Select an unchanged copy of the original recording.",
+  "project.audio_checking": "Checking and preparing audio… Text editing remains available.",
+  "project.audio_wait": "Wait for the current audio, save or voice operation to finish.",
+  "project.audio_unavailable": "Audio unavailable: playback and voice grouping are disabled. You can edit and export the text, or locate the original recording.",
+  "project.audio_rejected": "Replacement could not be used. Previously loaded audio remains available; see technical details.",
+  "project.audio_ready": "Verified audio ready for playback."
 }

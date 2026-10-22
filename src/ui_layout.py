@@ -85,6 +85,8 @@ def build_ui(app, root, languages, models, output, cache):
     ttk.Label(brand, text='ND TranskripThor', style='Title.TLabel').pack(anchor='w')
     app.theme_button = ttk.Button(header, command=lambda: apply_theme(app, 'light' if app.theme == 'dark' else 'dark'))
     app.theme_button.pack(side='right')
+    app.open_project_button = ttk.Button(header, width=0, padding=(8, 2), text=tr('project.open'), command=app.choose_project)
+    app.open_project_button.pack(side='right', padx=4)
     app.workspace_tabs = ttk.Notebook(root)
     app.workspace_tabs.enable_traversal()
     app.workspace_tabs.pack(fill='both', expand=True, padx=16)

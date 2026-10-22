@@ -166,6 +166,22 @@ class Project:
             return tr('project.editor_problem.the_project_contains_invalid_segments_the_editor_cannot_safely')
         return None
 
+    def relocate_audio(self, source, stop=None):
+        """Change only the location, never the recorded content identity or timeline."""
+        expected = self.get('fingerprint')
+        if not isinstance(expected, dict) or not expected.get('sha256'):
+            raise ProjectConflict(tr('project.audio_no_fingerprint'))
+        path = Path(source).resolve()
+        if fingerprint(path, stop) != expected:
+            raise ProjectConflict(tr('project.audio_mismatch'))
+        if stop is not None and stop.is_set():
+            raise InterruptedError(tr('project.fingerprint.recording_check_interrupted'))
+        stat = path.stat()
+        with self.db:
+            self.put('source', str(path))
+            self.put('source_stat', dict(size=stat.st_size, mtime_ns=stat.st_mtime_ns))
+        return str(path)
+
     def verify(self, digest, settings):
         if self.get('schema') != 1 or self.get('fingerprint') != digest:
             raise ProjectConflict(tr('project.verify.the_recording_does_not_match_the_saved_project_start'))

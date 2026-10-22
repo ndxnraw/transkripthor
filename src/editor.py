@@ -8,7 +8,7 @@ from types import MappingProxyType
 from ownership import Lease
 from responsive import MessageView, FlowFrame
 import tkinter as tk
-from tkinter import ttk, messagebox, simpledialog
+from tkinter import ttk, messagebox, simpledialog, filedialog
 from project import Project, fingerprint
 from playback import Player
 from subtitles import SubtitleOptions, timestamp
@@ -62,14 +62,23 @@ class Editor:
         self.speaker_job = None
         self.voice_check = None
         self.player = Player()
+        self.audio_busy = True
         outer = ttk.Frame(self.window, padding=8)
         outer.pack(fill='both', expand=True)
         heading = ttk.Frame(outer)
         heading.pack(fill='x', pady=(0, 4))
         self.saved_state = tk.StringVar(value=tr('editor.init.all_changes_saved'))
         ttk.Label(heading, textvariable=self.saved_state, style='Muted.TLabel').pack(side='right')
-        self.source_label = MessageView(heading, app, text=Path(self.source).name +
-            ('' if original_available else tr('editor.init.original_transcript_cannot_be_verified')), lines=1)
+        self.source_suffix = '' if original_available else tr('editor.init.original_transcript_cannot_be_verified')
+        self.source_name = tk.StringVar(value=Path(self.source).name + self.source_suffix)
+        self.audio_status = tk.StringVar(value=tr('project.audio_checking'))
+        self.source_info = tk.StringVar()
+        def update_source_info(*_):
+            self.source_info.set(self.audio_status.get() + '\n' + self.source_name.get())
+        self.audio_status.trace_add('write', update_source_info)
+        self.source_name.trace_add('write', update_source_info)
+        update_source_info()
+        self.source_label = MessageView(heading, app, textvariable=self.source_info, lines=1)
         self.source_label.pack(side='left', fill='x', expand=True)
         toolbar = ttk.Frame(outer)
         toolbar.pack(fill='x')
@@ -97,7 +106,12 @@ class Editor:
         ttk.Label(export_bar, textvariable=self.export_state, style='Muted.TLabel').pack(side='left')
         playback = FlowFrame(bottom)
         playback.pack(fill='x', pady=4)
-        details_toggle = ttk.Button(heading, width=0, padding=(8, 2), text=tr('editor.init.segment_and_subtitles'), command=self.toggle_details)
+        details_toggle = ttk.Menubutton(heading, width=0, padding=(8, 2), text=tr('editor.init.segment_and_subtitles'))
+        self.project_menu = tk.Menu(details_toggle, tearoff=False)
+        self.project_menu.add_command(label=tr('editor.init.segment_and_subtitles'), command=self.toggle_details)
+        self.project_menu.add_command(label=tr('project.locate_audio'), command=self.locate_audio, state='disabled')
+        self.project_menu.add_command(label=tr('project.open'), command=app.choose_project)
+        details_toggle.configure(menu=self.project_menu)
         details_toggle.pack(side='right', padx=(4, 0))
         self.details = ttk.Frame(bottom)
         from transcript_blocks import TranscriptBlocks
@@ -239,6 +253,8 @@ class Editor:
 
     def apply_theme(self):
         palette = palette_for(self.app)
+        self.project_menu.configure(bg=palette['field'], fg=palette['text'],
+            activebackground=palette['info'], activeforeground=palette['text'], font=(self.app.font, 10))
         self.window.configure(bg=palette['bg'])
         if self.text.winfo_exists():
             self.text.configure(bg=palette['field'], fg=palette['text'], insertbackground=palette['text'],
@@ -391,15 +407,35 @@ class Editor:
         self.page = max(0, min(self.page + delta, max(0, (len(self.matches)-1)//self.PAGE_SIZE)))
         self.render()
 
-    def load_audio(self):
+    def locate_audio(self):
+        if self.audio_busy or self.io_busy or self.speaker_busy:
+            self.status.set(tr('project.audio_wait'))
+            return
+        path = filedialog.askopenfilename(parent=self.window, title=tr('project.locate_audio'))
+        if not path:
+            return
+        self.player.pause()
+        self.audio_busy = True
+        self.project_menu.entryconfigure(1, state='disabled')
+        self.audio_status.set(tr('project.audio_checking'))
+        threading.Thread(target=self.load_audio, args=(path,), daemon=True).start()
+
+    def load_audio(self, replacement=None):
         try:
-            if fingerprint(self.source, self.stop) != self.digest:
+            if replacement is not None:
+                with Project(self.folder) as project:
+                    source = project.relocate_audio(replacement, self.stop)
+                self.source = source
+                self.events.put(('audio_source', source))
+            if replacement is None and fingerprint(self.source, self.stop) != self.digest:
                 raise ValueError(tr('editor.load_audio.the_source_recording_has_changed_playback_is_disabled_you'))
             if not self.stop.is_set():
                 duration = self.player.load(self.source, Path(self.folder)/'.pcm-cache')
                 self.events.put(('loaded', duration))
         except Exception as exc:
-            self.events.put(('error', str(exc)))
+            self.events.put(('audio_error', classify(exc, 'input')))
+        finally:
+            self.events.put(('audio_finished', None))
 
     def play(self, start=None, end=None):
         try:
@@ -629,6 +665,14 @@ class Editor:
             kind, value = self.events.get_nowait()
             if kind.startswith('io_'):
                 self.complete_io(kind, value)
+            elif kind == 'audio_source':
+                self.source_name.set(Path(value).name + self.source_suffix)
+            elif kind == 'audio_finished':
+                self.audio_busy = False
+                self.project_menu.entryconfigure(1, state='normal')
+            elif kind == 'audio_error':
+                self.audio_status.set(tr('project.audio_unavailable') if self.player.audio is None else tr('project.audio_rejected'))
+                show_error(self.window, tr('project.locate_audio'), value)
             elif kind == 'voice_availability':
                 token, cache, result = value
                 if token is self.voice_check:
@@ -639,6 +683,7 @@ class Editor:
                         self.refresh_voice_availability()
             elif kind == 'loaded':
                 self.slider.configure(to=max(1, value))
+                self.audio_status.set(tr('project.audio_ready'))
                 self.status.set(tr('editor.poll.audio_ready_select_a_segment_and_press_segment'))
             elif kind == 'speakers':
                 self.apply_speakers(*value)

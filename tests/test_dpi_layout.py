@@ -51,6 +51,10 @@ class SmallScreenTest(unittest.TestCase):
                             for page in app.pages.values():
                                 app.workspace_tabs.select(page)
                                 root.update()
+                                button = app.open_project_button
+                                self.assertTrue(button.winfo_ismapped())
+                                self.assertGreaterEqual(button.winfo_width(), button.winfo_reqwidth())
+                                self.assertLessEqual(button.winfo_rootx()+button.winfo_width(), root.winfo_rootx()+root.winfo_width())
                                 def inspect(widget):
                                     if isinstance(widget, (ttk.Entry, ttk.Combobox)):
                                         self.assertTrue(widget.winfo_ismapped(), (str(widget), widget.master.winfo_geometry(), widget.master.master.winfo_geometry(), widget.master.master.master.winfo_geometry()))
@@ -94,7 +98,7 @@ class PlaybackLayoutTest(unittest.TestCase):
                 yield child
                 yield from descendants(child)
         buttons = [widget for widget in descendants(self.editor.window)
-                   if isinstance(widget, ttk.Button) and widget['text'] in labels]
+                   if isinstance(widget, (ttk.Button, ttk.Menubutton)) and widget['text'] in labels]
         self.assertEqual(len(buttons), 4)
         for button in buttons:
             button.configure(width=40)
