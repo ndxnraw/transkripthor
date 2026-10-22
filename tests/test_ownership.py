@@ -75,9 +75,13 @@ root.destroy()
 
     def test_crash_releases_profile_and_durable_handoff_survives(self):
         profile = self.folder/'profile'
-        child = self.child('from ownership import ProfileOwner; import sys; owner=ProfileOwner(sys.argv[1]); print("READY",flush=True); sys.stdin.read()', profile)
+        # Windows .venv python.exe is a redirector with a different PID from
+        # the interpreter. Killing only Popen's PID can leave the lock owner
+        # alive. Crash the actual interpreter without finally/atexit cleanup.
+        child = self.child('from ownership import ProfileOwner; import os, sys; owner=ProfileOwner(sys.argv[1]); print("READY",flush=True); sys.stdin.read(1); os._exit(17)', profile)
         request = ProfileOwner.submit(profile, [self.folder/'čaká.wav'])
-        child.kill(); child.wait(timeout=10)
+        child.stdin.write('x'); child.stdin.flush()
+        self.assertEqual(child.wait(timeout=10), 17)
         owner = ProfileOwner(profile)
         self.addCleanup(owner.close)
         got = []

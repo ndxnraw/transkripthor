@@ -361,3 +361,12 @@ Fyzické systémové DPI a Narrator sa neoverovali. Pred pushom je povinný
 čistý klon presného kandidáta, nová `.venv`, celý beh 243 testov bez
 preskočenia a nové overené Windows EXE. SHA a výsledky sa evidujú lokálne
 mimo Gitu a v závere. Bez zmeny verzie, závislostí, tagu a vydania.
+
+Dodatočná kontrola predchádzajúceho CI F22 našla zlyhanie obnovy zámku po
+páde. Izolovaná Windows skúška potvrdila rozdiel PID `.venv` spúšťača a
+skutočného interpretra. Test pôvodne zabíjal iba PID spúšťača, takže nevedel
+zaručiť ukončenie vlastníka zámku. Teraz reálny interpreter vykoná
+`os._exit(17)` bez finally/atexit a test vyžaduje tento návratový kód pred
+opätovným získaním zámku. Produkčné zamykanie sa nemení a kontrola obnovy
+ani zachovania odovzdaných súborov sa nevypína.
+Opravená skúška prešla 30-krát z 30 za 3,830 s.
