@@ -161,6 +161,16 @@ držte mimo zdrojov (napríklad v `work/`), nie vedľa sledovaného príkladu.
 
 ## Používateľské údaje a chyby
 
+Vyhľadávanie v editore používa doslovné, neprekrývajúce sa výskyty bez
+rozlišovania veľkosti písmen. Zachováva diakritiku; NFC normalizácia a Unicode
+casefold slúžia iba na porovnanie, nemenia uložený text. Počet výskytov je
+oddelený od počtu nájdených úsekov. Ponuka **Occurrences / Výskyty**, F3
+a Shift+F3 prechádzajú dopredu/dozadu cyklicky, aj cez stránky. V aktívnom
+textovom poli sa zvýraznia všetky zhody a odlišne aktuálny výskyt; navigácia
+nespúšťa zvuk. Prázdny dotaz zruší filter. Po písaní sa zobrazí upozornenie
+na neaktuálne výsledky; Hľadať, navigácia výskytov alebo zmena stránky najprv
+zachytí úpravy a obnoví index. Pri nezmenenom texte sa index znova nepočíta.
+
 **Open project / Otvoriť projekt** v hlavičke otvorí `projekt.sqlite3`
 z existujúceho priečinka bez pridania položky do fronty. Prenášajte celý
 priečinok projektu, nie samotné TXT/SRT. Platia existujúce zámky, kontrola

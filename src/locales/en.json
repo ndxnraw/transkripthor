@@ -451,5 +451,9 @@
   "project.audio_wait": "Wait for the current audio, save or voice operation to finish.",
   "project.audio_unavailable": "Audio unavailable: playback and voice grouping are disabled. You can edit and export the text, or locate the original recording.",
   "project.audio_rejected": "Replacement could not be used. Previously loaded audio remains available; see technical details.",
-  "project.audio_ready": "Verified audio ready for playback."
+  "project.audio_ready": "Verified audio ready for playback.",
+  "search.previous": "Previous match",
+  "search.count": "Occurrence {current}/{count} · Matching segments: {segments}",
+  "search.changed": "Text changed — update search or move to the next/previous match.",
+  "search.navigation": "Occurrences"
 }

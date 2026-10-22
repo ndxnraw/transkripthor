@@ -451,5 +451,9 @@
   "project.audio_wait": "Počkajte na dokončenie práce so zvukom, ukladania alebo zoskupovania hlasov.",
   "project.audio_unavailable": "Zvuk nie je dostupný: prehrávanie a zoskupovanie hlasov nefungujú. Text môžete upravovať a exportovať alebo nájsť pôvodnú nahrávku.",
   "project.audio_rejected": "Náhradnú nahrávku sa nepodarilo použiť. Pôvodne načítaný zvuk zostáva dostupný; pozrite podrobnosti.",
-  "project.audio_ready": "Overený zvuk je pripravený na prehrávanie."
+  "project.audio_ready": "Overený zvuk je pripravený na prehrávanie.",
+  "search.previous": "Predchádzajúci výskyt",
+  "search.count": "Výskyt {current}/{count} · Nájdené úseky: {segments}",
+  "search.changed": "Text sa zmenil — obnovte hľadanie alebo prejdite na ďalší/predchádzajúci výskyt.",
+  "search.navigation": "Výskyty"
 }

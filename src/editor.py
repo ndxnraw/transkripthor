@@ -14,6 +14,8 @@ from playback import Player
 from subtitles import SubtitleOptions, timestamp
 from ui import palette_for
 from edit_history import EditHistory
+from transcript_search import occurrences
+from bisect import bisect_left, bisect_right
 
 
 class Editor:
@@ -55,6 +57,9 @@ class Editor:
         self.loading_text = False
         self.page = 0
         self.matches = list(range(len(self.segments)))
+        self.search_key = None
+        self.hits = []
+        self.active_hit = None
         self.events = queue.Queue()
         self.stop = threading.Event()
         self.speaker_busy = False
@@ -89,7 +94,12 @@ class Editor:
         search.pack(side='left', fill='x', expand=True)
         search.bind('<Return>', lambda _: self.search())
         ttk.Button(toolbar, width=0, padding=(8, 2), text=tr('editor.init.search'), command=self.search).pack(side='left', padx=4)
-        ttk.Button(toolbar, width=0, padding=(8, 2), text=tr('editor.init.next_match'), command=self.next_match).pack(side='left')
+        match_button = ttk.Menubutton(toolbar, width=0, padding=(8, 2), text=tr('search.navigation'))
+        self.match_menu = tk.Menu(match_button, tearoff=False)
+        self.match_menu.add_command(label=tr('editor.init.next_match'), accelerator='F3', command=self.next_match)
+        self.match_menu.add_command(label=tr('search.previous'), accelerator='Shift+F3', command=lambda: self.next_match(-1))
+        match_button.configure(menu=self.match_menu)
+        match_button.pack(side='left')
         ttk.Button(toolbar, width=0, padding=(8, 2), text=tr('editor.init.save_txt_srt'), style='Accent.TButton', command=self.save).pack(side='right', padx=(8, 0))
         # Pack fixed controls first so they remain accessible at minimum size.
         bottom = ttk.Frame(outer)
@@ -124,7 +134,7 @@ class Editor:
         ttk.Button(pages, width=0, padding=(8, 2), text=tr('editor.undo'), command=self.undo).pack(side='left', padx=4)
         ttk.Button(pages, width=0, padding=(8, 2), text=tr('editor.redo'), command=self.redo).pack(side='left')
         self.page_label = tk.StringVar()
-        ttk.Label(pages, textvariable=self.page_label).pack(side='right')
+        MessageView(pages, app, textvariable=self.page_label, lines=1).pack(side='right', fill='x', expand=True)
         # Replaced by an inline Text when a block is selected.
         self.text = tk.Text(self.window)
         voice = FlowFrame(self.details)
@@ -189,7 +199,7 @@ class Editor:
         actions = {'<Control-s>': lambda: self.save(), '<Control-f>': self.focus_search,
                    '<Control-z>': self.undo, '<Control-y>': self.redo, '<Control-Shift-Z>': self.redo,
                    '<<Undo>>': self.undo, '<<Redo>>': self.redo,
-                   '<F3>': self.next_match, '<Shift-F3>': lambda: self.navigate(-1),
+                   '<F3>': self.next_match, '<Shift-F3>': lambda: self.next_match(-1),
                    '<Alt-Up>': lambda: self.navigate(-1), '<Alt-Down>': lambda: self.navigate(1),
                    '<F6>': self.focus_text}
         for sequence, action in actions.items():
@@ -255,11 +265,15 @@ class Editor:
         palette = palette_for(self.app)
         self.project_menu.configure(bg=palette['field'], fg=palette['text'],
             activebackground=palette['info'], activeforeground=palette['text'], font=(self.app.font, 10))
+        self.match_menu.configure(bg=palette['field'], fg=palette['text'],
+            activebackground=palette['info'], activeforeground=palette['text'], font=(self.app.font, 10))
         self.window.configure(bg=palette['bg'])
         if self.text.winfo_exists():
             self.text.configure(bg=palette['field'], fg=palette['text'], insertbackground=palette['text'],
                                 selectbackground=palette['blue'], selectforeground=palette['accent_text'],
                                 highlightbackground=palette['border'], highlightcolor=palette['blue'])
+            self.text.tag_configure('search_match', background=palette['info'], foreground=palette['text'], underline=True)
+            self.text.tag_configure('search_active', background=palette['blue'], foreground=palette['accent_text'], underline=True)
         self.tree.canvas.configure(bg=palette['bg'])
         if not self.embedded:
             from window_style import titlebar
@@ -312,11 +326,10 @@ class Editor:
         self.track_changes(identifier for identifier, _ in changes)
         target = self.segment_indices[changes[0][0]]
         # Re-evaluate the filter; keep it unless it would hide the changed segment.
-        query = self.query.get().casefold()
-        self.matches = [i for i, item in enumerate(self.segments) if query in item['text'].casefold()]
+        self.refresh_search()
         if target not in self.matches:
             self.query.set('')
-            self.matches = list(range(len(self.segments)))
+            self.refresh_search()
         self.page = self.matches.index(target) // self.PAGE_SIZE
         self.render()
         self.tree.selection_set(str(target))
@@ -329,6 +342,7 @@ class Editor:
         finally:
             self.loading_text = False
         self.tree.reveal(target)
+        self.highlight_matches()
         self.refresh_dirty()
         self.status.set(tr('editor.redone') if redo else tr('editor.undone'))
 
@@ -340,6 +354,10 @@ class Editor:
         if self.text.edit_modified():
             if not self.loading_text:
                 self.mark_dirty()
+                if self.query.get():
+                    self.text.tag_remove('search_match', '1.0', 'end')
+                    self.text.tag_remove('search_active', '1.0', 'end')
+                    self.page_label.set(tr('search.changed'))
                 self.status.set(tr('editor.modified.text_edited_segment_timing_is_preserved_precise_word_timing'))
             self.text.edit_modified(False)
 
@@ -370,7 +388,7 @@ class Editor:
         self.current = None
         first = self.page * self.PAGE_SIZE
         self.tree.render(self.matches[first:first + self.PAGE_SIZE])
-        self.page_label.set(tr('editor.render.segments', p0=first + 1 if self.matches else 0, p1=min(first + self.PAGE_SIZE, len(self.matches)), p2=len(self.matches)))
+        self.search_summary()
 
     def select(self, event=None):
         chosen = self.tree.selection()
@@ -383,18 +401,91 @@ class Editor:
         self.tree.edit(self.current, item['text'])
         self.speaker.set(item.get('speaker', ''))
         self.loading_text = False
+        self.highlight_matches()
         if self.app.autoplay.get() and self.player.audio is not None:
             self.play_segment()
 
     def search(self):
         self.capture()
-        query = self.query.get().casefold()
-        self.matches = [i for i, item in enumerate(self.segments) if query in item['text'].casefold()]
+        self.refresh_search()
+        self.active_hit = None
         self.page = 0
         self.render()
+        if self.hits:
+            self.next_match()
 
-    def next_match(self):
-        self.navigate(1)
+    def refresh_search(self):
+        key = (self.query.get(), self.edit_serial)
+        if key == self.search_key:
+            return False
+        if self.search_key is None or key[0] != self.search_key[0]:
+            self.active_hit = None
+        self.search_key = key
+        self.hits = [(i, start, end) for i, item in enumerate(self.segments)
+                     for start, end in occurrences(item['text'], key[0])] if key[0] else []
+        self.matches = list(dict.fromkeys(hit[0] for hit in self.hits)) if key[0] else list(range(len(self.segments)))
+        return True
+
+    def search_summary(self):
+        if self.query.get():
+            position = bisect_left(self.hits, self.active_hit) if self.active_hit is not None else -1
+            current = position+1 if 0 <= position < len(self.hits) and self.hits[position] == self.active_hit else 0
+            self.page_label.set(tr('search.count', current=current, count=len(self.hits), segments=len(self.matches)))
+        else:
+            first = self.page * self.PAGE_SIZE
+            self.page_label.set(tr('editor.render.segments', p0=first + 1 if self.matches else 0, p1=min(first + self.PAGE_SIZE, len(self.matches)), p2=len(self.matches)))
+
+    def highlight_matches(self):
+        self.text.tag_remove('search_match', '1.0', 'end')
+        self.text.tag_remove('search_active', '1.0', 'end')
+        if self.current is None:
+            return
+        text = self.text.get('1.0', 'end-1c')
+        for start, end in occurrences(text, self.query.get()):
+            # Text's +Nc moves by Unicode characters, unlike Tcl string length.
+            left = f'1.0+{start}c'
+            right = f'1.0+{end}c'
+            self.text.tag_add('search_match', left, right)
+            if self.active_hit == (self.current, start, end):
+                self.text.tag_add('search_active', left, right)
+                self.text.mark_set('insert', left)
+                self.text.see(left)
+        self.text.tag_raise('search_active')
+
+    def next_match(self, delta=1):
+        if not self.query.get():
+            self.navigate(delta)
+            return
+        self.capture()
+        changed = self.refresh_search()
+        if not self.hits:
+            self.page = 0
+            self.active_hit = None
+            self.render()
+            self.focus_search()
+            return
+        if self.active_hit is None:
+            position = 0 if delta > 0 else len(self.hits)-1
+        else:
+            position = (bisect_right(self.hits, self.active_hit) if delta > 0 else bisect_left(self.hits, self.active_hit)-1) % len(self.hits)
+        self.active_hit = self.hits[position]
+        index = self.active_hit[0]
+        page = self.matches.index(index) // self.PAGE_SIZE
+        if changed or page != self.page:
+            self.page = page
+            self.render()
+        self.tree.selection_set(str(index))
+        # Search navigation never starts audio playback.
+        self.current = index
+        self.loading_text = True
+        try:
+            self.tree.edit(index, self.segments[index]['text'])
+            self.speaker.set(self.segments[index].get('speaker', ''))
+        finally:
+            self.loading_text = False
+        self.highlight_matches()
+        self.search_summary()
+        self.tree.reveal(index)
 
     def toggle_details(self):
         if self.details.winfo_manager():
@@ -404,6 +495,7 @@ class Editor:
 
     def change_page(self, delta):
         self.capture()
+        self.refresh_search()
         self.page = max(0, min(self.page + delta, max(0, (len(self.matches)-1)//self.PAGE_SIZE)))
         self.render()
 

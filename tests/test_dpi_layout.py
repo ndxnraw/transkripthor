@@ -40,6 +40,8 @@ class SmallScreenTest(unittest.TestCase):
                         editor = Editor(app, target, parent=app.editor_page)
                         app.editors.append(editor)
                         editor.toggle_details()
+                        editor.query.set('Text')
+                        editor.search()
                         models = ModelDialog(app, parent=app.models_page)
                         app.model_dialog = models
                         long_text = ('Viacriadková chyba s dlhou cestou C:/nahrávky/' + 'nahrávka_'*25 + '\n')*12

@@ -322,3 +322,42 @@ EXE z čistého klonu presného kandidáta s novou `.venv`. Výsledok, SHA
 a kontrolný súčet zostavy sa evidujú lokálne mimo Gitu a v závere úlohy.
 Fyzické systémové DPI, Narrator ani zvukový výstup reproduktorov sa manuálne
 neoverovali. Bez zmeny verzie, závislostí, tagu a vydania.
+
+## F24 – vyhľadávanie jednotlivých výskytov (22. 10. 2026)
+
+Východiskový strom `cce57d7` bol čistý a zhodný so vzdialenou `main`.
+Potvrdené bolo filtrovanie úsekov bez pozícií jednotlivých zhôd.
+
+- Samostatná Unicode logika vracia rozsahy v pôvodnom texte. Doslovné
+  neprekrývajúce sa hľadanie ignoruje veľkosť písmen, zachováva diakritiku
+  a podporuje NFC aj casefold bez zmeny obsahu projektu.
+- Editor zobrazuje aktuálny/celkový výskyt oddelene od počtu úsekov.
+  Prvá zhoda sa vyberie po Hľadať; ponuka Výskyty, F3 a Shift+F3 cyklicky
+  prechádzajú konkrétne zhody vrátane viacerých v jednom úseku a cez stránky.
+  V aktívnom poli sú označené všetky zhody a výraznejšie aktuálna. Náhľady
+  ostatných úsekov zostávajú obyčajné textové bloky. Zvuk sa tým nespúšťa.
+- Filter, stránkovanie aj navigácia najprv zachytia úpravy. Index sa obnoví
+  pri zmene dotazu/dát, nie pri každom ďalšom výskyte. Počas písania sa
+  nezobrazujú staré rozsahy ako aktuálne; stav vyzýva na obnovu výsledkov.
+  História, uloženie, pôvodný prepis a časovanie zostávajú zachované.
+- EN/SK preklady a návod opisujú správanie. Počítadlo používa existujúcu
+  ohraničenú informačnú plochu; nová ponuka nezaberá ďalší riadok editora.
+
+Päť nových regresií pokrýva viac zhôd, oba smery/obalenie, diakritiku,
+kombinované znaky, emoji, prázdny výsledok/dotaz, 10 000 úsekov, uloženie
+rozpísaných zmien, F3/Shift+F3 a čistý stav pri samotnej navigácii.
+Prvý cielený beh odhalil indexovanie Tk za emoji; opravené. Celý medzibeh
+242 testov odhalil päť DPI zlyhaní pre ďalšie tlačidlo a dve chyby nastavenia
+tagov po zničení textového poľa. Opravené ponukou a kontrolou existencie poľa.
+Následný cielený beh 21 testov ponechal iba staré očakávanie prvého výberu;
+test teraz overuje okamžité zobrazenie aj návrat, pôvodné dátové kontroly
+ostali zachované (opakovanie 1 test, 0,889 s, OK). Klávesová regresia prešla
+za 2,892 s. Finálna DPI matica s aktívnym hľadaním: 2 testy, 86,359 s, OK,
+EN/SK, oba vzhľady, malé obrazovky a Tk mierky 100–200 %.
+
+Samotný index 100 000 krátkych syntetických úsekov/200 000 výskytov trval
+0,126 s; nie je to meranie celého editora ani dlhého reálneho korpusu.
+Fyzické systémové DPI a Narrator sa neoverovali. Pred pushom je povinný
+čistý klon presného kandidáta, nová `.venv`, celý beh 243 testov bez
+preskočenia a nové overené Windows EXE. SHA a výsledky sa evidujú lokálne
+mimo Gitu a v závere. Bez zmeny verzie, závislostí, tagu a vydania.

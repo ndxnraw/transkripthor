@@ -132,10 +132,12 @@ class StudioTest(unittest.TestCase):
         editor.query.set('Text 8')
         editor.search()
         self.assertIn(84, editor.matches)
-        editor.next_match()
+        # Search reveals the first concrete occurrence immediately.
         self.assertEqual(editor.current, 8)
         editor.next_match()
         self.assertEqual(editor.current, 80)
+        editor.next_match(-1)
+        self.assertEqual(editor.current, 8)
         self.assertTrue(save_editor(editor))
         with Project(editor.folder) as project:
             rows = project.segments()
