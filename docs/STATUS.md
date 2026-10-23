@@ -370,3 +370,15 @@ zaručiť ukončenie vlastníka zámku. Teraz reálny interpreter vykoná
 opätovným získaním zámku. Produkčné zamykanie sa nemení a kontrola obnovy
 ani zachovania odovzdaných súborov sa nevypína.
 Opravená skúška prešla 30-krát z 30 za 3,830 s.
+
+23. 10.: čistý klon commitu `930b453` prešiel 243 testami za 244,275 s
+bez preskočenia a novým Windows EXE vrátane frozen diagnostiky (35 modulov).
+Push bol potvrdený, ale následný GitHub beh 39901167888 skončil jednou
+chybou z 243 testov: druhý test pádu stále ukončoval iba Windows spúšťač,
+tentoraz pri zámku modelovej cache. Všetky nové regresie vyhľadávania prešli.
+Rovnaké ukončenie skutočného interpretra cez `os._exit(17)` sa preto použilo
+aj pre modelovú cache a zostávajúci test pádu editora. Kontroly vlastníctva,
+zachovania textu a zákazu odstránenia používanej cache ostali nezmenené.
+Cielené overenie všetkých ôsmich testov vlastníctva: 2,644 s, OK.
+Tento opravný kandidát pred ďalším pushom opäť vyžaduje celý čistý test/build;
+výsledky konkrétneho SHA sa evidujú v lokálnom potvrdení a závere.

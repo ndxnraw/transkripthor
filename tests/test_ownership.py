@@ -156,7 +156,7 @@ from prepis import App
 from editor import Editor
 from unittest.mock import patch
 from pathlib import Path
-import sys, tkinter as tk
+import os, sys, tkinter as tk
 folder = Path(sys.argv[1])
 with Project(folder, create=True) as project:
     project.initialize('audio.wav', {}, {}, [], 16000)
@@ -166,12 +166,14 @@ app = App(root, folder/'isolated-profile')
 with patch.object(Editor, 'load_audio'):
     editor = Editor(app, folder, parent=app.editor_page)
 print('READY', flush=True)
-sys.stdin.read()
+sys.stdin.read(1)
+os._exit(17)
 '''
         child = self.child(code, folder)
         with self.assertRaises(OwnershipError):
             Project(folder)
-        child.kill(); child.wait(timeout=10)
+        child.stdin.write('x'); child.stdin.flush()
+        self.assertEqual(child.wait(timeout=10), 17)
         # Process exit can be signalled before Windows finishes releasing its
         # file handles. Still require real reacquisition and unchanged data.
         deadline = time.monotonic() + 3
@@ -210,12 +212,13 @@ sys.stdin.read()
         cache = self.folder/'models'
         target = cache_folder(cache, 'tiny')
         target.mkdir(parents=True)
-        code = 'from ownership import Lease; from pathlib import Path; import sys; lease=Lease(Path(sys.argv[1])/".models.lock"); print("READY",flush=True); sys.stdin.read()'
+        code = 'from ownership import Lease; from pathlib import Path; import os, sys; lease=Lease(Path(sys.argv[1])/".models.lock"); print("READY",flush=True); sys.stdin.read(1); os._exit(17)'
         child = self.child(code, cache)
         with self.assertRaises(OwnershipError):
             remove_model(cache, 'tiny')
         self.assertTrue(target.exists())
-        child.kill(); child.wait(timeout=10)
+        child.stdin.write('x'); child.stdin.flush()
+        self.assertEqual(child.wait(timeout=10), 17)
         remove_model(cache, 'tiny')
 
 
