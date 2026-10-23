@@ -455,5 +455,12 @@
   "search.previous": "Predchádzajúci výskyt",
   "search.count": "Výskyt {current}/{count} · Nájdené úseky: {segments}",
   "search.changed": "Text sa zmenil — obnovte hľadanie alebo prejdite na ďalší/predchádzajúci výskyt.",
-  "search.navigation": "Výskyty"
+  "search.navigation": "Výskyty",
+  "playback.settings": "Nastavenia prehrávania",
+  "playback.output": "Výstupné zariadenie",
+  "playback.default": "Predvolený systémový výstup",
+  "playback.speed": "Rýchlosť prehrávania",
+  "playback.help": "Posun zachová pauzu alebo prehrávanie. Po posune sa pokračuje do konca nahrávky. Rýchlosť zachová výšku hlasu. Zmeny platia iba v tomto editore. Pri zastavení výstupu vyberte dostupné zariadenie a stlačte Pokračovať.",
+  "playback.apply": "Použiť",
+  "playback.disconnected": "Zvukový výstup sa zastavil alebo vybrané zariadenie nie je dostupné. Pripojte ho alebo vyberte iný výstup v nastaveniach prehrávania a stlačte Pokračovať."
 }

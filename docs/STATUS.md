@@ -382,3 +382,34 @@ zachovania textu a zákazu odstránenia používanej cache ostali nezmenené.
 Cielené overenie všetkých ôsmich testov vlastníctva: 2,644 s, OK.
 Tento opravný kandidát pred ďalším pushom opäť vyžaduje celý čistý test/build;
 výsledky konkrétneho SHA sa evidujú v lokálnom potvrdení a závere.
+
+
+## F25 – prehrávanie, výstup a tempo (23. 10. 2026)
+
+Východiskom je lokálny `45db861`; existujúci necommitnutý záznam F24 v STATUS
+zostáva zachovaný oddelene. Posun myšou aj klávesmi zachová pauzu alebo chod
+prehrávania a pokračuje do konca nahrávky. Zmena výstupu/tempa zachová miesto
+aj limit vybraného úseku. Ponuka editora otvára lokalizovaný dialóg výstupu
+(a obnoví zoznam zariadení) a rýchlostí 0,75/1/1,25/1,5×. Nastavenie platí
+pre editor, nemení projekt ani export. Chýbajúci explicitný výstup sa potichu
+nenahrádza; nečakané zastavenie streamu zobrazí postup obnovenia. Pravidlá
+klávesových skratiek a ochrana písania zostali zachované.
+
+Tempo používa existujúci PyAV atempo s blokovým čítaním PCM, bez novej
+závislosti, zmeny výšky tónu či celkovej kópie nahrávky. Čas sa prepočítava
+na pôvodnú časovú os. Frozen startup diagnostika navyše skúša skutočný filter.
+
+Prvý celý beh: 249 testov za 233,592 s, šesť DPI subtestov neprešlo kvôli
+pridanému riadku tlačidla. Tlačidlo nahradila položka existujúcej ponuky,
+kontroly sa neoslabovali. Následných 14 cielených testov prešlo za 77,692 s:
+prehrávanie, klávesnica, stará DPI matica a nový dialóg EN/SK, svetlý/tmavý,
+Tk mierky 100/125/150/175/200 %. Osem nových regresií pokrýva oba seek stavy,
+limity, zmenu výstupu/tempa, chybu štartu a odpojenie, časovanie, reálny tempo
+filter, zachovanie frekvencie syntetického tónu a nezmenený stav projektu.
+
+Pred pushom musí presný kandidát prejsť celou sadou 251 testov bez preskočenia
+z čistého klonu a novým Windows EXE. Konkrétny výsledok a SHA sú v lokálnom
+potvrdení a závere. Fyzické odpojenie zariadenia, posluch reálnej reči,
+systémové DPI Windows ani Narrator sa neoverovali. Latencia audio výstupu
+nie je presnosť časových značiek exportu; zobrazenie sleduje audio bloky.
+Verzia, tagy a vydanie sa nemenia.

@@ -33,6 +33,13 @@ def run(folder):
             raise RuntimeError('Diagnostic profile is not empty')
         import sounddevice
         sounddevice.query_devices()
+        import numpy as np
+        from playback import tempo_blocks
+        samples = np.sin(2*np.pi*440*np.arange(16000)/16000).astype('float32')
+        count = sum(len(block) for block in tempo_blocks(samples, 0, len(samples), 1.25))
+        if not 11000 < count < 14500:
+            raise RuntimeError('Bundled playback tempo filter failed')
+        report['playback_tempo'] = 'PASS'
         import kaldi_native_fbank
         from i18n import Translator
         if set(Translator().catalogs) != {'en', 'sk'}:

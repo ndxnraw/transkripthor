@@ -161,6 +161,25 @@ držte mimo zdrojov (napríklad v `work/`), nie vedľa sledovaného príkladu.
 
 ## Používateľské údaje a chyby
 
+V ponuke editora sú **Playback settings / Nastavenia prehrávania**:
+výstupné zariadenie a tempo 0,75×, 1×, 1,25×, 1,5×. Voľba platí pre aktuálny
+editor, neukladá sa do projektu ani nemení jeho stav úprav. Zoznam výstupov
+sa obnoví pri otvorení dialógu. Explicitne vybrané nedostupné zariadenie sa
+nenahradí iným; používateľ ho znovu pripojí alebo zvolí iný výstup a pokračuje.
+Systémový predvolený výstup sa vyhodnocuje pri otvorení nového audio streamu.
+Neočakávané zastavenie streamu pozastaví prehrávanie a zobrazí ďalší postup.
+
+Posun myšou aj šípkami na časovej osi zachová pauzu/prehrávanie a zruší
+obmedzenie na vybraný úsek: pokračuje od nového miesta do konca nahrávky.
+Zmena rýchlosti alebo zariadenia zachová aktuálne miesto aj hranicu úseku.
+F7/F8 sa neuplatnia v textových vstupoch; medzera pri písaní zostáva medzerou.
+Tempo používa existujúci PyAV a [FFmpeg atempo](https://ffmpeg.org/ffmpeg-filters.html#atempo)
+po blokoch PCM (najviac 4096 vstupných vzoriek), bez preladenia vzorkovacej
+frekvencie hlasu a bez vytvárania ďalšej kópie celej nahrávky. Zobrazené časy
+sú v pôvodnej časovej osi, s presnosťou audio bloku; latencia zariadenia môže
+spôsobiť malý rozdiel oproti fyzicky počutému zvuku. Automatický test frekvencie
+syntetického tónu nie je posluchovým hodnotením zrozumiteľnosti reálnej reči.
+
 Vyhľadávanie v editore používa doslovné, neprekrývajúce sa výskyty bez
 rozlišovania veľkosti písmen. Zachováva diakritiku; NFC normalizácia a Unicode
 casefold slúžia iba na porovnanie, nemenia uložený text. Počet výskytov je

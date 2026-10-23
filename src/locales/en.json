@@ -455,5 +455,12 @@
   "search.previous": "Previous match",
   "search.count": "Occurrence {current}/{count} · Matching segments: {segments}",
   "search.changed": "Text changed — update search or move to the next/previous match.",
-  "search.navigation": "Occurrences"
+  "search.navigation": "Occurrences",
+  "playback.settings": "Playback settings",
+  "playback.output": "Output device",
+  "playback.default": "System default output",
+  "playback.speed": "Playback speed",
+  "playback.help": "Seeking keeps playback paused or running. Seeking continues to the end of the recording. Speed keeps voice pitch. Changes apply to this editor only. If output stops, select an available device and press Resume.",
+  "playback.apply": "Apply",
+  "playback.disconnected": "Audio output stopped or the selected device is unavailable. Reconnect it or choose another output in Playback settings, then press Resume."
 }

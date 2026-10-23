@@ -10,7 +10,7 @@ from responsive import MessageView, FlowFrame
 import tkinter as tk
 from tkinter import ttk, messagebox, simpledialog, filedialog
 from project import Project, fingerprint
-from playback import Player
+from playback import Player, RATES, output_devices
 from subtitles import SubtitleOptions, timestamp
 from ui import palette_for
 from edit_history import EditHistory
@@ -121,6 +121,7 @@ class Editor:
         self.project_menu.add_command(label=tr('editor.init.segment_and_subtitles'), command=self.toggle_details)
         self.project_menu.add_command(label=tr('project.locate_audio'), command=self.locate_audio, state='disabled')
         self.project_menu.add_command(label=tr('project.open'), command=app.choose_project)
+        self.project_menu.add_command(label=tr('playback.settings'), command=self.playback_settings)
         details_toggle.configure(menu=self.project_menu)
         details_toggle.pack(side='right', padx=(4, 0))
         self.details = ttk.Frame(bottom)
@@ -243,7 +244,7 @@ class Editor:
             return None
         if segment:
             self.play_segment()
-        elif self.player.stream is not None:
+        elif self.player.playing:
             self.player.pause()
         else:
             self.play()
@@ -251,14 +252,11 @@ class Editor:
 
     def keyboard_seek(self, delta):
         # Keyboard seek preserves pause; arrows elsewhere keep their editing role.
-        running = self.player.stream is not None
-        self.player.pause()
-        if self.player.audio is not None:
-            with self.player.lock:
-                self.player.position = max(0, min(len(self.player.audio), self.player.position + round(delta * 16000)))
-                self.position.set(self.player.position / 16000)
-            if running:
-                self.play()
+        try:
+            self.player.seek(self.player.position / 16000 + delta)
+            self.position.set(self.player.position / 16000)
+        except Exception as exc:
+            self.status.set(tr('editor.play.playback_unavailable', p0=exc))
         return 'break'
 
     def apply_theme(self):
@@ -542,11 +540,47 @@ class Editor:
 
     def begin_seek(self, event=None):
         self.dragging = True
+        self.seek_running = self.player.playing
         self.player.pause()
 
     def seek(self, event=None):
         self.dragging = False
-        self.play(self.position.get())
+        try:
+            self.player.seek(self.position.get(), resume=getattr(self, 'seek_running', False))
+        except Exception as exc:
+            self.status.set(tr('editor.play.playback_unavailable', p0=exc))
+
+    def playback_settings(self):
+        try:
+            devices = [None, *output_devices()]
+        except Exception as exc:
+            self.status.set(tr('editor.play.playback_unavailable', p0=exc))
+            return
+        if self.player.device is not None and self.player.device not in devices:
+            devices.append(self.player.device)
+        window = tk.Toplevel(self.window)
+        window.title(tr('playback.settings'))
+        body = ttk.Frame(window, padding=16)
+        body.pack(fill='both', expand=True)
+        ttk.Label(body, text=tr('playback.output')).pack(anchor='w')
+        output = ttk.Combobox(body, state='readonly', width=45,
+            values=[tr('playback.default')]+[f'{d[1]} ({d[3]})' for d in devices[1:]])
+        output.pack(fill='x', pady=4)
+        output.current(devices.index(self.player.device) if self.player.device in devices else 0)
+        ttk.Label(body, text=tr('playback.speed')).pack(anchor='w')
+        rate = ttk.Combobox(body, state='readonly', values=[f'{r:g}×' for r in RATES])
+        rate.current(RATES.index(self.player.rate))
+        rate.pack(fill='x', pady=4)
+        ttk.Label(body, text=tr('playback.help'), wraplength=380).pack(fill='x', pady=8)
+        def apply():
+            try:
+                self.player.configure(RATES[rate.current()], devices[output.current()])
+            except Exception as exc:
+                self.status.set(tr('editor.play.playback_unavailable', p0=exc))
+            window.destroy()
+        ttk.Button(body, text=tr('playback.apply'), command=apply).pack(anchor='e')
+        window.bind('<Escape>', lambda event: window.destroy())
+        output.focus_set()
 
     def save(self):
         if self.io_busy:
@@ -788,6 +822,9 @@ class Editor:
                     self.speaker_busy = False
                     self.refresh_voice_availability()
                 self.status.set(value)
+        error = self.player.poll_error()
+        if error:
+            self.status.set(tr('editor.play.playback_unavailable', p0=error))
         if not self.dragging:
             self.position.set(self.player.position / 16000)
         self.clock.set(timestamp(self.position.get()))
