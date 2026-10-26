@@ -14,7 +14,8 @@ from PyInstaller.utils.hooks import copy_metadata
 datas = [(str(source / 'assets'), 'assets')]
 datas += [(str(source / 'locales'), 'locales')]
 binaries = []
-hiddenimports = []
+# Keep evaluation helpers in the frozen source audit as well as source runs.
+hiddenimports = ['eval_corpus', 'eval_metrics', 'eval_runtime']
 datas += collect_data_files('certifi')
 datas += collect_data_files('tkinterdnd2')
 if find_spec('kaldi_native_fbank'):

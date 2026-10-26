@@ -480,3 +480,9 @@ a postup. Benchmark nemeria UI/frontu ani produkčný IPC watchdog; používa
 rovnakú produkčnú úlohu v izolovanom procese s vlastným timeoutom. VRAM je
 vzorkovaný dolný odhad špičky, na WDDM môže byť nedostupná. Práva a ručnú
 správnosť referencie deklaruje autor korpusu. Verzia, tagy ani Release sa nemenia.
+
+Prvý čistý kandidát 396f38d dokončil 270 testov za 246,568 s bez preskočenia,
+ale kontrola balíka odmietla nepribalený eval_corpus (ani ďalšie dva nové
+pomocné moduly neboli závislosťou UI). Do špecifikácie boli pridané explicitné
+importy všetkých troch modulov; kontrola zdrojovej zhody sa neoslabovala.
+Tento kandidát sa nepushol. Opravený kandidát vyžaduje nový celý test/build.
