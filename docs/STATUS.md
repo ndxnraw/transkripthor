@@ -486,3 +486,12 @@ ale kontrola balíka odmietla nepribalený eval_corpus (ani ďalšie dva nové
 pomocné moduly neboli závislosťou UI). Do špecifikácie boli pridané explicitné
 importy všetkých troch modulov; kontrola zdrojovej zhody sa neoslabovala.
 Tento kandidát sa nepushol. Opravený kandidát vyžaduje nový celý test/build.
+
+Opravené balenie f26ffe4 prešlo čistou sadou 270 testov za 242,118 s a novým
+EXE (40 zhodných modulov, startup PASS); push bol potvrdený. GitHub CI
+40312095610 však po 270 testoch za 287,030 s zistilo jednu chybu nového testu:
+čítanie UTF-8 manifestu bez explicitného encoding použilo na runneri cp1252.
+Produkčný čítač encoding/JSON bajty používa explicitne. Test bol opravený
+na UTF-8 bez oslabenia kontroly duplicít; ďalší kandidát musí znova prejsť
+celým čistým test/build a vzdialeným CI. Tento neúspech sa neskrýva opakovaním
+rovnakého behu bez opravy.

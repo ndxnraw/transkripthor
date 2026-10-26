@@ -41,7 +41,7 @@ class EvaluationTest(unittest.TestCase):
             if change=='entity':row['entities'][0]['text']='Missing'
             p=self.manifest(row)
             if change=='duplicate':
-                data=json.loads(p.read_text());data['recordings'].append(dict(row,id='other'));p.write_text(json.dumps(data))
+                data=json.loads(p.read_text(encoding='utf-8'));data['recordings'].append(dict(row,id='other'));p.write_text(json.dumps(data),encoding='utf-8')
             with self.subTest(change=change),self.assertRaises(ValueError):validate_manifest(p)
 
     def test_text_entities_switches_and_missing_timing(self):
