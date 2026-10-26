@@ -55,7 +55,7 @@ class Project:
 
     def _ensure_storage(self, fresh):
         if self.db.execute("SELECT 1 FROM sqlite_master WHERE name='transcript_storage'").fetchone():
-            if self.db.execute('SELECT version FROM transcript_storage').fetchone() != (1,):
+            if self.db.execute('SELECT version FROM transcript_storage').fetchone() not in ((1,), (2,)):
                 raise ProjectConflict(tr('project.ensure_storage.unsupported_transcript_storage_version'))
             return
         with self.db:
@@ -202,18 +202,21 @@ class Project:
                 if isinstance(data, list):
                     result = {item['id']: item for item in data}
                     break
-                layers.append(data['changes'])
+                layers.append(data)
                 revision = data['base']
-            for changes in reversed(layers):
-                result.update((item['id'], item) for item in changes)
-            return [result[key] for key in sorted(result)]
+            for layer in reversed(layers):
+                for identifier in layer.get('deleted', []):
+                    result.pop(identifier, None)
+                result.update((item['id'], item) for item in layer['changes'])
+            return sorted(result.values(), key=lambda item: (item['start'], item['id']))
         if view not in ('current', 'original'):
             raise ProjectConflict(tr('project.segments.invalid_transcript_selection'))
         if view == 'original' and not self.original_available():
             raise ProjectConflict(tr('project.segments.the_original_model_output_cannot_be_verified_in_this'))
         table = 'original_segments' if view == 'original' else 'segments'
-        return [dict(json.loads(data), id=identifier) for identifier, data in
+        rows = [dict(json.loads(data), id=identifier) for identifier, data in
                 self.db.execute(f'SELECT id, data FROM {table} ORDER BY id')]
+        return sorted(rows, key=lambda item: (item['start'], item['id'])) if view == 'current' else rows
 
     def commit_chunk(self, index, segments, previous_language):
         with self.db:
@@ -239,25 +242,53 @@ class Project:
             options = request.get('options')
         return SubtitleOptions(**options) if options is not None else SubtitleOptions()
 
-    def edit(self, segments, export_options=None):
+    def edit(self, segments, export_options=None, *, structural=False):
         options = asdict(export_options if export_options is not None else self.subtitle_options())
+        if structural and not self.get('complete', False):
+            raise ProjectConflict(tr('segments.complete_required'))
+        if structural and self.db.execute('SELECT version FROM transcript_storage').fetchone() == (1,):
+            backup = self.folder / ('zaloha-pred-upravou-usekov-' + uuid.uuid4().hex)
+            backup.mkdir()
+            with closing(sqlite3.connect(backup/'projekt.sqlite3')) as saved:
+                self.db.backup(saved)
+                if saved.execute('PRAGMA quick_check').fetchone() != ('ok',):
+                    raise OSError('Project backup failed')
         with self.db:
             self.db.execute('BEGIN IMMEDIATE')
+            if structural and not self.get('complete', False):
+                raise ProjectConflict(tr('segments.complete_required'))
             for segment in segments:
+                if structural and segment.get('deleted'):
+                    self.db.execute('DELETE FROM segments WHERE id=?', (segment['id'],))
+                    continue
                 existing = self.db.execute('SELECT data FROM segments WHERE id=?', (segment['id'],)).fetchone()
+                if structural and (existing is None or any(json.loads(existing[0]).get(k) != segment.get(k) for k in ('text', 'start', 'end'))):
+                    segment = dict(segment, words=[])
                 if existing and dict(json.loads(existing[0]), id=segment['id']) == segment:
+                    continue
+                if structural and existing is None:
+                    self.db.execute('INSERT INTO segments VALUES (?, ?)',
+                                    (segment['id'], json.dumps(segment, ensure_ascii=False)))
                     continue
                 cursor = self.db.execute('UPDATE segments SET data=? WHERE id=?',
                                          (json.dumps(segment, ensure_ascii=False), segment['id']))
                 if cursor.rowcount != 1:
                     raise ProjectConflict(tr('project.edit.the_segment_being_edited_no_longer_exists_in_the'))
             current = self.segments()
+            if structural:
+                from segment_edit import validate
+                from speech_models import SAMPLE_RATE
+                validate(current, self.get('samples') / SAMPLE_RATE if self.get('samples') is not None else None)
+                self.db.execute('UPDATE transcript_storage SET version=2')
+                self.put('next_segment_id', max(self.get('next_segment_id', 0),
+                    max((s['id'] for s in current), default=-1)+1))
             previous = self.db.execute('SELECT MAX(id) FROM transcript_revisions').fetchone()[0]
             if previous is None:
                 snapshot = current  # First immutable baseline; older full revisions stay readable.
             else:
                 baseline = {item['id']: item for item in self.segments('revision', previous)}
-                snapshot = dict(base=previous, changes=[item for item in current if baseline.get(item['id']) != item])
+                snapshot = dict(base=previous, changes=[item for item in current if baseline.get(item['id']) != item],
+                                deleted=sorted(set(baseline)-{item['id'] for item in current}))
             cursor = self.db.execute('INSERT INTO transcript_revisions (data) VALUES (?)',
                                      (json.dumps(snapshot, ensure_ascii=False),))
             self.put('subtitle_options', options)

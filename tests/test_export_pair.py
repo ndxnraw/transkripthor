@@ -108,6 +108,8 @@ class ExportPairTest(unittest.TestCase):
             self.assertTrue(save_editor(editor))
             self.assertFalse(editor.dirty)
             self.assertIn('saved', editor.saved_state.get())
+            error.assert_not_called()
+            self.assertFalse(export_editor(editor))
             self.assertIn('incomplete', editor.export_state.get())
             self.assertEqual(error.call_args.args[1], 'TXT/SRT export')
             self.assertEqual(error.call_args.args[2]['category'], 'permission')

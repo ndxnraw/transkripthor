@@ -57,12 +57,12 @@ a = Analysis(
 )
 pyz = PYZ(a.pure)
 
-from version import VERSION, WINDOWS_VERSION
+from version import DISPLAY_VERSION, WINDOWS_VERSION
 from PyInstaller.config import CONF
 version_path = Path(CONF['workpath']) / 'version_info.txt'
 version_path.parent.mkdir(parents=True, exist_ok=True)
 version_path.write_text((Path(SPECPATH) / 'version_info.template').read_text(encoding='utf-8')
-                       .replace('@VERSION@', VERSION).replace('@WINDOWS_VERSION@', repr(WINDOWS_VERSION)), encoding='utf-8')
+                       .replace('@VERSION@', DISPLAY_VERSION).replace('@WINDOWS_VERSION@', repr(WINDOWS_VERSION)), encoding='utf-8')
 
 exe = EXE(
     pyz,

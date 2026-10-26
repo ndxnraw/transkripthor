@@ -120,6 +120,7 @@ class SpeakerEditingTest(unittest.TestCase):
                 self.assertEqual(self.editor.segments[40]['speaker'], 'Hlas 140')
                 self.assertEqual(self.editor.speaker.get(), 'Hlas 140')
                 self.assertTrue(save_editor(self.editor))
+                self.assertTrue(export_editor(self.editor))
                 reopened = Editor(self.app, self.folder, parent=self.app.editor_page)
                 self.assertEqual(reopened.segments[0]['text'], 'Prvá oprava počas výpočtu.')
                 self.assertEqual(reopened.segments[40]['text'], text)

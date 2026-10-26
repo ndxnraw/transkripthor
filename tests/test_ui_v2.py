@@ -134,6 +134,7 @@ class DesktopTest(unittest.TestCase):
             self.assertFalse(editor.close())
         with patch('editor.messagebox.showerror', side_effect=AssertionError('Unexpected export error')):
             self.assertTrue(save_editor(editor))
+        self.assertTrue(export_editor(editor))
         with Project(project_folder) as project:
             self.assertEqual(project.segments()[-1]['text'],'Opravený posledný úsek.')
             self.assertEqual(project.segments()[-1]['start'],3000)

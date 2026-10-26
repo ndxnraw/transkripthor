@@ -1,5 +1,11 @@
 # Vývoj na Windows a prenos na ďalší počítač
 
+Aktuálny program je **Pre-release**. Toto označenie používa rozhranie aj
+textové Windows metadata; príznak Windows `VS_FF_PRERELEASE` je zapnutý.
+Interná kompatibilná číselná hodnota `WINDOWS_VERSION` sa nezvyšuje.
+Historické číselné verzie v auditoch a archívnych vydaniach neoznačujú
+aktuálny vývoj za finálny release. SYNC nevytvára tag ani GitHub Release.
+
 Podporujeme Windows x64 a CPython 3.12 s Tk a pip. Na toto overenie sa používa
 samostatný oficiálny Python 3.12.10; pôvodná zostava zaznamenala 3.12.14.
 Python 3.12.10 má [oficiálnu Windows distribúciu](https://www.python.org/ftp/python/3.12.10/).
@@ -160,6 +166,36 @@ v [src/eval/README.md](../src/eval/README.md). Súkromný manifest a merania
 držte mimo zdrojov (napríklad v `work/`), nie vedľa sledovaného príkladu.
 
 ## Používateľské údaje a chyby
+
+Dokončený prepis podporuje rozdelenie pri textovom kurzore s explicitným
+časom hranice, zlúčenie susedných úsekov s rovnakým hovoriacim a úpravu
+začiatku/konca v sekundách. Operácie zachovajú stabilné ID (nová časť dostane
+nové ID), fungujú v projektovom Undo/Redo a pri ukladaní prenášajú len dotknuté
+riadky/odstránenia. Neplatné intervaly, prekryvy a časy mimo známej dĺžky
+audia sú odmietnuté. Slová po štrukturálnej zmene nemajú tvrdené presné časy.
+Ručné hranice sa pri exporte nepredlžujú na mäkké minimum trvania titulku;
+nesplnené minimum vyvolá upozornenie pri zachovaní ručne zadaného času.
+Zlúčenie pridá jednu medzeru iba tam, kde medzi textami žiadna nie je.
+Štrukturálne operácie sú počas ukladania a zoskupovania hlasov zablokované.
+Nedokončený ASR projekt ich odmietne, aby sa nemenili hranice pokračovania.
+
+Prvé štrukturálne uloženie zálohuje SQLite a transakčne zapne formát úložiska
+2; obsah revízií sa rozšíri o odstránené ID. Staré plné/delta revízie sa stále
+čítajú. Originál sa nemení. Starší klient odmietne nový formát namiesto toho,
+aby pri čítaní ignoroval odstránené segmenty; záloha je bod návratu.
+
+Uložiť projekt už automaticky nespúšťa export. Exportné možnosti čítajú
+výslovne zvolený originál alebo uloženú revíziu na pracovnom vlákne. TXT,
+SRT, VTT, DOCX a JSON sa zapíšu do novej generácie a až potom sa atómovo
+prepne `exporty/aktualny-balik.json`. Predchádzajúce generácie sa nemažú.
+Pri chybe zostane projekt uložený a predchádzajúci publikovaný balík platný.
+SRT/VTT majú časovanie vždy; TXT/DOCX/JSON ho pridajú iba na požiadanie.
+Označenia hovoriacich sú samostatná voľba pre všetky formáty. TXT/JSON
+zachovávajú text aj Unicode; titulky používajú existujúce zalamovanie slov
+a validáciu. JSON má `schema=1`, zdroj, revíziu a segmenty. DOCX je jednoduchý
+Open XML dokument bez nových runtime závislostí. Neobsahuje makrá ani externé
+vzťahy. Pri XML-neprípustnom znaku export zlyhá bez publikovania balíka.
+Pôvodné TXT/SRT API a export pri dokončení ASR zostávajú kompatibilné.
 
 V ponuke editora sú **Playback settings / Nastavenia prehrávania**:
 výstupné zariadenie a tempo 0,75×, 1×, 1,25×, 1,5×. Voľba platí pre aktuálny

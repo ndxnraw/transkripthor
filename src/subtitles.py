@@ -88,6 +88,9 @@ def cues(segments, options=None, *, audio_duration=None):
             groups = [dict(start=start, end=end, text=text)]
             if len(wrapped(text, options.characters)) > options.lines or end-start > options.max_duration:
                 warnings.add(tr('subtitles.unaligned', index=segment_index))
+        if segment.get('manual_timing'):
+            for group in groups:
+                group['manual_timing'] = True
         result.extend(groups)
     # Validate the actual millisecond intervals written to SRT before publishing.
     for index, cue in enumerate(result, 1):
@@ -101,7 +104,8 @@ def cues(segments, options=None, *, audio_duration=None):
             raise ValueError(tr('subtitles.overlap', index=index))
     for index, cue in enumerate(result):
         boundary = result[index+1]['start'] if index+1 < len(result) else (audio_end_ms if audio_end_ms is not None else cue['end'])
-        cue['end'] = min(max(cue['end'], cue['start'] + math.ceil(options.min_duration * 1000)), boundary)
+        if not cue.pop('manual_timing', False):
+            cue['end'] = min(max(cue['end'], cue['start'] + math.ceil(options.min_duration * 1000)), boundary)
         duration = (cue['end'] - cue['start']) / 1000
         if duration < options.min_duration:
             warnings.add(tr('subtitles.too_short', index=index+1, actual=duration, limit=options.min_duration))

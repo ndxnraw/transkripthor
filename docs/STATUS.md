@@ -413,3 +413,37 @@ potvrdení a závere. Fyzické odpojenie zariadenia, posluch reálnej reči,
 systémové DPI Windows ani Narrator sa neoverovali. Latencia audio výstupu
 nie je presnosť časových značiek exportu; zobrazenie sleduje audio bloky.
 Verzia, tagy a vydanie sa nemenia.
+
+
+## Úloha 24 – editor a exporty, Pre-release (26. 10. 2026)
+
+Editor umožňuje rozdeliť dokončený segment pri kurzore a zadanom čase,
+zlúčiť susedné segmenty rovnakého hovoriaceho a upraviť hranice. Kontroluje
+poradie, prekryvy, hranice zvuku a milisekundové intervaly. Operácie patria
+do Undo/Redo; pôvodný ASR prepis zostáva nezmenený. Prvá štrukturálna zmena
+vytvorí zálohu databázy a bezpečne zvýši formát úložiska na 2. Staršia
+aplikácia tento formát odmietne. Neplatné časovanie slov sa odstráni;
+ručne určené hranice export nepredlžuje kvôli mäkkému limitu titulkov.
+
+Uloženie projektu už automaticky neexportuje. Samostatný dialóg vyberá
+originál alebo uloženú revíziu, TXT/SRT/VTT/DOCX/JSON a zahrnutie časov či
+hovoriacich. SRT/VTT vždy obsahujú časy. Export beží mimo UI a publikuje
+celú generáciu až po zápise všetkých súborov; predchádzajúce exporty ostávajú.
+DOCX vzniká zo štandardného OOXML bez novej závislosti. Program, Windows
+textové metadata a aktuálne návody používajú označenie Pre-release;
+interné číselné identifikátory a historické vydania sa nemenia.
+
+Overenie pracovných zmien: celý beh 260 testov za 256,308 s bez preskočenia;
+po posledných úpravách 27 cielených testov za 8,231 s. Deväť nových regresií
+pokrýva revízie, zálohu, Undo/Redo, uloženie/otvorenie, Unicode, odmietnutie
+neplatných časov, formáty, dialóg a zlyhanie publikovania. Povinné konečné
+clean-clone testy a nové Windows EXE sa overujú na presnom commite pred
+pushom; výsledok a SHA zaznamenáva lokálne potvrdenie a záverečná správa.
+
+Obmedzenia: štrukturálne úpravy vyžadujú dokončený prepis a známu dĺžku
+zvuku; zlúčenie rozdielnych hovoriacich vyžaduje najprv ručné zjednotenie.
+Pri chýbajúcom časovaní slov sa presné časy slov neodhadujú. DOCX sa overil
+ako ZIP/XML, nie vizuálne vo Worde. Testy Tk mierok nie sú fyzické systémové
+DPI Windows. Nové meranie ASR/GPU, Narrator ani ručné vizuálne overenie
+všetkých kombinácií DPI sa nevykonalo. Existujúci nesúvisiaci lokálny záznam
+STATUS zostáva mimo commitu; staršie neúspechy nie sú výsledkom tohto kandidáta.

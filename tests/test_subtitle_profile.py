@@ -56,6 +56,9 @@ class SubtitleProfileTest(unittest.TestCase):
         self.assertEqual(self.values(reopened), ['55', '3', '0.5', '9.5'])
         self.assertFalse(reopened.dirty)
         with Project(self.folder) as project:
+            self.assertEqual(project.get('editor_export')['state'], 'pending')
+        self.assertTrue(export_editor(reopened))
+        with Project(self.folder) as project:
             expected = asdict(SubtitleOptions(55, 3, .5, 9.5))
             self.assertEqual(project.get('subtitle_options'), expected)
             self.assertEqual(project.get('editor_export')['options'], expected)

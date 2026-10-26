@@ -1,9 +1,6 @@
 # ND TranskripThor – používateľský návod
 
-Tento návod opisuje aktuálny vývojový kód 2.1.3b. Publikované EXE v2.1.3b
-mu nemusí funkčne zodpovedať; stav je v [STATUS.md](STATUS.md).
-
-Oprava sťahovania, aktuálne výsledky overenia a známe obmedzenia: [verzia 2.1.3b](OPRAVA-2.1.3b.md).
+Tento návod opisuje aktuálny **pre-release**. Archívne EXE mu nemusí funkčne zodpovedať; výsledky overenia sú v [STATUS.md](STATUS.md). Číselné údaje v starších záznamoch sú historické.
 
 Aktualizácia rozhrania podľa návrhu Studio, pri zachovaní lokálneho prepisu.
 Samostatné karty **Nahrávky, Editor, Modely, Nastavenia a Podrobnosti spracovania**
@@ -20,8 +17,7 @@ na stiahnutie vybraných modelov. Po stiahnutí je dostupný režim Iba offline.
 Rozbaľte celý Windows ZIP a spustite **ND TranskripThor.exe**. Priečinok
 `_internal` musí zostať vedľa EXE. Python netreba inštalovať. Modely nie sú
 pribalené. Nová zdrojová zostava vznikne v `dist/ND TranskripThor`.
-[Windows ZIP 2.1.3b](https://github.com/ndxnraw/TranskripThor/releases/download/v2.1.3b/ND-TranskripThor-2.1.3b-Windows.zip)
-· [Poznámky k vydaniu](https://github.com/ndxnraw/TranskripThor/releases/tag/v2.1.3b)
+[Archív starších zostáv](https://github.com/ndxnraw/TranskripThor/releases) — aktuálny pre-release zostavte podľa DEVELOPMENT.md.
 
 ## Funkcie
 
@@ -51,7 +47,7 @@ pribalené. Nová zdrojová zostava vznikne v `dist/ND TranskripThor`.
    blok a upravte text priamo v ňom. **▶ Úsek** prehrá vybraný interval.
    **Hľadať** prehľadáva celý prepis; **Ďalší výskyt** prejde na ďalší zhodný úsek.
    Hovoriaci a nastavenia titulkov sú pod tlačidlom **Úsek, hovoriaci a titulky**.
-5. **Uložiť TXT/SRT** vytvorí `prepis.opravene.txt` a `titulky.opravene.srt`.
+5. **Uložiť** uloží projekt; samostatná ponuka **Možnosti exportu** vytvorí vybrané formáty.
    Pôvodný dokončený export zostáva zachovaný. Neuložené úpravy sú viditeľne
    označené; pri zatvorení editor upozorní na ich uloženie.
 
@@ -71,7 +67,7 @@ nespracujú znova. Overuje sa obsah nahrávky aj zhoda nastavení; pri nezhode t
 obnoviť nastavenia alebo spustiť nový prepis.
 
 SQLite projekt je autoritatívny zdroj. TXT/SRT sú exporty, ktoré možno znovu
-vytvoriť; pri páde počas exportu otvorte projekt vo fronte a zopakujte uloženie.
+vytvoriť; pri páde počas exportu otvorte projekt a zopakujte export bez prepisovania zvuku.
 Staré samotné TXT/SRT z verzie 1.x nemajú checkpoint a nemožno z nich bezpečne
 pokračovať. Zachovajte celý výstupný priečinok aj pôvodnú nahrávku.
 
@@ -148,3 +144,24 @@ Debug CZ/SK: pred spustením nastavte `$env:ND_TRANSKRIPTHOR_DEBUG='1'`.
 Rotovaný log je `%LOCALAPPDATA%\LokalnyPrepis\asr-debug.log`; neobsahuje zvuk ani text prepisu.
 
 Created by Daniel Návojský (ndxnraw) using Codex | 2026
+
+
+## Úprava úsekov a export v pre-release
+
+V ponuke editora môžete dokončený prepis rozdeliť pri kurzore v texte,
+zlúčiť s nasledujúcim úsekom alebo ručne upraviť jeho začiatok a koniec.
+Pri rozdelení zadáte čas v sekundách pôvodnej nahrávky; program nepredstiera
+presné automatické zarovnanie upravených slov. Časy musia zostať v poradí,
+bez prekryvov a v hraniciach nahrávky. Zlučované úseky musia mať rovnakého
+hovoriaceho. Všetky operácie podporujú Undo/Redo. Pôvodný prepis zostáva
+nedotknutý. Pred prvou štrukturálnou úpravou sa uloží záloha databázy;
+staršie aplikácie nemusia nový projekt otvoriť, záloha zostáva použiteľná.
+
+**Uložiť** uloží projekt bez vytvorenia exportu. **Možnosti exportu** umožnia
+vybrať originál alebo uloženú revíziu a formáty TXT, SRT, VTT, DOCX a JSON.
+Časy a hovoriaci v textových formátoch sú explicitné voľby; SRT/VTT majú
+časy vždy. Pred exportom neuložených opráv najprv uložte projekt.
+Každý export vytvorí samostatný balík v priečinku projektu `exporty`.
+Otvoriť export zobrazí posledný úspešne publikovaný balík. Neúspešný export
+nenaruší uložený projekt ani predchádzajúce exporty. Pôvodné tlačidlo opakovania
+bez zvolených možností naďalej exportuje poslednú uloženú revíziu do TXT/SRT.

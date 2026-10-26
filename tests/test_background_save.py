@@ -8,7 +8,7 @@ from unittest.mock import patch
 import test_editor_speakers
 from project import Project
 from state import StateStore, atomic_text, queue_item
-from test_io_support import wait_io, save_editor
+from test_io_support import wait_io, save_editor, export_editor
 
 
 class BackgroundSaveTest(unittest.TestCase):
@@ -45,6 +45,8 @@ class BackgroundSaveTest(unittest.TestCase):
         with Project(self.folder) as project:
             self.assertEqual(project.segments()[0]['text'], 'Text 0. First.')
             self.assertEqual(project.segments('revision', project.get('editor_export')['revision'])[0]['text'], 'Text 0. First.')
+        self.assertFalse((self.folder/'prepis.opravene.txt').exists())
+        self.assertTrue(export_editor(e))
         self.assertNotIn('Later.', (self.folder/'prepis.opravene.txt').read_text(encoding='utf-8-sig'))
         self.assertTrue(save_editor(e))
         self.assertFalse(e.dirty)

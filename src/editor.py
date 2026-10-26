@@ -29,8 +29,13 @@ class Editor:
                 raise ValueError(problem)
             self.segments = project.segments()
             self.source, self.digest = project.get('source'), project.get('fingerprint')
+            self.structure_ready = project.get('complete', False)
+            self.audio_duration = project.get('samples') / 16000 if project.get('samples') is not None else None
+            self.next_segment_id = max(project.get('next_segment_id', 0),
+                project.db.execute('SELECT COALESCE(MAX(id), -1)+1 FROM (SELECT id FROM segments UNION ALL SELECT id FROM original_segments)').fetchone()[0])
             original_available = project.original_available()
             export_request = project.get('editor_export')
+            bundle_request = project.get('bundle_export')
             subtitle_options = project.subtitle_options()
             self.project_lease = Lease(Path(folder)/'.project.lock')
         self.embedded = parent is not None
@@ -48,6 +53,11 @@ class Editor:
         self.current = None
         self.history = EditHistory()
         self.pending_segments = {}
+        self.structural_ids = set()
+        self.export_request = None
+        if bundle_request:
+            from export_formats import ExportOptions
+            self.export_request = (ExportOptions(**bundle_request['options']), bundle_request['view'], bundle_request['revision'])
         self.edit_serial = 0
         self.io_busy = False
         self.io_saved = False
@@ -100,7 +110,7 @@ class Editor:
         self.match_menu.add_command(label=tr('search.previous'), accelerator='Shift+F3', command=lambda: self.next_match(-1))
         match_button.configure(menu=self.match_menu)
         match_button.pack(side='left')
-        ttk.Button(toolbar, width=0, padding=(8, 2), text=tr('editor.init.save_txt_srt'), style='Accent.TButton', command=self.save).pack(side='right', padx=(8, 0))
+        ttk.Button(toolbar, width=0, padding=(8, 2), text=tr('exports.save_project'), style='Accent.TButton', command=self.save).pack(side='right', padx=(8, 0))
         # Pack fixed controls first so they remain accessible at minimum size.
         bottom = ttk.Frame(outer)
         bottom.pack(side='bottom', fill='x')
@@ -109,6 +119,9 @@ class Editor:
         self.status_label.pack(side='bottom', fill='x', pady=2)
         self.export_state = tk.StringVar(value=tr('editor.init.export_has_not_been_saved_yet') if not export_request else
             (tr('editor.init.txt_srt_export_complete') if export_request['state'] == 'complete' else tr('editor.init.project_saved_export_is_pending')))
+        if bundle_request:
+            source = tr('exports.original') if bundle_request['view'] == 'original' else tr('exports.revision', id=bundle_request['revision'])
+            self.export_state.set(source+' — '+tr('exports.done' if bundle_request['state'] == 'complete' else 'exports.incomplete'))
         export_bar = ttk.Frame(bottom)
         export_bar.pack(side='bottom', fill='x')
         ttk.Button(export_bar, width=0, padding=(8, 2), text=tr('editor.init.retry_export'), command=self.retry_export).pack(side='right')
@@ -122,6 +135,10 @@ class Editor:
         self.project_menu.add_command(label=tr('project.locate_audio'), command=self.locate_audio, state='disabled')
         self.project_menu.add_command(label=tr('project.open'), command=app.choose_project)
         self.project_menu.add_command(label=tr('playback.settings'), command=self.playback_settings)
+        self.project_menu.add_command(label=tr('segments.split'), command=lambda: self.edit_structure('split'))
+        self.project_menu.add_command(label=tr('segments.merge'), command=lambda: self.edit_structure('merge'))
+        self.project_menu.add_command(label=tr('segments.times'), command=lambda: self.edit_structure('times'))
+        self.project_menu.add_command(label=tr('exports.options'), command=self.export_dialog)
         details_toggle.configure(menu=self.project_menu)
         details_toggle.pack(side='right', padx=(4, 0))
         self.details = ttk.Frame(bottom)
@@ -318,11 +335,20 @@ class Editor:
             self.status.set(tr('editor.nothing_redo') if redo else tr('editor.nothing_undo'))
             return
         for identifier, fields in changes:
-            self.segments[self.segment_indices[identifier]].update(fields)
+            if '__row__' in fields:
+                self.segments = [s for s in self.segments if s['id'] != identifier]
+                if fields['__row__'] is not None:
+                    self.segments.append(fields['__row__'])
+                self.structural_ids.add(identifier)
+                self.speaker_revisions[identifier] = self.speaker_revisions.get(identifier, 0) + 1
+            else:
+                self.segments[self.segment_indices[identifier]].update(fields)
             if 'speaker' in fields:
                 self.speaker_revisions[identifier] = self.speaker_revisions.get(identifier, 0) + 1
+        self.segments.sort(key=lambda s: (s['start'], s['id']))
+        self.segment_indices = {s['id']: i for i, s in enumerate(self.segments)}
         self.track_changes(identifier for identifier, _ in changes)
-        target = self.segment_indices[changes[0][0]]
+        target = next((self.segment_indices[key] for key, _ in changes if key in self.segment_indices), 0)
         # Re-evaluate the filter; keep it unless it would hide the changed segment.
         self.refresh_search()
         if target not in self.matches:
@@ -582,6 +608,106 @@ class Editor:
         window.bind('<Escape>', lambda event: window.destroy())
         output.focus_set()
 
+    def change_structure(self, operation, *, offset=None, seconds=None, start=None, end=None):
+        from segment_edit import split, merge, validate
+        if not self.structure_ready:
+            raise ValueError(tr('segments.complete_required'))
+        if self.io_busy or self.speaker_busy:
+            raise ValueError(tr('editor.io_busy'))
+        self.capture()
+        if self.current is None:
+            raise ValueError(tr('segments.select'))
+        index = self.current
+        before = self.segments[index:index+(2 if operation == 'merge' else 1)]
+        if operation == 'split':
+            after = split(before[0], offset, seconds, self.next_segment_id)
+        elif operation == 'merge' and len(before) == 2:
+            after = [merge(*before)]
+        elif operation == 'times':
+            after = [dict(before[0], start=start, end=end, words=[], manual_timing=True)]
+        else:
+            raise ValueError(tr('segments.select'))
+        candidate = self.segments[:index]+after+self.segments[index+len(before):]
+        validate(candidate, self.audio_duration)
+        self.player.pause()
+        old, new = {r['id']: r for r in before}, {r['id']: r for r in after}
+        changes = [(key, {'__row__':old.get(key)}, {'__row__':new.get(key)}) for key in sorted(set(old)|set(new))]
+        self.segments = candidate
+        self.next_segment_id = max(self.next_segment_id, max(new)+1)
+        self.segment_indices = {s['id']: i for i, s in enumerate(self.segments)}
+        self.structural_ids.update(set(old)|set(new))
+        self.current = None
+        self.record_changes(changes)
+        self.query.set('')
+        self.refresh_search()
+        self.page = index//self.PAGE_SIZE
+        self.render()
+        self.tree.selection_set(str(index))
+        self.select()
+
+    def edit_structure(self, operation):
+        try:
+            if self.current is None:
+                raise ValueError(tr('segments.select'))
+            self.capture()
+            row = self.segments[self.current]
+            values = {}
+            if operation == 'split':
+                values['offset'] = len(self.text.get('1.0', 'insert'))
+                values['seconds'] = simpledialog.askfloat(tr('segments.split'), tr('segments.split_time'), parent=self.window)
+                if values['seconds'] is None:
+                    return
+            elif operation == 'times':
+                for key in ('start', 'end'):
+                    values[key] = simpledialog.askfloat(tr('segments.times'), tr('segments.'+key),
+                        initialvalue=row[key], parent=self.window)
+                    if values[key] is None:
+                        return
+            self.change_structure(operation, **values)
+        except Exception as exc:
+            messagebox.showerror(tr('segments.title'), str(exc), parent=self.window)
+
+    def export_dialog(self):
+        if self.io_busy:
+            return
+        self.capture()
+        if self.dirty:
+            self.status.set(tr('exports.save_first'))
+            return
+        from export_formats import FORMATS, ExportOptions
+        with Project(self.folder) as project:
+            sources = [('revision', row[0]) for row in project.db.execute('SELECT id FROM transcript_revisions ORDER BY id DESC')]
+            if project.original_available():
+                sources.append(('original', None))
+        if not sources:
+            self.status.set(tr('exports.save_first'))
+            return
+        window = tk.Toplevel(self.window)
+        window.title(tr('exports.options'))
+        body = ttk.Frame(window, padding=12); body.pack(fill='both', expand=True)
+        ttk.Label(body, text=tr('exports.source')).pack(anchor='w')
+        source = ttk.Combobox(body, state='readonly', values=[tr('exports.original') if v == 'original' else tr('exports.revision', id=r) for v,r in sources])
+        source.current(0); source.pack(fill='x')
+        selected = {f:tk.BooleanVar(value=f in ('txt','srt')) for f in FORMATS}
+        for format, variable in selected.items():
+            ttk.Checkbutton(body, text=format.upper(), variable=variable).pack(anchor='w')
+        times, speakers = tk.BooleanVar(value=False), tk.BooleanVar(value=False)
+        ttk.Checkbutton(body, text=tr('exports.times'), variable=times).pack(anchor='w')
+        ttk.Checkbutton(body, text=tr('exports.speakers'), variable=speakers).pack(anchor='w')
+        ttk.Label(body, text=tr('exports.help'), wraplength=360).pack(fill='x', pady=8)
+        def run():
+            try:
+                options = ExportOptions(tuple(f for f,v in selected.items() if v.get()), times.get(), speakers.get())
+                view, revision = sources[source.current()]
+                self.export_request = (options, view, revision)
+                self.start_io()
+                window.destroy()
+            except Exception as exc:
+                messagebox.showerror(tr('exports.options'), str(exc), parent=window)
+        ttk.Button(body, text=tr('exports.run'), command=run).pack(anchor='e')
+        window.bind('<Escape>', lambda event: window.destroy())
+        source.focus_set()
+
     def save(self):
         if self.io_busy:
             self.status.set(tr('editor.io_busy'))
@@ -593,7 +719,8 @@ class Editor:
             # Only changed records cross the thread boundary. Nested word data is
             # immutable in the editor: edits replace it rather than mutate it.
             versions = dict(self.pending_segments)
-            rows = [dict(self.segments[self.segment_indices[key]]) for key in versions]
+            rows = [dict(self.segments[self.segment_indices[key]]) if key in self.segment_indices
+                    else dict(id=key, deleted=True) for key in versions]
             token = (self.history.state, tuple(v.get() for v in self.cue_values), versions)
             self.start_io(rows, options, token)
             return True
@@ -605,7 +732,11 @@ class Editor:
         try:
             import os
             from export_pair import latest_pair
-            os.startfile(str(latest_pair(Path(self.folder), '.opravene')))
+            from export_formats import latest_bundle
+            folder = Path(self.folder)
+            bundle, legacy = folder/'exporty'/'aktualny-balik.json', folder/'exporty'/'aktualny.opravene.json'
+            location = latest_bundle(folder) if bundle.exists() and (not legacy.exists() or bundle.stat().st_mtime_ns >= legacy.stat().st_mtime_ns) else latest_pair(folder, '.opravene')
+            os.startfile(str(location))
         except Exception as exc:
             messagebox.showinfo(tr('editor.labels.export'), tr('editor.open_export.could_not_open_the_completed_export_pair_select_retry') + str(exc), parent=self.window)
 
@@ -621,13 +752,20 @@ class Editor:
         self.io_is_save = token is not None
         self.io_saved = self.io_success = False
         self.export_state.set(tr('editor.io_saving') if token else tr('editor.io_exporting'))
+        structural = bool(self.structural_ids)
+        request = self.export_request
         def run():
             try:
                 with Project(self.folder) as project:
                     if token is not None:
-                        project.edit(rows, export_options=options)
+                        project.edit(rows, export_options=options, structural=structural)
                         self.events.put(('io_committed', token))
-                    warnings = project.retry_export()
+                        warnings = []
+                    elif request:
+                        from export_formats import export_project
+                        location, warnings = export_project(project, request[0], view=request[1], revision=request[2])
+                    else:
+                        warnings = project.retry_export()
                 self.events.put(('io_done', warnings))
             except Exception as exc:
                 self.events.put(('io_error', classify(exc, 'disk')))
@@ -643,15 +781,16 @@ class Editor:
             for key, version in versions.items():
                 if self.pending_segments.get(key) == version:
                     del self.pending_segments[key]
+                    self.structural_ids.discard(key)
             self.io_saved = True
             self.refresh_dirty()
-            self.export_state.set(tr('editor.io_exporting'))
+            self.export_state.set(tr('exports.saved_only'))
             return
         self.io_busy = False
         self.io_success = kind == 'io_done'
         if self.io_success:
-            self.export_state.set(tr('editor.retry_export.txt_srt_export_complete'))
-            self.status.set(tr('editor.retry_export.the_txt_srt_pair_is_available_through_open_export') + ' '.join(value))
+            self.export_state.set(tr('exports.saved_only') if self.io_is_save else tr('exports.done'))
+            self.status.set(tr('exports.saved_only') if self.io_is_save else tr('exports.done')+' '+' '.join(value))
         elif self.io_is_save and not self.io_saved:
             self.export_state.set(tr('editor.io_failed'))
             show_error(self.window, tr('editor.save.save'), value)

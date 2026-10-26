@@ -40,6 +40,17 @@ def run(folder):
         if not 11000 < count < 14500:
             raise RuntimeError('Bundled playback tempo filter failed')
         report['playback_tempo'] = 'PASS'
+        from export_formats import render, ExportOptions, FORMATS
+        from subtitles import SubtitleOptions
+        files, _ = render([dict(id=0, start=0, end=1, text='Overenie č 日本', words=[])],
+                          ExportOptions(FORMATS), SubtitleOptions(), 1, dict(view='original', revision=None))
+        import io, zipfile
+        from xml.etree import ElementTree as ET
+        with zipfile.ZipFile(io.BytesIO(files['prepis.docx'])) as document:
+            ET.fromstring(document.read('word/document.xml'))
+        if len(files) != 5 or json.loads(files['prepis.json'])['segments'][0]['text'] != 'Overenie č 日本':
+            raise RuntimeError('Bundled export formats failed')
+        report['export_formats'] = 'PASS'
         import kaldi_native_fbank
         from i18n import Translator
         if set(Translator().catalogs) != {'en', 'sk'}:
