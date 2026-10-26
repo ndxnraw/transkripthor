@@ -336,3 +336,16 @@ spustite setup/testy/build a nové EXE. Pri zlyhaní ponechajte commit lokálne
 alebo použite schválený draft PR postup. Kontrolujte výsledok Windows CI;
 workflow build sa dá vyžiadať ručne. Release/tag/verzia vyžadujú výslovný
 režim RELEASE a zadanú novú verziu.
+
+
+## Referenčné meranie F26
+
+`src/evaluate_mixed.py` vyžaduje validovaný schema=2 korpus, presný commit
+modelu a nový výstupný priečinok. `--device cpu|cuda` je explicitná voľba;
+GPU chybu nenahradí CPU meraním. `--validate-only` kontroluje referencie bez
+načítania modelu. Nástroj používa produkčný `transcribe_job`, diskové PCM,
+checkpointy a efektívne nastavenia backendu v izolovanom procese na nahrávku.
+Metodika, význam metrík a zoznam chýbajúcich ukážok sú v
+[src/eval/README.md](../src/eval/README.md). Bez oprávneného korpusu neuvádzame
+reálne WER, presnosť prechodov ani výkon modelov. Jednotkové testy a technická
+skúška Windows počítadiel pamäte nie sú meraním kvality prepisu.

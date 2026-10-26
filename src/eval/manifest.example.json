@@ -6,10 +6,32 @@
     "kind": "real",
     "authorized": false,
     "reviewed_by": "",
-    "tags": ["switching", "short_answers", "noise", "names", "mid_sentence"],
+    "tags": [
+      "switching",
+      "short_answers",
+      "noise",
+      "names",
+      "mid_sentence"
+    ],
     "segments": [
-      {"start": 0.0, "end": 2.5, "text": "Zítra to pošleme do skladu.", "language": "cs"},
-      {"start": 3.0, "end": 5.5, "text": "Dobre, potom to naskladním.", "language": "sk"}
-    ]
-  }
+      {
+        "start": 0.0,
+        "end": 2.5,
+        "text": "Zítra to pošleme do skladu.",
+        "language": "cs"
+      },
+      {
+        "start": 3.0,
+        "end": 5.5,
+        "text": "Dobre, potom to naskladním.",
+        "language": "sk"
+      }
+    ],
+    "rights": "",
+    "sha256": "",
+    "duration": 5.5,
+    "language": "cs-sk",
+    "entities": []
+  },
+  "schema": 2
 }

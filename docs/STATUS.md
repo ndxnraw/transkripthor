@@ -447,3 +447,36 @@ ako ZIP/XML, nie vizuálne vo Worde. Testy Tk mierok nie sú fyzické systémov�
 DPI Windows. Nové meranie ASR/GPU, Narrator ani ručné vizuálne overenie
 všetkých kombinácií DPI sa nevykonalo. Existujúci nesúvisiaci lokálny záznam
 STATUS zostáva mimo commitu; staršie neúspechy nie sú výsledkom tohto kandidáta.
+
+
+## Úloha 25 / F26 – dôveryhodné meranie kvality (26. 10. 2026)
+
+Vyhodnocovanie používa produkčné načítanie presného offline snapshotu,
+backendové efektívne nastavenia a transcribe_job vrátane diskového PCM,
+VAD, checkpointov a exportu. Každá nahrávka/model má izolovaný proces a
+časový limit. Voľba cpu/cuda je explicitná (predvolene CPU); zlyhanie GPU
+sa nepreklasifikuje na CPU meranie. Ukladajú sa parametre, revízia modelu,
+verzie balíkov, odtlačky zdrojov/referencie, hardware, čas načítania a fázy.
+
+Schema=2 validuje oprávnenie, referenciu, SHA-256, jedinečnosť, časové hranice,
+jazyky, slová a anotácie mien/čísel. Report rozlišuje WER/CER, anotované
+výskyty mien/čísel, časové pokrytie jazyka, prechody, hranice zhodných slov,
+RTF, peak working set a vzorkovanú per-process VRAM. Chýbajúce merania sú
+null; chyby ostávajú v súhrnoch scenárov. Dokumentácia presne opisuje
+normalizáciu, tolerancie a obmedzenia anotácií/zarovnania a WDDM.
+
+Overené: 10 nových simulovaných regresií za 0,146 s bez preskočenia; reálne
+čítanie Windows pamäte a hardvérových metadát prešlo. Sandbox jeden pokus
+zablokoval pri dočasných súboroch; opakovanie s potrebným prístupom prešlo.
+Presný kandidát pred pushom musí dokončiť celú sadu (270 testov) a nový
+Windows EXE z čistého klonu; výsledky konkrétneho SHA sú v lokálnom potvrdení
+a závere. Predošlá úloha 24 bola synchronizovaná ako b9ce8ea: čistý beh
+260 testov za 206,836 s, EXE aj GitHub CI (260 testov, 344,149 s) prešli.
+
+Reálny oprávnený referenčný korpus nie je v sledovaných zdrojoch k dispozícii.
+Neboli merané reálne WER, mená, prechody, GPU výkon ani presnosť časovania;
+neuvádzame vymyslené skóre. README vyhodnocovania obsahuje potrebné ukážky
+a postup. Benchmark nemeria UI/frontu ani produkčný IPC watchdog; používa
+rovnakú produkčnú úlohu v izolovanom procese s vlastným timeoutom. VRAM je
+vzorkovaný dolný odhad špičky, na WDDM môže byť nedostupná. Práva a ručnú
+správnosť referencie deklaruje autor korpusu. Verzia, tagy ani Release sa nemenia.
