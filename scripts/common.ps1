@@ -11,6 +11,7 @@ function Invoke-ProjectPython {
 
 function Assert-WindowsPython {
     param([string]$Executable, [string[]]$Prefix = @())
-    & $Executable @Prefix -c "import sys, struct, tkinter; assert sys.platform == 'win32' and sys.version_info[:2] == (3, 12) and struct.calcsize('P') == 8, 'Windows x64 Python 3.12 required'; print(sys.version); print('Tk', tkinter.Tcl().eval('info patchlevel'))"
-    if ($LASTEXITCODE -ne 0) { throw 'Windows x64 Python 3.12 with Tk is required.' }
+    $ExpectedPython = (Get-Content -LiteralPath (Join-Path $ProjectRoot '.python-version') -Raw).Trim()
+    & $Executable @Prefix -c "import sys, struct, tkinter, platform; assert sys.platform == 'win32' and platform.python_implementation() == 'CPython' and platform.python_version() == sys.argv[1] and struct.calcsize('P') == 8, 'Pinned Windows x64 CPython required'; print(sys.version); print('Tk', tkinter.Tcl().eval('info patchlevel'))" $ExpectedPython
+    if ($LASTEXITCODE -ne 0) { throw "Windows x64 CPython $ExpectedPython with Tk is required; existing environment was preserved." }
 }

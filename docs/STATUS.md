@@ -495,3 +495,37 @@ Produkčný čítač encoding/JSON bajty používa explicitne. Test bol opraven�
 na UTF-8 bez oslabenia kontroly duplicít; ďalší kandidát musí znova prejsť
 celým čistým test/build a vzdialeným CI. Tento neúspech sa neskrýva opakovaním
 rovnakého behu bez opravy.
+
+
+## Úloha 26 / F27, F28 – uzamknuté zostavovanie (27. 10. 2026)
+
+Existujúce runtime/speakers/build wheel locky s SHA-256 a Hub pin 0.36.2 boli
+zachované; aplikačné závislosti sa neaktualizovali. Pribudol bootstrap.lock
+pre už používaný pip 25.0.1. `.python-version` zjednocuje CPython 3.12.10 x64
+v setup/test/build aj CI. Resolver odmieta iný Python/architektúru a konfliktné
+reporty. Nová kontrola porovnáva vstupy, constraints, presný pin interného
+Hub transportu a reálne nainštalovaný reťazec v projektovom .venv. Neznáme
+verzie alebo balíky sa odmietajú bez automatického mazania prostredia.
+
+Build na začiatku zneplatní staré potvrdenie (so zálohou), potom overí
+prostredie, celú regresnú sadu, PyInstaller, zdrojovú zhodu a startup EXE.
+Až po úspechu zapíše build-manifest.json s SHA-256 vstupov, zostavy a
+interpretera, commitom a verziami. ZIP balenie vyžaduje platný manifest a
+zhodu aktuálnych vstupov/súborov/prostredia. Manifest sa pribalí do ZIP.
+
+Sedem nových regresií prešlo za 1,100 s: locky, drift, Hub nesúlad, blokovanie
+balenia pri zlyhaní testov, neplatný/pozmenený manifest aj malý ZIP s checksum.
+Prvý PowerShell pokus zastavila lokálna politika Windows PowerShellu pred
+testovanou chybou; test používa dostupný PowerShell 7 bez zmeny politiky.
+Lokálne overenie aktuálneho prostredia potvrdilo 43 uzamknutých distribúcií.
+Pred pushom presný kandidát musí dokončiť čistú inštaláciu, celých 277 testov
+(vrátane reálneho lokálneho HTTP transportu) a novú overenú Windows zostavu.
+Konkrétne SHA a konečné výsledky sú v lokálnom potvrdení a závere.
+
+Nejde o preukázanú bitovú identitu dvoch EXE na odlišných počítačoch.
+Manifest je evidencia vstupov a ochrana pred náhodným zastaraným balíkom,
+nie kryptografický podpis. Python inštalátor musí mať dôveryhodný pôvod;
+manifest meria použitý interpreter. GPU lock ani reálne veľké modelové
+sťahovanie neboli súčasťou tejto úpravy. Verzia/tag/Release sa nemenia.
+Predošlá F26 bola dokončená commitom 9190a5f: čistých 270 testov za 215,958 s,
+Windows EXE PASS a GitHub CI 40314089987 (270 testov za 203,125 s) PASS.

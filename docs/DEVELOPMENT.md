@@ -6,8 +6,9 @@ Interná kompatibilná číselná hodnota `WINDOWS_VERSION` sa nezvyšuje.
 Historické číselné verzie v auditoch a archívnych vydaniach neoznačujú
 aktuálny vývoj za finálny release. SYNC nevytvára tag ani GitHub Release.
 
-Podporujeme Windows x64 a CPython 3.12 s Tk a pip. Na toto overenie sa používa
-samostatný oficiálny Python 3.12.10; pôvodná zostava zaznamenala 3.12.14.
+Zostavovanie a testy vyžadujú Windows x64 a presný CPython 3.12.10 s Tk.
+Autoritatívny pin je `.python-version`, ktorý čítajú lokálne skripty aj CI.
+Staršie záznamy o 3.12.14 sú historické, nie aktuálny predpis.
 Python 3.12.10 má [oficiálnu Windows distribúciu](https://www.python.org/ftp/python/3.12.10/).
 Pri inštalácii povoľte Tcl/Tk a pip. Potrebujete Git, internet na inštaláciu
 balíkov/modelov a niekoľko GB voľného miesta. PyAV wheel obsahuje dekódovanie;
@@ -35,7 +36,7 @@ git status --short --branch
 
 Ak Python nie je v PATH ani v launcheri `py`, prvý setup spustite s
 `-Python 'C:\cesta k Pythonu\python.exe'`. Skript vyžaduje Windows x64
-Python 3.12 a Tk, vytvorí `.venv` len ak chýba a existujúce prostredie nemaže.
+Python podľa `.python-version` a Tk, vytvorí `.venv` len ak chýba a existujúce prostredie nemaže.
 Opakovaná inštalácia je bezpečná; pip skontroluje locky a konzistenciu.
 Pri zlyhaní vráti nenulový výsledok. Nepoužívajte `PYTHONPATH`/`PYTHONHOME`
 ani `work/model-packages`. Príkazy fungujú aj s medzerami a diakritikou
@@ -349,3 +350,51 @@ Metodika, význam metrík a zoznam chýbajúcich ukážok sú v
 [src/eval/README.md](../src/eval/README.md). Bez oprávneného korpusu neuvádzame
 reálne WER, presnosť prechodov ani výkon modelov. Jednotkové testy a technická
 skúška Windows počítadiel pamäte nie sú meraním kvality prepisu.
+
+
+## Reprodukovateľné vstupy a povinné kontroly F27/F28
+
+Použite čistý klon a nové `.venv`; existujúce profily ani modely nemažte.
+`setup.ps1` zachová existujúce prostredie, odmietne nesprávny Python a
+nainštaluje pip 25.0.1 z `bootstrap.lock` s SHA-256. Aplikačné verzie sa v tejto
+úlohe nemenili. Runtime/build/speakers locky pokrývajú deklarovaný reťazec;
+`verify_environment.py` porovnáva vstupy, constraints, pin transportu a skutočné
+verzie distribúcií vrátane závislostí a umiestnenia v projektovom `.venv`.
+Neznáme balíky a odlišné verzie sa neodstraňujú automaticky: pripravte čistý
+klon/prostredie. Schválené voliteľné build/speaker balíky sú povolené aj pri
+vývojových testoch. GPU variant torch potrebuje samostatne overený lock;
+základný build ho nebude potichu považovať za zhodný CPU variant.
+
+Jedinou cestou balenia EXE je `scripts/build.ps1` (`zostavit.cmd` je obal).
+Build overí prostredie, spustí úplné testy a až potom PyInstaller, porovnanie
+zabalených zdrojov a diagnostiku EXE. Testy vyžadujú minimálne 197 objavených
+a dokončených testov bez preskočenia. Integračné testy transportu v tej istej
+sade používajú lokálny HTTP server a skutočný Hub stream, obnovu, zámky,
+kontrolné súčty, prerušenie a časové limity; nesťahujú veľké modely.
+PowerShell regresia úmyselne nechá testovací skript zlyhať a overí, že sa
+balenie nespustí. Používa dostupný PowerShell 7 (ako CI), inak Windows
+PowerShell s platnou lokálnou politikou; politiku neskúša obísť ani meniť.
+
+Na začiatku build označí manifest ako pending; starší manifest zálohuje pod
+`build/previous-build-manifests`. Až po všetkých kontrolách vytvorí
+`dist/ND TranskripThor/build-manifest.json`: SHA-256 vstupov a súborov zostavy,
+commit, Python, jeho spustiteľný súbor a presné verzie knižníc. `package.py`
+overí tento manifest, aktuálne vstupy, prostredie aj súbory pred vytvorením
+ZIP; manifest sa pribalí. Neúspešný build, zmena zdrojov či poškodená zostava
+blokujú balenie. Po pridaní licencií zostáva kontrola aplikačných súborov
+platná; licenčné kópie sa do porovnania runtime stromu nezapočítavajú.
+Manifest nie je digitálny podpis ani obrana proti úmyselnej úprave vlastného
+manifestu. Je to ochrana pred náhodným zabalením nesprávnej zostavy.
+
+Reprodukovateľnosť tu znamená pevné overiteľné vstupy a zopakovateľný postup,
+nie potvrdenú bitovú identitu dvoch EXE/ZIP. PyInstaller, cesty a časové značky
+môžu ovplyvniť bajty; bitovú identitu na dvoch počítačoch sme nemerali. Python
+inštalujte z oficiálnej Windows distribúcie uvedenej vyššie; manifest meria
+použitý interpreter, nenahrádza overenie pôvodu jeho inštalátora.
+
+Závislosti aktualizujte po jednej: upravte príslušný `.in` a constraint,
+vyriešte celý reťazec na presnom Pythone, vytvorte nové wheel hash locky,
+prejdite diff a urobte čistý setup/test/build. Pri Hugging Face Hub navyše
+skontrolujte interné API v `download_worker.py`, vedome upravte HUB_VERSION
+a úspešne dokončite všetky transportné regresie. Nesúlad pinu kontrola odmietne.
+Nikdy neaktualizujte celý lock naslepo ani nevypínajte TLS/hash kontroly.

@@ -17,6 +17,8 @@ def main():
         raise ValueError('Complete onedir build required')
     if output.exists() or output.with_suffix('.sha256').exists():
         raise FileExistsError('Do not overwrite an existing package/checksum')
+    from build_receipt import verify
+    verify(app)
     for distribution in distributions():
         for relative in distribution.files or []:
             if any(word in relative.name.lower() for word in ('license', 'licence', 'copying')):
@@ -30,7 +32,7 @@ def main():
     output.parent.mkdir(parents=True, exist_ok=True)
     with ZipFile(output, 'x', ZIP_DEFLATED, compresslevel=3) as archive:
         for path in sorted(app.rglob('*')):
-            if path.is_file() and (path.name == 'ND TranskripThor.exe' or path.relative_to(app).parts[0] in ('_internal', 'LICENCIE')):
+            if path.is_file() and (path.name in ('ND TranskripThor.exe', 'build-manifest.json') or path.relative_to(app).parts[0] in ('_internal', 'LICENCIE')):
                 archive.write(path, Path(app.name) / path.relative_to(app))
     with ZipFile(output) as archive:
         if archive.testzip() is not None:

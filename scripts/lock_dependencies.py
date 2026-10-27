@@ -26,10 +26,14 @@ def main():
     for path in args.report:
         report = json.loads(path.read_text(encoding='utf-8'))
         environment = dict(report['environment'], extra='')
-        if environment['sys_platform'] != 'win32' or environment['python_version'] != '3.12':
-            raise ValueError('Resolve on Windows Python 3.12')
+        if (environment['sys_platform'] != 'win32' or environment['python_full_version'] !=
+                (ROOT/'.python-version').read_text(encoding='ascii').strip() or environment['platform_machine'].lower() not in ('amd64','x86_64')):
+            raise ValueError('Resolve on the pinned Windows x64 Python')
         for entry in report['install']:
-            packages[canonicalize_name(entry['metadata']['name'])] = entry
+            key=canonicalize_name(entry['metadata']['name'])
+            if key in packages and packages[key] != entry:
+                raise ValueError(f'Conflicting resolver reports: {key}')
+            packages[key] = entry
     def closure(roots):
         found = set()
         def visit(name):

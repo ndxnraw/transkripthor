@@ -16,9 +16,14 @@ if (!(Test-Path -LiteralPath $ProjectPython)) {
     if ($LASTEXITCODE -ne 0) { throw 'venv creation failed; the existing environment was not deleted.' }
 }
 Assert-WindowsPython $ProjectPython
+Invoke-ProjectPython -Arguments @('-m', 'pip', 'install', '--require-hashes', '--only-binary=:all:', '-r', (Join-Path $ProjectRoot 'requirements/bootstrap.lock'))
 $Lock = if ($Mode -eq 'build') { 'build.lock' } else { 'runtime.lock' }
 Invoke-ProjectPython -Arguments @('-m', 'pip', 'install', '--require-hashes', '--only-binary=:all:', '-r', (Join-Path $ProjectRoot "requirements/$Lock"))
 if ($Speakers -or $Mode -eq 'build') {
     Invoke-ProjectPython -Arguments @('-m', 'pip', 'install', '--require-hashes', '--only-binary=:all:', '-r', (Join-Path $ProjectRoot 'requirements/speakers.lock'))
 }
 Invoke-ProjectPython -Arguments @('-m', 'pip', 'check')
+
+$VerifyArgs = @((Join-Path $PSScriptRoot 'verify_environment.py'), '--mode', $Mode)
+if ($Speakers) { $VerifyArgs += '--speakers' }
+Invoke-ProjectPython -Arguments $VerifyArgs
