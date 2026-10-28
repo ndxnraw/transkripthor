@@ -8,7 +8,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'src'))
 
 
 def main():
-    from model_catalog import download, location, cached_path
+    from ndtranskripthor.models.model_catalog import download, location, cached_path
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('model', choices=['tiny', 'small', 'medium', 'large-v3',
                                         'kinit/whisper-large-v3-sk', 'Wespeaker/wespeaker-voxceleb-resnet34-LM'])

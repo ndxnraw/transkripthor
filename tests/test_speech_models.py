@@ -6,7 +6,7 @@ import unittest
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import Mock, patch
-import speech_models as sm
+from ndtranskripthor.asr import speech_models as sm
 
 class ModelsTest(unittest.TestCase):
     def setUp(self):
@@ -20,9 +20,9 @@ class ModelsTest(unittest.TestCase):
         self.assertEqual(sm.route('en', 'small'), 'small')
         self.assertEqual(sm.route(None, 'medium'), 'medium')
 
-    @patch('speech_models.release_memory')
-    @patch('speech_models.device', return_value='cpu')
-    @patch('speech_models.load_backend')
+    @patch('ndtranskripthor.asr.speech_models.release_memory')
+    @patch('ndtranskripthor.asr.speech_models.device', return_value='cpu')
+    @patch('ndtranskripthor.asr.speech_models.load_backend')
     def test_reuse_and_language_switch(self, load, *_):
         manager = sm.ModelManager()
         first = manager.get('sk', 'tiny', 'cache', True, self.emit, self.stop)
@@ -35,27 +35,27 @@ class ModelsTest(unittest.TestCase):
         self.assertEqual(load.call_args.args[0], 'small')
         self.assertTrue(load.call_args.args[2])
 
-    @patch('speech_models.release_memory')
-    @patch('speech_models.device', return_value='cuda')
-    @patch('speech_models.load_backend')
+    @patch('ndtranskripthor.asr.speech_models.release_memory')
+    @patch('ndtranskripthor.asr.speech_models.device', return_value='cuda')
+    @patch('ndtranskripthor.asr.speech_models.load_backend')
     def test_cuda_load_requires_explicit_cpu_confirmation(self, load, *_):
         load.side_effect = [RuntimeError('CUDA out of memory'), object()]
         with self.assertRaises(sm.GPUError):
             sm.ModelManager().get('sk', sm.SLOVAK_MODEL, 'cache', True, self.emit, self.stop, 'cuda')
         self.assertEqual([x.args[3] for x in load.call_args_list], ['cuda'])
 
-    @patch('speech_models.release_memory')
-    @patch('speech_models.device', return_value='cpu')
-    @patch('speech_models.load_backend', side_effect=ImportError('torch missing'))
+    @patch('ndtranskripthor.asr.speech_models.release_memory')
+    @patch('ndtranskripthor.asr.speech_models.device', return_value='cpu')
+    @patch('ndtranskripthor.asr.speech_models.load_backend', side_effect=ImportError('torch missing'))
     def test_failed_explicit_selection_does_not_switch_model(self, load, *_):
         with self.assertRaisesRegex(RuntimeError, 'selected model'):
             sm.ModelManager().get('sk', sm.SLOVAK_MODEL, 'cache', True, self.emit, self.stop)
         load.assert_called_once()
         self.assertEqual(load.call_args.args[0], sm.SLOVAK_MODEL)
 
-    @patch('speech_models.release_memory')
-    @patch('speech_models.device', return_value='cpu')
-    @patch('speech_models.load_backend', side_effect=OSError('not cached'))
+    @patch('ndtranskripthor.asr.speech_models.release_memory')
+    @patch('ndtranskripthor.asr.speech_models.device', return_value='cpu')
+    @patch('ndtranskripthor.asr.speech_models.load_backend', side_effect=OSError('not cached'))
     def test_no_model_gives_actionable_error(self, *_):
         with self.assertRaisesRegex(RuntimeError, 'cache.*RAM/VRAM'):
             sm.ModelManager().get('cs', 'tiny', 'cache', True, self.emit, self.stop)
@@ -88,7 +88,7 @@ class ModelsTest(unittest.TestCase):
 
     def test_adapter_chunks_cancel_gpu_retry(self):
         import numpy as np
-        import pcm_audio as audio
+        from ndtranskripthor.audio import pcm_audio as audio
         from faster_whisper import vad
         adapter = sm.LocalAdapter.__new__(sm.LocalAdapter)
         adapter.stop, adapter.device, adapter.model_id = self.stop, 'cuda', sm.SLOVAK_MODEL
@@ -113,9 +113,9 @@ class ModelsTest(unittest.TestCase):
                 sm.route(language, sm.SLOVAK_MODEL)
         self.assertEqual(sm.route('hu', 'small'), 'small')
 
-    @patch('speech_models.release_memory')
-    @patch('speech_models.device', return_value='cpu')
-    @patch('speech_models.load_backend')
+    @patch('ndtranskripthor.asr.speech_models.release_memory')
+    @patch('ndtranskripthor.asr.speech_models.device', return_value='cpu')
+    @patch('ndtranskripthor.asr.speech_models.load_backend')
     def test_cancel_during_load_is_not_cached(self, load, *_):
         def loaded(*args):
             self.stop.set()

@@ -6,8 +6,8 @@ from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
 import tkinter as tk
-import prepis
-from speech_models import SLOVAK_MODEL
+from ndtranskripthor.presentation import prepis
+from ndtranskripthor.asr.speech_models import SLOVAK_MODEL
 
 
 class InterfaceTest(unittest.TestCase):
@@ -25,26 +25,26 @@ class InterfaceTest(unittest.TestCase):
         self.root.destroy()
         self.state.cleanup()
 
-    @patch('prepis.threading.Thread')
+    @patch('ndtranskripthor.presentation.prepis.threading.Thread')
     def test_hungarian_uses_selected_multilingual_model(self, thread):
         self.assertEqual(self.root.title(), 'ND TranskripThor')
         self.app.language.set('Maďarčina')
         self.app.start()
         self.assertEqual(thread.call_args.kwargs['args'][2:4], ('hu', 'small'))
 
-    @patch('prepis.threading.Thread')
+    @patch('ndtranskripthor.presentation.prepis.threading.Thread')
     def test_mixed_mode_uses_selected_model(self, thread):
         self.app.language.set('Čeština + slovenčina')
         self.app.start()
         self.assertEqual(thread.call_args.kwargs['args'][2:4], ('cs-sk', 'small'))
 
-    @patch('prepis.threading.Thread')
+    @patch('ndtranskripthor.presentation.prepis.threading.Thread')
     def test_slovak_does_not_force_kinit(self, thread):
         self.app.start()
         self.assertEqual(thread.call_args.kwargs['args'][2:4], ('sk', 'small'))
 
-    @patch('prepis.messagebox.showinfo')
-    @patch('prepis.threading.Thread')
+    @patch('ndtranskripthor.presentation.prepis.messagebox.showinfo')
+    @patch('ndtranskripthor.presentation.prepis.threading.Thread')
     def test_kinit_language_validation_before_start(self, thread, dialog):
         self.app.quality.set(next(k for k, v in prepis.MODELS.items() if v == SLOVAK_MODEL))
         self.app.language.set('Maďarčina')
@@ -58,7 +58,7 @@ class InterfaceTest(unittest.TestCase):
 
 
 class ExportTest(unittest.TestCase):
-    @patch('prepis.transcribe_mixed')
+    @patch('ndtranskripthor.presentation.prepis.transcribe_mixed')
     def test_mixed_export_keeps_languages_and_timestamps(self, mixed):
         mixed.return_value = (iter([SimpleNamespace(text='Zítra.', start=0, end=2),
             SimpleNamespace(text='Dobre.', start=127.5, end=131.1)]),

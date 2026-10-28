@@ -7,10 +7,11 @@ from types import SimpleNamespace
 from unittest.mock import Mock, patch
 import numpy as np
 
-from state import StateStore, ProgressClock, queue_item
-from project import Project, fingerprint
-from jobs import transcribe_job, job_settings
-from subtitles import SubtitleOptions, cues, render_srt, normalized
+from ndtranskripthor.queueing.state import StateStore, queue_item
+from ndtranskripthor.application.progress import ProgressClock
+from ndtranskripthor.projects.project import Project, fingerprint
+from ndtranskripthor.application.jobs import transcribe_job, job_settings
+from ndtranskripthor.exports.subtitles import SubtitleOptions, cues, render_srt, normalized
 
 
 class PersistenceTest(unittest.TestCase):
@@ -104,7 +105,7 @@ class ResumeTest(unittest.TestCase):
             audio = np.zeros(20*16000, dtype=np.float32)
             spans = [dict(start=0,end=6*16000),dict(start=10*16000,end=16*16000)]
             settings = job_settings('small','cs')
-            with patch('pcm_audio.decode_audio', return_value=audio), \
+            with patch('ndtranskripthor.audio.pcm_audio.decode_audio', return_value=audio), \
                  patch('faster_whisper.vad.get_speech_timestamps', return_value=spans):
                 self.assertFalse(transcribe_job(model, source, out, settings, stop, emit))
                 stop.clear()
@@ -127,7 +128,7 @@ class ResumeTest(unittest.TestCase):
                 raise RuntimeError('decoder failed')
             model = Mock()
             model.transcribe.return_value = (failed(), SimpleNamespace(language='sk'))
-            with patch('pcm_audio.decode_audio', return_value=np.zeros(6*16000)), \
+            with patch('ndtranskripthor.audio.pcm_audio.decode_audio', return_value=np.zeros(6*16000)), \
                  patch('faster_whisper.vad.get_speech_timestamps', return_value=[dict(start=0,end=6*16000)]):
                 with self.assertRaisesRegex(RuntimeError, 'decoder failed'):
                     transcribe_job(model, source, out, job_settings('small','sk'), threading.Event(), Mock())
@@ -176,12 +177,12 @@ class SubtitleTest(unittest.TestCase):
 
 class OptionalAndModelTest(unittest.TestCase):
     def test_voice_clustering_has_no_language_dependency(self):
-        from speakers import cluster
+        from ndtranskripthor.asr.speakers import cluster
         labels = cluster([np.array([1.,0.]), np.array([0.,1.]), np.array([1.,0.]), None])
         self.assertEqual(labels,['Hovoriaci 1','Hovoriaci 2','Hovoriaci 1','Neurčený hovoriaci'])
 
     def test_evaluation_reports_errors_and_language_time(self):
-        from evaluate_mixed import metrics
+        from ndtranskripthor.evaluation.evaluate_mixed import metrics
         reference = [dict(start=0,end=2,text='Zítra to pošleme.',language='cs'),
                      dict(start=2,end=4,text='Dobre potom.',language='sk')]
         hypothesis = [dict(start=0,end=2,text='Zítra pošleme.',language='cs'),
@@ -192,7 +193,7 @@ class OptionalAndModelTest(unittest.TestCase):
         self.assertEqual(result['real_time_factor'], 2)
 
     def test_cache_validation_and_offline_error(self):
-        from model_catalog import cached_path, cache_folder, ensure_model, remove_model
+        from ndtranskripthor.models.model_catalog import cached_path, cache_folder, ensure_model, remove_model
         with tempfile.TemporaryDirectory() as folder:
             with self.assertRaisesRegex(ValueError,'Offline'):
                 ensure_model(folder,'small',True,Mock(),threading.Event())
@@ -210,7 +211,7 @@ class OptionalAndModelTest(unittest.TestCase):
                 remove_model(folder,'../../unsafe')
 
     def test_pause_seek_and_playback_callback(self):
-        from playback import Player
+        from ndtranskripthor.audio.playback import Player
         import sys
         audio = np.ones(16000,dtype=np.float32)
         player = Player()

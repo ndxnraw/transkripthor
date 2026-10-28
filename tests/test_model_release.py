@@ -3,7 +3,7 @@ import time
 import unittest
 from unittest.mock import Mock, patch
 import test_editor_speakers
-from model_dialog import ModelDialog
+from ndtranskripthor.presentation.model_dialog import ModelDialog
 
 
 class ModelReleaseTest(unittest.TestCase):
@@ -18,7 +18,7 @@ class ModelReleaseTest(unittest.TestCase):
             time.sleep(.01)
 
     def test_release_is_guarded_runs_off_ui_and_keeps_model_files(self):
-        with patch('model_dialog.inventory', return_value=[]):
+        with patch('ndtranskripthor.presentation.model_dialog.inventory', return_value=[]):
             dialog = ModelDialog(self.app, parent=self.app.models_page)
             self.app.model_dialog = dialog
             self.wait(dialog)
@@ -33,7 +33,7 @@ class ModelReleaseTest(unittest.TestCase):
             def release():
                 threads.append(threading.get_ident())
                 close()
-            with patch.object(self.app.models, 'close', side_effect=release), patch('model_dialog.remove_model') as remove:
+            with patch.object(self.app.models, 'close', side_effect=release), patch('ndtranskripthor.presentation.model_dialog.remove_model') as remove:
                 dialog.release_model()
                 self.wait(dialog)
                 remove.assert_not_called()

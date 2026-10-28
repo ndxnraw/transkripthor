@@ -2,8 +2,8 @@ import time
 import unittest
 from unittest.mock import patch
 import test_editor_speakers
-from model_dialog import ModelDialog
-from model_catalog import inventory
+from ndtranskripthor.presentation.model_dialog import ModelDialog
+from ndtranskripthor.models.model_catalog import inventory
 
 
 class InventoryUiTest(unittest.TestCase):
@@ -44,7 +44,7 @@ class InventoryUiTest(unittest.TestCase):
         dialog = ModelDialog(self.app, parent=self.app.models_page)
         self.app.model_dialog = dialog
         self.wait(dialog)
-        with patch('model_dialog.inventory', wraps=inventory) as read, patch('model_dialog.show_error') as details:
+        with patch('ndtranskripthor.presentation.model_dialog.inventory', wraps=inventory) as read, patch('ndtranskripthor.presentation.model_dialog.show_error') as details:
             dialog.run(lambda: (_ for _ in ()).throw(ValueError('specific failure')))
             self.wait(dialog)
             read.assert_called_once_with(self.app.cache)
@@ -78,7 +78,7 @@ class InventoryUiTest(unittest.TestCase):
         self.app.manage_models()
         self.assertTrue(dialog.refresh_pending)
         self.editor.speaker_busy = False
-        with patch('model_dialog.inventory', wraps=inventory) as read:
+        with patch('ndtranskripthor.presentation.model_dialog.inventory', wraps=inventory) as read:
             dialog.poll()
             self.wait(dialog)
             read.assert_called_once_with(self.app.cache)

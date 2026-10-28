@@ -1,5 +1,5 @@
 """Voliteľné predbežné stiahnutie KInIT do používateľskej cache aplikácie."""
-from i18n import tr
+from ndtranskripthor.core.i18n import tr
 import argparse
 import os
 from pathlib import Path
@@ -11,7 +11,7 @@ def main():
         default=Path(os.environ.get('LOCALAPPDATA', str(Path.home()))) / 'LokalnyPrepis' / 'models')
     args = parser.parse_args()
     from huggingface_hub import snapshot_download
-    from speech_models import SLOVAK_MODEL
+    from ndtranskripthor.asr.speech_models import SLOVAK_MODEL
     snapshot_download(SLOVAK_MODEL, revision='v2.0', cache_dir=str(args.cache / 'huggingface'),
         allow_patterns=['*.json', '*.safetensors', '*.txt', 'README.md'], max_workers=2)
     print(tr('stiahnut_model.main.model_ready_in_cache', p0=args.cache))

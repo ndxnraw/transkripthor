@@ -8,9 +8,9 @@ import threading
 import unittest
 from unittest.mock import patch
 
-from model_catalog import cache_folder, inventory, snapshot_state, verify_model
-from download_worker import verify_file, IntegrityError
-from i18n import set_language
+from ndtranskripthor.models.model_catalog import cache_folder, inventory, snapshot_state, verify_model
+from ndtranskripthor.models.download_worker import verify_file, IntegrityError
+from ndtranskripthor.core.i18n import set_language
 
 
 class IntegrityTest(unittest.TestCase):
@@ -43,7 +43,7 @@ class IntegrityTest(unittest.TestCase):
     def test_inventory_distinguishes_missing_found_verified_and_changed_without_hashing(self):
         self.assertEqual(snapshot_state(self.path, 'tiny'), 'found')
         self.receipt()
-        with patch('download_worker.verify_file', side_effect=AssertionError('Inventory must not hash')):
+        with patch('ndtranskripthor.models.download_worker.verify_file', side_effect=AssertionError('Inventory must not hash')):
             rows = {row['model']:row for row in inventory(self.cache)}
         self.assertEqual(rows['tiny']['state'], 'verified')
         self.assertEqual(rows['small']['state'], 'missing')
@@ -117,6 +117,6 @@ class IntegrityTest(unittest.TestCase):
         self.assertEqual(inventory(self.cache)[0]['state'], 'incomplete')
 
     def test_explicit_online_verification_pins_snapshot(self):
-        with patch('download_transport.supervise') as supervise:
+        with patch('ndtranskripthor.models.download_transport.supervise') as supervise:
             verify_model(self.cache, 'tiny', False, lambda *args: None, self.stop)
         self.assertEqual(supervise.call_args.kwargs, dict(revision='a'*40, verify_only=True))

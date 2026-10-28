@@ -21,13 +21,16 @@ def main():
     archive = CArchiveReader(str(args.exe))
     embedded = archive.open_embedded_archive('PYZ.pyz')
     checked = 0
-    for path in sorted(source.glob('*.py')):
-        if path.stem in ('check_runtime', 'evaluate_mixed', 'stiahnut_model', 'download_progress'):
-            # CLI utilities and the older cache monitor are not EXE dependencies.
-            # The monitor's existing regressions stay in the required test suite;
-            # application downloads use download_transport/download_worker.
+    for path in sorted(source.rglob('*.py')):
+        if path.parent == source and path.stem in ('check_runtime', 'evaluate_mixed', 'stiahnut_model'):
+            # Standalone CLI launchers are not frozen dependencies. All package
+            # modules (including evaluation and diagnostics) are audited below.
             continue
-        frozen = marshal.loads(archive.extract('prepis')) if path.stem == 'prepis' else embedded.extract(path.stem)
+        relative = path.relative_to(source).with_suffix('')
+        module = '.'.join(relative.parts)
+        if module.endswith('.__init__'):
+            module = module[:-9]
+        frozen = marshal.loads(archive.extract('prepis')) if relative.as_posix() == 'prepis' else embedded.extract(module)
         if signature(frozen) != signature(compile(path.read_text(encoding='utf-8-sig'), str(path), 'exec')):
             raise RuntimeError(f'Frozen code differs: {path.name}')
         checked += 1

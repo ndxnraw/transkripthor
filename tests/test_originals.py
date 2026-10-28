@@ -12,9 +12,9 @@ from unittest.mock import Mock, patch
 from types import SimpleNamespace
 
 import numpy as np
-from jobs import job_settings, transcribe_job
-from project import Project, fingerprint
-from state import atomic_text
+from ndtranskripthor.application.jobs import job_settings, transcribe_job
+from ndtranskripthor.projects.project import Project, fingerprint
+from ndtranskripthor.core.atomic import atomic_text
 
 
 class OriginalTest(unittest.TestCase):
@@ -86,7 +86,7 @@ class OriginalTest(unittest.TestCase):
                 if path.suffix == '.srt':
                     raise OSError('locked SRT')
                 return atomic_text(path, *args)
-            with patch('project.atomic_text', side_effect=write):
+            with patch('ndtranskripthor.projects.project.atomic_text', side_effect=write):
                 with self.assertRaisesRegex(OSError, 'locked SRT'):
                     project.export(view='revision', revision=revision)
             self.assertEqual(project.segments('revision', revision)[0]['text'], 'Opravené.')
@@ -105,7 +105,7 @@ class OriginalTest(unittest.TestCase):
         model = Mock()
         model.transcribe.return_value = (iter([SimpleNamespace(start=0, end=1, text='Druhý.', words=[])]),
                                          SimpleNamespace(language='sk'))
-        with patch('pcm_audio.decode_audio', return_value=np.zeros(32000)):
+        with patch('ndtranskripthor.audio.pcm_audio.decode_audio', return_value=np.zeros(32000)):
             self.assertTrue(transcribe_job(model, self.source, self.folder, self.settings,
                                           threading.Event(), Mock(), resume=True))
         with Project(self.folder) as project:
@@ -145,7 +145,7 @@ class OriginalTest(unittest.TestCase):
     def test_backup_failure_does_not_migrate_or_change_exports(self):
         self.legacy()
         before = (self.folder/'projekt.sqlite3').read_bytes()
-        with patch('project.shutil.copy2', side_effect=OSError('disk full')):
+        with patch('ndtranskripthor.projects.project.shutil.copy2', side_effect=OSError('disk full')):
             with self.assertRaisesRegex(OSError, 'disk full'):
                 Project(self.folder)
         self.assertEqual((self.folder/'projekt.sqlite3').read_bytes(), before)
@@ -166,7 +166,7 @@ class OriginalTest(unittest.TestCase):
         self.legacy()
         code = '''
 import os, sys
-from project import Project
+from ndtranskripthor.projects.project import Project
 Project.segments = lambda *args, **kwargs: os._exit(27)
 Project(sys.argv[1])
 '''

@@ -6,12 +6,12 @@ import unittest
 import wave
 from pathlib import Path
 from unittest.mock import Mock, patch
-from app_errors import CATEGORIES, ProjectConflict, CategorizedError, classify, explanation
-from jobs import job_settings, transcribe_job
-from project import Project
-from speech_models import GPUError
-from state import StateStore, queue_item
-from i18n import Translator
+from ndtranskripthor.core.app_errors import CATEGORIES, ProjectConflict, CategorizedError, classify, explanation
+from ndtranskripthor.application.jobs import job_settings, transcribe_job
+from ndtranskripthor.projects.project import Project
+from ndtranskripthor.asr.speech_models import GPUError
+from ndtranskripthor.queueing.state import StateStore, queue_item
+from ndtranskripthor.core.i18n import Translator
 import test_studio
 
 
@@ -113,12 +113,12 @@ class ErrorUiTest(unittest.TestCase):
         self.app.listbox.selection_set(0)
         self.app.update_selection()
         self.assertNotIn('WinError', self.app.selection_info.get())
-        with patch('prepis.show_error') as dialog:
+        with patch('ndtranskripthor.presentation.prepis.show_error') as dialog:
             self.app.show_item_info()
             self.assertEqual(dialog.call_args.args[2], dict(category='permission', details='fixture WinError 32'))
 
     def test_technical_details_are_collapsed_and_read_only(self):
-        from app_errors import show_error
+        from ndtranskripthor.presentation.error_dialog import show_error
         from tkinter import Toplevel, Text
         show_error(self.root, 'Fixture', classify(PermissionError('fixture details')))
         window = next(w for w in self.root.winfo_children() if isinstance(w, Toplevel))

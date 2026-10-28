@@ -6,8 +6,8 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 import test_editor_speakers
-from project import Project
-from state import StateStore, atomic_text, queue_item
+from ndtranskripthor.projects.project import Project
+from ndtranskripthor.queueing.state import StateStore, atomic_text, queue_item
 from test_io_support import wait_io, save_editor, export_editor
 
 
@@ -63,7 +63,7 @@ class BackgroundSaveTest(unittest.TestCase):
             project.db.commit()
         self.select(0)
         e.text.insert('end', ' correction')
-        with patch.object(Project, 'edit', side_effect=OSError('disk full')), patch('editor.messagebox.showerror'):
+        with patch.object(Project, 'edit', side_effect=OSError('disk full')), patch('ndtranskripthor.presentation.editor.messagebox.showerror'):
             self.assertFalse(save_editor(e))
         self.assertTrue(e.dirty)
         self.assertIn(100, e.pending_segments)

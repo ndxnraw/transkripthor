@@ -42,8 +42,8 @@ class BuildContractTest(unittest.TestCase):
 
     def test_transport_pin_mismatch_is_rejected(self):
         shutil.copytree(ROOT/'requirements',self.root/'requirements')
-        (self.root/'src').mkdir()
-        (self.root/'src'/'download_worker.py').write_text("HUB_VERSION='different'",encoding='utf-8')
+        (self.root/'src/ndtranskripthor/models').mkdir(parents=True)
+        (self.root/'src/ndtranskripthor/models/download_worker.py').write_text("HUB_VERSION='different'",encoding='utf-8')
         with self.assertRaisesRegex(ValueError,'Hub lock'):env.validate_locks(self.root)
 
     def test_real_powershell_test_failure_stops_packaging(self):

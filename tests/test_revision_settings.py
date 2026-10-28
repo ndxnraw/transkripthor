@@ -8,13 +8,13 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
-from asr_batch import BatchRunner
-from decode_settings import effective_settings, apply_settings
-from jobs import job_settings, transcribe_chunk, transcribe_job
-from mixed_language import MixedConfig
-from model_catalog import cached_path, cache_folder, ensure_model
-from project import Project
-from speech_models import ModelManager, SlovakWhisper, SLOVAK_MODEL, load_backend
+from ndtranskripthor.application.asr_batch import BatchRunner
+from ndtranskripthor.asr.decode_settings import effective_settings, apply_settings
+from ndtranskripthor.application.jobs import job_settings, transcribe_chunk, transcribe_job
+from ndtranskripthor.asr.mixed_language import MixedConfig
+from ndtranskripthor.models.model_catalog import cached_path, cache_folder, ensure_model
+from ndtranskripthor.projects.project import Project
+from ndtranskripthor.asr.speech_models import ModelManager, SlovakWhisper, SLOVAK_MODEL, load_backend
 
 A, B = 'a'*40, 'b'*40
 
@@ -40,7 +40,7 @@ class RevisionTest(unittest.TestCase):
 
     def test_snapshot_resolution_and_memory_key_ignore_changed_ref(self):
         for model in ('tiny', SLOVAK_MODEL):
-            with self.subTest(model=model), patch('speech_models.load_backend', return_value=object()) as load:
+            with self.subTest(model=model), patch('ndtranskripthor.asr.speech_models.load_backend', return_value=object()) as load:
                 old = self.snapshot(model, A)
                 new = self.snapshot(model, B)
                 self.assertEqual(cached_path(self.cache, model), new)
@@ -57,7 +57,7 @@ class RevisionTest(unittest.TestCase):
 
     def test_missing_revision_never_substitutes_current(self):
         self.snapshot('tiny', B)
-        with patch('model_catalog.download') as download:
+        with patch('ndtranskripthor.models.model_catalog.download') as download:
             with self.assertRaisesRegex(ValueError, A):
                 ensure_model(self.cache, 'tiny', True, self.emit, self.stop, revision=A)
             download.assert_not_called()
@@ -97,8 +97,8 @@ class RevisionTest(unittest.TestCase):
                 _, _, ack, answer = value; answer.append(True); ack.set()
         config = dict(cache=self.cache, items=items, batch_ids=['0','1'], batch_mode='retry', resume_settings=None)
         runner = BatchRunner(config, self.stop, SimpleNamespace(put=receive))
-        with patch('speech_models.load_backend', return_value=SimpleNamespace(model=SimpleNamespace(device='cpu'))) as load, \
-                patch('asr_batch.transcribe_job', return_value=True) as job:
+        with patch('ndtranskripthor.asr.speech_models.load_backend', return_value=SimpleNamespace(model=SimpleNamespace(device='cpu'))) as load, \
+                patch('ndtranskripthor.application.asr_batch.transcribe_job', return_value=True) as job:
             runner.work(['audio.wav','audio.wav'], str(self.cache), 'en', 'small', True)
         self.assertEqual([Path(c.kwargs['snapshot']).name for c in load.call_args_list], [A, B])
         self.assertEqual([c.args[3] for c in job.call_args_list], original)
@@ -154,7 +154,7 @@ class RevisionTest(unittest.TestCase):
                 return iter([SimpleNamespace(start=.1, end=1., text='Preserved', words=[])]), SimpleNamespace(language='sk')
         def emit(kind, value):
             if kind == 'segment': self.stop.set()
-        with patch('pcm_audio.decode_audio', return_value=np.zeros(20*16000)), \
+        with patch('ndtranskripthor.audio.pcm_audio.decode_audio', return_value=np.zeros(20*16000)), \
                 patch('faster_whisper.vad.get_speech_timestamps', return_value=[dict(start=0,end=96000),dict(start=160000,end=256000)]):
             self.assertFalse(transcribe_job(Model(), source, target, settings, self.stop, emit))
             with Project(target) as project:
@@ -173,7 +173,7 @@ class RevisionTest(unittest.TestCase):
 
     def test_ui_missing_snapshot_online_offline_and_cancel(self):
         import tkinter as tk
-        from prepis import App
+        from ndtranskripthor.presentation.prepis import App
         from test_studio import destroy_window
         source = self.cache/'audio.wav'; source.write_bytes(b'fixture')
         target = self.cache/'project'
@@ -185,8 +185,8 @@ class RevisionTest(unittest.TestCase):
         app.accept_files([str(source)])
         app.items[0].update(state='interrupted', project=str(target))
         identifier = app.items[0]['id']
-        with patch('model_catalog.cached_path', return_value=None), patch('prepis.messagebox.showinfo') as info, \
-                patch('prepis.messagebox.askyesno', return_value=False) as ask, patch('prepis.threading.Thread') as thread:
+        with patch('ndtranskripthor.models.model_catalog.cached_path', return_value=None), patch('ndtranskripthor.presentation.prepis.messagebox.showinfo') as info, \
+                patch('ndtranskripthor.presentation.prepis.messagebox.askyesno', return_value=False) as ask, patch('ndtranskripthor.presentation.prepis.threading.Thread') as thread:
             app.offline.set(True)
             app.start('retry', identifiers=[identifier])
             self.assertIn(A, info.call_args.args[1]); ask.assert_not_called(); thread.assert_not_called()

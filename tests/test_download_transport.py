@@ -13,9 +13,9 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
 
-from download_transport import supervise, DownloadLimits
-from download_worker import safe_error, verify_file, IntegrityError
-from model_catalog import cached_path, cache_folder, SLOVAK_MODEL, SPEAKER_MODEL, complete_snapshot
+from ndtranskripthor.models.download_transport import supervise, DownloadLimits
+from ndtranskripthor.models.download_worker import safe_error, verify_file, IntegrityError
+from ndtranskripthor.models.model_catalog import cached_path, cache_folder, SLOVAK_MODEL, SPEAKER_MODEL, complete_snapshot
 
 
 def fixture_worker(cache,model,connection,revision=None,verify_only=False):
@@ -23,7 +23,7 @@ def fixture_worker(cache,model,connection,revision=None,verify_only=False):
     # validation, process watchdog and on-disk resume are production code.
     from huggingface_hub import file_download as fd
     import huggingface_hub as hub
-    from download_worker import run_download
+    from ndtranskripthor.models.download_worker import run_download
     spec=json.loads((Path(cache)/'fixture.json').read_text())
     files={name:bytes.fromhex(data) for name,data in spec['files'].items()}
     sha='a'*40
@@ -114,7 +114,7 @@ class TransferTest(unittest.TestCase):
             supervise(self.cache,model,emit or (lambda k,v:self.events.append((k,v))),self.stop,limits or DownloadLimits(idle=5,verification_idle=5,attempts=2,backoff=.1),fixture_worker,revision=revision,verify_only=verify_only)
 
     def test_explicit_verification_legacy_cache_all_routes_without_weight_download(self):
-        from model_catalog import snapshot_state
+        from ndtranskripthor.models.model_catalog import snapshot_state
         for model in ('tiny', SLOVAK_MODEL, SPEAKER_MODEL):
             with self.subTest(model=model):
                 if model == SLOVAK_MODEL:

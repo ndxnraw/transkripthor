@@ -47,7 +47,7 @@ def validate_locks(root=ROOT):
         locked=pins(req/(mode+'.lock'))
         for name,version in pins(req/(mode+'.in'),False).items():
             if locked.get(name)!=version: raise ValueError(f'Input/lock mismatch: {mode}/{name}')
-    tree=ast.parse((root/'src/download_worker.py').read_text(encoding='utf-8-sig'))
+    tree=ast.parse((root/'src/ndtranskripthor/models/download_worker.py').read_text(encoding='utf-8-sig'))
     hub=next(ast.literal_eval(n.value) for n in tree.body if isinstance(n,ast.Assign)
              and any(isinstance(t,ast.Name) and t.id=='HUB_VERSION' for t in n.targets))
     if all_pins.get('huggingface-hub')!=hub: raise ValueError('Hub lock differs from instrumented transport version')

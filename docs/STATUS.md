@@ -529,3 +529,41 @@ manifest meria použitý interpreter. GPU lock ani reálne veľké modelové
 sťahovanie neboli súčasťou tejto úpravy. Verzia/tag/Release sa nemenia.
 Predošlá F26 bola dokončená commitom 9190a5f: čistých 270 testov za 215,958 s,
 Windows EXE PASS a GitHub CI 40314089987 (270 testov za 203,125 s) PASS.
+
+## Úloha 27 – oddelenie vrstiev a zdrojového balíka (28. 10. 2026)
+
+Zdrojové moduly sú v `src/ndtranskripthor`: presentation, application,
+projects, queueing, asr, models, audio, exports, core, evaluation a diagnostics.
+Spúšťače, `src/version.py`, assets/locales, tests, scripts a packaging zostávajú
+na existujúcich verejných miestach. Importy, worker procesy, eval CLI,
+inštrumentovaný Hub pin a rekurzívny audit pribaleného kódu používajú nové cesty.
+Pred presunom vznikla lokálna ignorovaná ZIP záloha; používateľské dáta,
+modely a staršia nesúvisiaca rozpracovaná poznámka v tomto dokumente zostali zachované.
+
+Ukladanie/export editora vykonáva dátová služba `perform_project_io`; udalosti
+odlišujú commit od exportu. Tk dialógy a prekladané combo boxy už nie sú
+v core. Priebeh je v application, atómový zápis v core a PCM časová os v audio.
+Protokoly EventSink/Transcriber/ProfileStore/Playback/ExportProject dokumentujú
+hranice. Editor ani exportér nepracujú priamo so SQLite: zoznam revízií,
+nové ID a exportný stav poskytuje Project. Schémy, checkpointy, pôvodné texty,
+revízie, nastavenia a ASR protokol sa nemenia; migrácia projektov nie je potrebná.
+
+Päť nových regresií overuje smer importov, studený import bez Tk/modelových
+runtime, zdrojové/frozen Unicode cesty, službu uloženia a opätovného otvorenia
+s nezmeneným originálom a konkrétnu chybu zápisu bez falošného potvrdenia.
+Úplný priebežný beh dokončil 282 testov za 366,779 s bez preskočenia;
+jediná chyba bola starý import dialógu v teste. Po jeho oprave a dokončení
+exportného rozhrania prešlo všetkých 21 cielených testov za 16,777 s.
+Zdrojový `prepis.py --self-test-startup` PASS: Tk, tkdnd, assety, oba katalógy,
+natívne importy, tempo audia, päť exportných formátov a nový lokálny proces.
+
+Prvý prerušený vývojový beh zachytil aj blokovanie ASR stop udalosti;
+samostatný procesový test aj nasledujúci celý beh procesových testov prešli.
+Táto občasná staršia neistota sa nepovažuje za vyriešenú týmto refaktorom.
+Pred pushom je povinný nový úplný beh bez chýb/preskočenia a Windows EXE
+z čistého klonu presného kandidáta. Konkrétne SHA, finálne počty a výsledok
+zostavy budú v lokálnom overovacom potvrdení a závere úlohy; priebežné výsledky
+vyššie nenahrádzajú túto bránu. Testovacia matica používa Tk scaling 100–200 %,
+nie prepínanie systémového Windows DPI. Skutočné modely/GPU, systémový drag
+and drop a posluch na fyzických zariadeniach sa v tejto úlohe znovu nemerali.
+Verzia, tag a GitHub Release sa nemenia.

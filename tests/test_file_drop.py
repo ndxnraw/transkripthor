@@ -4,8 +4,8 @@ import unittest
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
-from prepis import App
-from file_drop import create_root, FileDrop
+from ndtranskripthor.presentation.prepis import App
+from ndtranskripthor.presentation.file_drop import create_root, FileDrop
 
 
 class FileDropTest(unittest.TestCase):
@@ -36,7 +36,7 @@ class FileDropTest(unittest.TestCase):
     def test_tcl_paths_dedup_picker_and_invalid(self):
         self.assertEqual(self.drop(self.data(self.paths)), 'copy')
         self.assertEqual(len(self.app.items), 2)
-        with patch('prepis.filedialog.askopenfilenames', return_value=[str(self.paths[0]).upper(), str(self.paths[1])]):
+        with patch('ndtranskripthor.presentation.prepis.filedialog.askopenfilenames', return_value=[str(self.paths[0]).upper(), str(self.paths[1])]):
             self.app.add_files()
         self.assertEqual(len(self.app.items), 2)
         self.assertIn('duplicates: 2', self.app.status.get())
@@ -80,7 +80,7 @@ class FileDropTest(unittest.TestCase):
         failed = FileDrop(self.app)
         self.assertEqual(failed.targets, [])
         self.assertIn('is unavailable', self.app.drop_hint.get())
-        with patch('prepis.filedialog.askopenfilenames', return_value=list(map(str, self.paths))):
+        with patch('ndtranskripthor.presentation.prepis.filedialog.askopenfilenames', return_value=list(map(str, self.paths))):
             self.app.add_files()
         self.assertEqual(len(self.app.items), 2)
         self.assertIn('fixture tkdnd', (self.folder/'state/dnd.log').read_text(encoding='utf-8'))

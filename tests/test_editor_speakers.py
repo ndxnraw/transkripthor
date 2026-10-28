@@ -7,10 +7,10 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from editor import Editor
-from jobs import job_settings
-from prepis import App
-from project import Project
+from ndtranskripthor.presentation.editor import Editor
+from ndtranskripthor.application.jobs import job_settings
+from ndtranskripthor.presentation.prepis import App
+from ndtranskripthor.projects.project import Project
 from test_studio import destroy_window
 
 
@@ -58,10 +58,10 @@ class SpeakerEditingTest(unittest.TestCase):
             if not release.wait(10):
                 raise RuntimeError('Test worker timeout')
             return result if result is not None else [f'Hlas {s["id"]}' for s in segments]
-        patches = [patch('speakers.availability', return_value=(self.folder, 'Ready', '')),
-                   patch('editor.messagebox.askyesno', return_value=True),
-                   patch('speakers.assign_speakers', side_effect=assign),
-                   patch('editor.threading.Thread', side_effect=thread_factory)]
+        patches = [patch('ndtranskripthor.asr.speakers.availability', return_value=(self.folder, 'Ready', '')),
+                   patch('ndtranskripthor.presentation.editor.messagebox.askyesno', return_value=True),
+                   patch('ndtranskripthor.asr.speakers.assign_speakers', side_effect=assign),
+                   patch('ndtranskripthor.presentation.editor.threading.Thread', side_effect=thread_factory)]
         for item in patches:
             item.start()
             self.addCleanup(item.stop)
@@ -167,7 +167,7 @@ class SpeakerEditingTest(unittest.TestCase):
     def test_global_rename_wins_over_pending_assignments(self):
         self.select(0)
         finish = self.start_worker()
-        with patch('editor.simpledialog.askstring', return_value='Daniel'):
+        with patch('ndtranskripthor.presentation.editor.simpledialog.askstring', return_value='Daniel'):
             self.editor.rename_speaker()
         finish()
         self.assertTrue(all(s['speaker'] == 'Daniel' for s in self.editor.segments))

@@ -7,10 +7,10 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch, Mock
 
-from prepis import App
-from ui import apply_theme
-from project import Project
-from editor import Editor
+from ndtranskripthor.presentation.prepis import App
+from ndtranskripthor.presentation.ui import apply_theme
+from ndtranskripthor.projects.project import Project
+from ndtranskripthor.presentation.editor import Editor
 
 
 class DesktopTest(unittest.TestCase):
@@ -61,7 +61,7 @@ class DesktopTest(unittest.TestCase):
                         project.finish()
                     expected = project.editor_problem()
                     self.assertTrue(expected)
-                    with patch('prepis.messagebox.showinfo') as info, patch('editor.Editor') as constructor:
+                    with patch('ndtranskripthor.presentation.prepis.messagebox.showinfo') as info, patch('ndtranskripthor.presentation.editor.Editor') as constructor:
                         self.app.open_editor()
                         constructor.assert_not_called()
                         self.assertEqual(info.call_args.args[1], expected)
@@ -73,7 +73,7 @@ class DesktopTest(unittest.TestCase):
     @unittest.skipUnless(sys.platform == 'win32', 'Native Windows painting')
     def test_native_painting_survives_window_restore_and_theme_changes(self):
         from ctypes import wintypes
-        from window_style import titlebar
+        from ndtranskripthor.presentation.window_style import titlebar
         user = ctypes.windll.user32
         user.GetAncestor.argtypes = [wintypes.HWND, wintypes.UINT]
         user.GetAncestor.restype = wintypes.HWND
@@ -108,11 +108,11 @@ class DesktopTest(unittest.TestCase):
         self.app.items[0]['state']='completed'
         self.app.items[1]['state']='failed'
         self.app.items[2]['state']='interrupted'
-        with patch('prepis.threading.Thread') as thread:
+        with patch('ndtranskripthor.presentation.prepis.threading.Thread') as thread:
             self.app.start('retry')
             self.assertEqual(thread.call_args.kwargs['args'][0],[str(paths[0]),str(paths[2])])
 
-    @patch('editor.Editor.load_audio')
+    @patch('ndtranskripthor.presentation.editor.Editor.load_audio')
     def test_editor_entire_transcript_search_save_and_dirty_prompt(self, load):
         project_folder = Path(self.folder.name)/'project'
         with Project(project_folder,create=True) as project:
@@ -130,9 +130,9 @@ class DesktopTest(unittest.TestCase):
         editor.text.insert('1.0','Opravený posledný úsek.')
         editor.modified()
         self.assertTrue(editor.dirty)
-        with patch('editor.messagebox.askyesnocancel',return_value=None):
+        with patch('ndtranskripthor.presentation.editor.messagebox.askyesnocancel',return_value=None):
             self.assertFalse(editor.close())
-        with patch('editor.messagebox.showerror', side_effect=AssertionError('Unexpected export error')):
+        with patch('ndtranskripthor.presentation.editor.messagebox.showerror', side_effect=AssertionError('Unexpected export error')):
             self.assertTrue(save_editor(editor))
         self.assertTrue(export_editor(editor))
         with Project(project_folder) as project:
@@ -159,7 +159,7 @@ class ScalingTest(unittest.TestCase):
                 window = tk.Tk()
                 try:
                     window.tk.call('tk', 'scaling', 96 / 72 * scale)
-                    from state import StateStore
+                    from ndtranskripthor.queueing.state import StateStore
                     StateStore(folder).save('settings.json', {'geometry': '1800x1000+0+0', 'language': 'Maďarčina'})
                     app = App(window, folder)
                     window.update()

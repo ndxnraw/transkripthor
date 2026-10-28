@@ -8,7 +8,7 @@ from types import SimpleNamespace
 from unittest.mock import patch
 from unittest.mock import Mock
 import numpy as np
-from pcm_audio import decode_audio, speech_spans, cleanup, RATE
+from ndtranskripthor.audio.pcm_audio import decode_audio, speech_spans, cleanup, RATE
 
 
 class PCMTest(unittest.TestCase):
@@ -42,7 +42,7 @@ class PCMTest(unittest.TestCase):
         cache = self.root/'cache'
         with self.assertRaises(InterruptedError):
             decode_audio(self.source, folder=cache, stop=stop)
-        with patch('pcm_audio.shutil.disk_usage', return_value=SimpleNamespace(free=0)):
+        with patch('ndtranskripthor.audio.pcm_audio.shutil.disk_usage', return_value=SimpleNamespace(free=0)):
             with self.assertRaisesRegex(OSError, 'disk space'):
                 decode_audio(self.source, folder=cache)
         with self.assertRaises(Exception):
@@ -71,7 +71,7 @@ class PCMTest(unittest.TestCase):
         self.assertEqual(spans, [dict(start=0,end=RATE*125)])
 
     def test_player_reads_pcm_and_closes_cache(self):
-        from playback import Player
+        from ndtranskripthor.audio.playback import Player
         player = Player()
         player.load(self.source, self.root/'cache')
         directory = player.audio.directory
@@ -81,8 +81,8 @@ class PCMTest(unittest.TestCase):
         self.assertFalse(directory.exists())
 
     def test_real_pcm_stop_checkpoint_resume_and_cleanup(self):
-        from jobs import job_settings, transcribe_job
-        from project import Project
+        from ndtranskripthor.application.jobs import job_settings, transcribe_job
+        from ndtranskripthor.projects.project import Project
         stop = threading.Event()
         target = self.root/'project'
         settings = job_settings('small', 'sk')

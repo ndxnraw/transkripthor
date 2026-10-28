@@ -3,8 +3,8 @@ import threading
 import unittest
 from pathlib import Path
 from unittest.mock import patch
-from download_progress import DownloadMonitor, cache_bytes
-from model_catalog import download
+from ndtranskripthor.models.download_progress import DownloadMonitor, cache_bytes
+from ndtranskripthor.models.model_catalog import download
 
 
 class DownloadProgressTest(unittest.TestCase):
@@ -65,6 +65,6 @@ class DownloadProgressTest(unittest.TestCase):
         self.assertEqual(cache_bytes(self.folder),1024)
 
     def test_catalog_uses_supervised_transport(self):
-        with patch('download_transport.supervise') as worker:
+        with patch('ndtranskripthor.models.download_transport.supervise') as worker:
             download(self.folder,'small',self.events.append,self.stop)
         worker.assert_called_once_with(self.folder,'small',self.events.append,self.stop)

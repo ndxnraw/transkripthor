@@ -1,9 +1,9 @@
 """F08: validate serialized intervals, truthful soft-limit warnings, no text loss."""
 import tempfile
 import unittest
-from i18n import set_language
-from project import Project
-from subtitles import SubtitleOptions, cues, normalized, render_srt
+from ndtranskripthor.core.i18n import set_language
+from ndtranskripthor.projects.project import Project
+from ndtranskripthor.exports.subtitles import SubtitleOptions, cues, normalized, render_srt
 
 
 def segment(start, end, text='Text', words=None):

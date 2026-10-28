@@ -6,10 +6,10 @@ from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
 import numpy as np
-from speech_models import ModelManager, GPUError, DEVICES, load_backend
-from jobs import job_settings, transcribe_job
-from project import Project
-from state import StateStore
+from ndtranskripthor.asr.speech_models import ModelManager, GPUError, DEVICES, load_backend
+from ndtranskripthor.application.jobs import job_settings, transcribe_job
+from ndtranskripthor.projects.project import Project
+from ndtranskripthor.queueing.state import StateStore
 
 
 class DeviceTest(unittest.TestCase):
@@ -20,9 +20,9 @@ class DeviceTest(unittest.TestCase):
                 store.save('settings.json', {'device': value})
                 self.assertEqual(store.settings([], []).get('device', 'cpu'), value if value in ('cpu', 'cuda') else 'cpu')
 
-    @patch('speech_models.release_memory')
-    @patch('speech_models.device', return_value='cuda')
-    @patch('speech_models.load_backend', side_effect=lambda *a: object())
+    @patch('ndtranskripthor.asr.speech_models.release_memory')
+    @patch('ndtranskripthor.asr.speech_models.device', return_value='cuda')
+    @patch('ndtranskripthor.asr.speech_models.load_backend', side_effect=lambda *a: object())
     def test_cpu_default_gpu_success_switch_and_reuse(self, load, detect, _):
         manager = ModelManager()
         args = ('sk', 'tiny', 'cache', True, Mock(), threading.Event())
@@ -35,10 +35,10 @@ class DeviceTest(unittest.TestCase):
         manager.get(*args, 'cpu')
         self.assertEqual([c.args[3] for c in load.call_args_list], ['cpu', 'cuda', 'cpu'])
 
-    @patch('speech_models.release_memory')
+    @patch('ndtranskripthor.asr.speech_models.release_memory')
     def test_unavailable_and_load_dll_failure_never_auto_fallback(self, _):
         for available, error in [('cpu', None), ('cuda', RuntimeError('Library cublas64_12.dll is not found'))]:
-            with patch('speech_models.device', return_value=available), patch('speech_models.load_backend', side_effect=error) as load:
+            with patch('ndtranskripthor.asr.speech_models.device', return_value=available), patch('ndtranskripthor.asr.speech_models.load_backend', side_effect=error) as load:
                 manager = ModelManager()
                 with self.assertRaises(GPUError):
                     manager.get('sk', 'tiny', 'cache', True, Mock(), threading.Event(), 'cuda')
@@ -80,7 +80,7 @@ class DeviceTest(unittest.TestCase):
                             raise InterruptedError('Zrušené')
                         return cpu
                     settings = job_settings('tiny', 'cs-sk' if mixed else 'sk')
-                    with patch('pcm_audio.decode_audio', return_value=np.zeros(20*16000)), \
+                    with patch('ndtranskripthor.audio.pcm_audio.decode_audio', return_value=np.zeros(20*16000)), \
                          patch('faster_whisper.vad.get_speech_timestamps', return_value=[dict(start=0,end=6*16000),dict(start=10*16000,end=16*16000)]):
                         args = (gpu, source, target, settings, stop, emit)
                         if accepted:
@@ -101,7 +101,7 @@ class DeviceTest(unittest.TestCase):
 
 class DeviceInterfaceTest(unittest.TestCase):
     def test_loading_fallback_confirmation_and_cancel(self):
-        from prepis import App
+        from ndtranskripthor.presentation.prepis import App
         for accepted in (True, False):
             with self.subTest(accepted=accepted), tempfile.TemporaryDirectory() as folder:
                 app = App.__new__(App)
@@ -127,11 +127,11 @@ class DeviceInterfaceTest(unittest.TestCase):
                         ack.set()
                 app.events = SimpleNamespace(put=receive)
                 cpu = SimpleNamespace(model=SimpleNamespace(device='cpu'))
-                with patch('model_catalog.ensure_model'), patch('model_catalog.cached_path', return_value=Path('revision')), \
-                     patch('speech_models.device', return_value='cuda'), patch('speech_models.release_memory'), \
-                     patch('speech_models.load_backend', side_effect=[RuntimeError('cublas64_12.dll missing'), cpu]) as load, \
-                     patch('asr_batch.transcribe_job', return_value=True) as job:
-                    from asr_batch import BatchRunner
+                with patch('ndtranskripthor.models.model_catalog.ensure_model'), patch('ndtranskripthor.models.model_catalog.cached_path', return_value=Path('revision')), \
+                     patch('ndtranskripthor.asr.speech_models.device', return_value='cuda'), patch('ndtranskripthor.asr.speech_models.release_memory'), \
+                     patch('ndtranskripthor.asr.speech_models.load_backend', side_effect=[RuntimeError('cublas64_12.dll missing'), cpu]) as load, \
+                     patch('ndtranskripthor.application.asr_batch.transcribe_job', return_value=True) as job:
+                    from ndtranskripthor.application.asr_batch import BatchRunner
                     app.request_cpu = lambda exc, emit: BatchRunner.request_cpu(app, exc, emit)
                     BatchRunner.work(app, ['audio.wav'], folder, 'sk', 'tiny', True, 'cuda')
                 self.assertEqual([c.args[3] for c in load.call_args_list], ['cuda', 'cpu'] if accepted else ['cuda'])
@@ -143,7 +143,7 @@ class DeviceInterfaceTest(unittest.TestCase):
 
     def test_choice_persistence_no_load_and_disabled_during_work(self):
         import tkinter as tk
-        from prepis import App
+        from ndtranskripthor.presentation.prepis import App
         with tempfile.TemporaryDirectory() as folder:
             root = tk.Tk()
             root.withdraw()
@@ -162,7 +162,7 @@ class DeviceInterfaceTest(unittest.TestCase):
                 with Project(project_folder, create=True) as project:
                     project.initialize('a.wav', {}, job_settings('tiny', 'cs'), [], 0)
                 app.items[0].update(state='interrupted', project=str(project_folder))
-                with patch('prepis.threading.Thread') as thread:
+                with patch('ndtranskripthor.presentation.prepis.threading.Thread') as thread:
                     app.start('retry', identifiers=[app.items[0]['id']])
                     self.assertEqual(thread.call_args.kwargs['args'][-1], 'cuda')
                     self.assertEqual(thread.call_args.kwargs['args'][2:4], ('cs', 'tiny'))

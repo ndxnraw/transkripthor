@@ -2,9 +2,9 @@
 import unittest
 from unittest.mock import patch
 import test_editor_speakers
-from transcript_search import occurrences
+from ndtranskripthor.projects.transcript_search import occurrences
 from test_io_support import save_editor
-from project import Project
+from ndtranskripthor.projects.project import Project
 
 
 class SearchLogicTest(unittest.TestCase):
@@ -84,7 +84,7 @@ class SearchEditorTest(unittest.TestCase):
         e.search()
         self.assertEqual(len(e.hits), 20000)
         self.assertEqual(len(e.matches), 10000)
-        with patch('editor.occurrences', wraps=occurrences) as find:
+        with patch('ndtranskripthor.presentation.editor.occurrences', wraps=occurrences) as find:
             e.next_match(-1)
             self.assertEqual(e.current, 9999)
             self.assertEqual(e.page, 249)

@@ -5,8 +5,8 @@ import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import patch,Mock
-from eval_corpus import validate_manifest
-from eval_metrics import detailed,summarize
+from ndtranskripthor.evaluation.eval_corpus import validate_manifest
+from ndtranskripthor.evaluation.eval_metrics import detailed,summarize
 
 
 class EvaluationTest(unittest.TestCase):
@@ -79,17 +79,17 @@ class EvaluationTest(unittest.TestCase):
         self.assertEqual(result[0]['name_error_rate']['rate'],1)
 
     def test_production_job_device_revision_and_effective_settings(self):
-        from evaluate_mixed import measure
+        from ndtranskripthor.evaluation.evaluate_mixed import measure
         import contextlib
         project=Mock();project.segments.return_value=self.row['segments']
         project.get.side_effect=lambda key: {'samples':32000,'fingerprint':{'sha256':self.row['sha256']},'execution_history':[]}[key]
         recording=dict(self.row,source=str(self.root/'audio č.wav'))
-        with patch('eval_runtime.environment',return_value={}),patch('eval_runtime.memory',return_value={'peak_working_set_bytes':12}), \
-             patch('eval_runtime.GpuMemorySampler') as sampler,patch('speech_models.ModelManager') as manager, \
-             patch('model_catalog.ensure_model') as ensure,patch('model_catalog.cached_path',return_value=Path('a'*40)), \
-             patch('decode_settings.effective_settings',return_value={'backend':'test'}), \
-             patch('decode_settings.runtime_settings',return_value={'device':'cuda'}), \
-             patch('jobs.transcribe_job',return_value=True) as job,patch('project.Project',return_value=contextlib.nullcontext(project)):
+        with patch('ndtranskripthor.evaluation.eval_runtime.environment',return_value={}),patch('ndtranskripthor.evaluation.eval_runtime.memory',return_value={'peak_working_set_bytes':12}), \
+             patch('ndtranskripthor.evaluation.eval_runtime.GpuMemorySampler') as sampler,patch('ndtranskripthor.asr.speech_models.ModelManager') as manager, \
+             patch('ndtranskripthor.models.model_catalog.ensure_model') as ensure,patch('ndtranskripthor.models.model_catalog.cached_path',return_value=Path('a'*40)), \
+             patch('ndtranskripthor.asr.decode_settings.effective_settings',return_value={'backend':'test'}), \
+             patch('ndtranskripthor.asr.decode_settings.runtime_settings',return_value={'device':'cuda'}), \
+             patch('ndtranskripthor.application.jobs.transcribe_job',return_value=True) as job,patch('ndtranskripthor.projects.project.Project',return_value=contextlib.nullcontext(project)):
             sampler.return_value.result.return_value={}
             result=measure(recording,'small','a'*40,'cuda',self.root,self.root)
             self.assertEqual(result['status'],'ok')
@@ -102,10 +102,10 @@ class EvaluationTest(unittest.TestCase):
             self.assertTrue(ensure.call_args.args[2])
 
     def test_gpu_failure_not_silently_retried_on_cpu(self):
-        from evaluate_mixed import measure
-        with patch('eval_runtime.environment',return_value={}),patch('eval_runtime.memory',return_value={}), \
-             patch('eval_runtime.GpuMemorySampler'),patch('speech_models.ModelManager') as manager, \
-             patch('model_catalog.ensure_model',side_effect=RuntimeError('CUDA unavailable')):
+        from ndtranskripthor.evaluation.evaluate_mixed import measure
+        with patch('ndtranskripthor.evaluation.eval_runtime.environment',return_value={}),patch('ndtranskripthor.evaluation.eval_runtime.memory',return_value={}), \
+             patch('ndtranskripthor.evaluation.eval_runtime.GpuMemorySampler'),patch('ndtranskripthor.asr.speech_models.ModelManager') as manager, \
+             patch('ndtranskripthor.models.model_catalog.ensure_model',side_effect=RuntimeError('CUDA unavailable')):
             result=measure(self.row,'small','a'*40,'cuda',self.root,self.root)
             self.assertEqual(result['status'],'failed')
             self.assertEqual(result['device'],'cuda')
@@ -113,10 +113,10 @@ class EvaluationTest(unittest.TestCase):
             manager.return_value.close.assert_called_once()
 
     def test_cli_validation_and_failed_worker_report(self):
-        from evaluate_mixed import main
+        from ndtranskripthor.evaluation.evaluate_mixed import main
         import subprocess
         manifest=self.manifest()
-        with patch('sys.argv',['eval',str(manifest),'--validate-only']),patch('speech_models.ModelManager') as manager:
+        with patch('sys.argv',['eval',str(manifest),'--validate-only']),patch('ndtranskripthor.asr.speech_models.ModelManager') as manager:
             main();manager.assert_not_called()
         output=self.root/'measurement'
         argv=['eval',str(manifest),'--cache',str(self.root),'--output',str(output),'--revision','small='+'a'*40,'--device','cuda']
@@ -133,7 +133,7 @@ class EvaluationTest(unittest.TestCase):
         self.assertEqual(cpu['results'][0]['device'],'cpu')
 
     def test_gpu_sampling_is_per_process_and_unavailable_is_not_zero(self):
-        from eval_runtime import GpuMemorySampler
+        from ndtranskripthor.evaluation.eval_runtime import GpuMemorySampler
         import os
         sampler=GpuMemorySampler(True)
         def query(*args,**kwargs):

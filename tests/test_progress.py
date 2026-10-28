@@ -7,8 +7,8 @@ import wave
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
-from state import BatchProgress, ProgressClock
-from asr_batch import BatchRunner, recording_duration
+from ndtranskripthor.application.progress import BatchProgress, ProgressClock
+from ndtranskripthor.application.asr_batch import BatchRunner, recording_duration
 import test_studio
 
 
@@ -73,11 +73,11 @@ class ProgressTest(unittest.TestCase):
                     if interrupt:
                         stop.set(); return False
                     raise OSError('fixture disk error')
-                with patch('asr_batch.recording_duration', side_effect=[1,999]), \
-                     patch('model_catalog.ensure_model'), patch('model_catalog.cached_path', return_value=Path('revision')), \
+                with patch('ndtranskripthor.application.asr_batch.recording_duration', side_effect=[1,999]), \
+                     patch('ndtranskripthor.models.model_catalog.ensure_model'), patch('ndtranskripthor.models.model_catalog.cached_path', return_value=Path('revision')), \
                      patch.object(runner.models, 'get', return_value=model), \
-                     patch('decode_settings.effective_settings', return_value={}), \
-                     patch('asr_batch.transcribe_job', side_effect=transcribe):
+                     patch('ndtranskripthor.asr.decode_settings.effective_settings', return_value={}), \
+                     patch('ndtranskripthor.application.asr_batch.transcribe_job', side_effect=transcribe):
                     runner.work(['a.wav','b.wav'], folder, 'sk', 'tiny', True)
                 self.assertNotIn(('progress', 100), events)
                 states = [v[1]['state'] for k,v in events if k == 'job']

@@ -9,9 +9,9 @@ import time
 import tkinter as tk
 from pathlib import Path
 from unittest.mock import patch
-from editor import Editor
-from prepis import App
-from project import Project
+from ndtranskripthor.presentation.editor import Editor
+from ndtranskripthor.presentation.prepis import App
+from ndtranskripthor.projects.project import Project
 from test_studio import destroy_window
 
 

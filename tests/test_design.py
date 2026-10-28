@@ -6,8 +6,8 @@ from tkinter import ttk
 import unittest
 from unittest.mock import patch
 
-from prepis import App
-from ui import AUTHOR, PALETTES, apply_theme
+from ndtranskripthor.presentation.prepis import App
+from ndtranskripthor.presentation.ui import AUTHOR, PALETTES, apply_theme
 from test_studio import destroy_window
 
 
@@ -84,7 +84,7 @@ class DesignTest(unittest.TestCase):
             self.assertEqual(self.root.focus_get(), self.app.lang_box)
 
     def test_header_contains_only_title_next_to_logo(self):
-        from i18n import tr
+        from ndtranskripthor.core.i18n import tr
         header = self.app.icon.master
         brand = next(w for w in header.winfo_children() if isinstance(w, ttk.Frame))
         for scale in (1, 1.25, 1.5, 1.75, 2):

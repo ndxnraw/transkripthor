@@ -7,18 +7,18 @@ import tkinter as tk
 import unittest
 from unittest.mock import patch
 
-from i18n import Translator, fields, normalize_language, set_language, tr
-from prepis import App, LANGUAGES, MODELS
-from state import StateStore
-from project import Project
-from editor import Editor
+from ndtranskripthor.core.i18n import Translator, fields, normalize_language, set_language, tr
+from ndtranskripthor.presentation.prepis import App, LANGUAGES, MODELS
+from ndtranskripthor.queueing.state import StateStore
+from ndtranskripthor.projects.project import Project
+from ndtranskripthor.presentation.editor import Editor
 from test_studio import destroy_window
 
 
 class CatalogTest(unittest.TestCase):
     def test_all_literal_translation_calls_have_catalog_entries(self):
         catalog = Translator().catalogs['en']
-        for path in (Path(__file__).resolve().parents[1] / 'src').glob('*.py'):
+        for path in (Path(__file__).resolve().parents[1] / 'src').rglob('*.py'):
             if path.name.startswith('test'):
                 continue
             for node in ast.walk(ast.parse(path.read_text(encoding='utf-8-sig'))):

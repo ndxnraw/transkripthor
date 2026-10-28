@@ -7,10 +7,10 @@ import tkinter as tk
 import unittest
 from unittest.mock import patch
 
-from editor import Editor
-from prepis import App
-from project import Project
-from subtitles import SubtitleOptions
+from ndtranskripthor.presentation.editor import Editor
+from ndtranskripthor.presentation.prepis import App
+from ndtranskripthor.projects.project import Project
+from ndtranskripthor.exports.subtitles import SubtitleOptions
 from test_studio import destroy_window
 
 
@@ -46,7 +46,7 @@ class SubtitleProfileTest(unittest.TestCase):
             e.dirty = False
             value.set(replacement)
             self.assertTrue(e.dirty)
-        with patch('editor.messagebox.askyesnocancel', return_value=True) as ask:
+        with patch('ndtranskripthor.presentation.editor.messagebox.askyesnocancel', return_value=True) as ask:
             self.assertFalse(e.close())
             self.assertTrue(e.window.winfo_exists())
             wait_io(e)
@@ -73,16 +73,16 @@ class SubtitleProfileTest(unittest.TestCase):
     def test_cancel_discard_and_invalid_profile(self):
         e = self.open()
         e.cue_values[0].set('')
-        with patch('editor.messagebox.askyesnocancel', return_value=None):
+        with patch('ndtranskripthor.presentation.editor.messagebox.askyesnocancel', return_value=None):
             self.assertFalse(e.close())
         self.assertTrue(e.window.winfo_exists())
-        with patch('editor.messagebox.askyesnocancel', return_value=True), patch('editor.messagebox.showerror') as error:
+        with patch('ndtranskripthor.presentation.editor.messagebox.askyesnocancel', return_value=True), patch('ndtranskripthor.presentation.editor.messagebox.showerror') as error:
             self.assertFalse(e.close())
             error.assert_called_once()
         self.assertTrue(e.dirty)
         with Project(self.folder) as project:
             self.assertEqual(project.subtitle_options(), SubtitleOptions())
-        with patch('editor.messagebox.askyesnocancel', return_value=False):
+        with patch('ndtranskripthor.presentation.editor.messagebox.askyesnocancel', return_value=False):
             self.assertTrue(e.close())
         reopened = self.open()
         self.assertEqual(float(reopened.cue_values[0].get()), 42)
@@ -114,10 +114,10 @@ class SubtitleProfileTest(unittest.TestCase):
     def test_export_failure_keeps_saved_profile(self):
         e = self.open()
         e.cue_values[0].set('55')
-        with patch.object(Project, 'retry_export', side_effect=PermissionError('locked')), patch('editor.messagebox.showerror'):
+        with patch.object(Project, 'retry_export', side_effect=PermissionError('locked')), patch('ndtranskripthor.presentation.editor.messagebox.showerror'):
             self.assertTrue(save_editor(e))
         self.assertFalse(e.dirty)
-        with patch('editor.messagebox.askyesnocancel') as ask:
+        with patch('ndtranskripthor.presentation.editor.messagebox.askyesnocancel') as ask:
             self.assertTrue(e.close())
             ask.assert_not_called()
         reopened = self.open()

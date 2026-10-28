@@ -3,7 +3,7 @@ import unittest
 from unittest.mock import Mock, patch
 
 import numpy as np
-from playback import Player, RATES, tempo_blocks, output_devices
+from ndtranskripthor.audio.playback import Player, RATES, tempo_blocks, output_devices
 import test_editor_speakers
 
 
@@ -129,8 +129,8 @@ class PlaybackEditorTest(unittest.TestCase):
     def test_settings_dialog_applies_without_editing_project(self):
         import tkinter as tk
         from tkinter import ttk
-        from ui import apply_theme
-        from i18n import set_language
+        from ndtranskripthor.presentation.ui import apply_theme
+        from ndtranskripthor.core.i18n import set_language
         e = self.editor
         device = (3, 'Headphones Unicode č 日本', 0, 'Host')
         for language in ('en', 'sk'):
@@ -140,7 +140,7 @@ class PlaybackEditorTest(unittest.TestCase):
                 apply_theme(self.app, theme)
                 for scale in (1, 1.25, 1.5, 1.75, 2):
                     self.root.tk.call('tk', 'scaling', scale*96/72)
-                    with patch('editor.output_devices', return_value=[device]):
+                    with patch('ndtranskripthor.presentation.editor.output_devices', return_value=[device]):
                         e.playback_settings()
                     window = next(w for w in e.window.winfo_children() if isinstance(w, tk.Toplevel))
                     self.root.update()

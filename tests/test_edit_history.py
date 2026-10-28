@@ -2,9 +2,9 @@ from test_io_support import save_editor, export_editor
 import unittest
 from unittest.mock import patch
 import test_editor_speakers
-from edit_history import EditHistory
-from editor import Editor
-from project import Project
+from ndtranskripthor.projects.edit_history import EditHistory
+from ndtranskripthor.presentation.editor import Editor
+from ndtranskripthor.projects.project import Project
 
 
 class HistoryTest(unittest.TestCase):
@@ -79,7 +79,7 @@ class EditorHistoryTest(unittest.TestCase):
         e = self.editor
         self.select(0)
         self.replace('Saved change')
-        with patch('editor.messagebox.showerror', side_effect=AssertionError('Unexpected export error')):
+        with patch('ndtranskripthor.presentation.editor.messagebox.showerror', side_effect=AssertionError('Unexpected export error')):
             self.assertTrue(save_editor(e))
         self.assertFalse(e.dirty)
         e.undo()
@@ -88,7 +88,7 @@ class EditorHistoryTest(unittest.TestCase):
         e.redo()
         self.assertFalse(e.dirty)
         e.undo()
-        with patch('editor.messagebox.showerror', side_effect=AssertionError('Unexpected export error')):
+        with patch('ndtranskripthor.presentation.editor.messagebox.showerror', side_effect=AssertionError('Unexpected export error')):
             self.assertTrue(save_editor(e))
         self.assertTrue(e.close())
         reopened = Editor(self.app, self.folder, parent=self.app.editor_page)
@@ -107,7 +107,7 @@ class EditorHistoryTest(unittest.TestCase):
         e.redo()
         self.assertEqual(e.segments[0]['speaker'], 'Manual')
         self.select(1)
-        with patch('editor.simpledialog.askstring', return_value='Renamed'):
+        with patch('ndtranskripthor.presentation.editor.simpledialog.askstring', return_value='Renamed'):
             e.rename_speaker()
         self.assertEqual(e.segments[44]['speaker'], 'Renamed')
         e.undo()

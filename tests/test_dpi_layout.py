@@ -5,13 +5,13 @@ import tkinter as tk
 from tkinter import ttk
 import unittest
 from itertools import product
-from state import StateStore
+from ndtranskripthor.queueing.state import StateStore
 from unittest.mock import patch
-from prepis import App
-from editor import Editor
-from model_dialog import ModelDialog
-from project import Project
-from ui import apply_theme
+from ndtranskripthor.presentation.prepis import App
+from ndtranskripthor.presentation.editor import Editor
+from ndtranskripthor.presentation.model_dialog import ModelDialog
+from ndtranskripthor.projects.project import Project
+from ndtranskripthor.presentation.ui import apply_theme
 from test_studio import destroy_window
 import test_editor_speakers
 
@@ -93,7 +93,7 @@ class PlaybackLayoutTest(unittest.TestCase):
     def test_wide_playback_and_details_buttons_remain_fully_visible(self):
         # Hosted Windows desktops can request wider buttons than this machine.
         # Exercise that constraint without changing/ignoring any original test.
-        from i18n import tr
+        from ndtranskripthor.core.i18n import tr
         labels = {tr('editor.init.' + key) for key in ('segment', 'resume', 'pause', 'segment_and_subtitles')}
         def descendants(widget):
             for child in widget.winfo_children():

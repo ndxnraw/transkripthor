@@ -398,3 +398,45 @@ prejdite diff a urobte čistý setup/test/build. Pri Hugging Face Hub navyše
 skontrolujte interné API v `download_worker.py`, vedome upravte HUB_VERSION
 a úspešne dokončite všetky transportné regresie. Nesúlad pinu kontrola odmietne.
 Nikdy neaktualizujte celý lock naslepo ani nevypínajte TLS/hash kontroly.
+
+## Aplikačné vrstvy (úloha 27)
+
+Jediný zdroj je `src/ndtranskripthor/`. Verejné spúšťače `src/prepis.py`
+a `src/evaluate_mixed.py` zostávajú malé a zachovávajú existujúce príkazy.
+Autoritatívna verzia zostáva `src/version.py`. Nepridávajte ploché kópie modulov
+ani úpravy `sys.modules` na obchádzanie importov.
+
+| Balík | Zodpovednosť a rozhranie |
+|---|---|
+| `presentation` | Tk okná, editor, dostupnosť, dialógy a preklad zobrazovaných volieb; prácu ukladania odovzdáva službe. |
+| `application` | `transcribe_job`, `BatchRunner`, riadený ASR proces, dátové správy, priebeh a `perform_project_io`. |
+| `projects` | `Project`: checkpointy, originál/revízie, transakcie; editácia segmentov, Undo/Redo a vyhľadávanie bez Tk. |
+| `queueing` | `StateStore`: samostatné nastavenia a transakčná fronta, kompatibilita starého profilu. |
+| `asr` | Existujúce faster-whisper/KInIT adaptéry, efektívne dekódovanie a CZ/SK režim; bez načítania pri importe. |
+| `models` | Inventár, integrita, cache a izolovaný prenos s rovnakým pinom Hub. |
+| `audio` | Diskové PCM, spoločný formát časovej osi, prehrávač a zariadenia. |
+| `exports` | Vykreslenie a konzistentné publikovanie TXT/SRT/VTT/DOCX/JSON, validácia titulkov. |
+| `core` | Protokoly hraníc (`EventSink`, `Transcriber`, `ProfileStore`, `Playback`, `ExportProject`), chyby, preklady, zámky a atómové zápisy. |
+| `evaluation`, `diagnostics` | Meranie cez produkčné služby a izolované source/frozen diagnostiky. |
+
+Služba `perform_project_io` prijíma zachytené dáta, otvorí vlastné pripojenie
+k projektu vo worker vlákne a vracia udalosti `io_committed`, `io_done` alebo
+`io_error`. Nečíta Tk premenné ani nemení príznak neuložených úprav; to robí
+editor až po prijatí udalosti. Editor už nepozná SQL tabuľky na pridelenie ID
+ani zoznam revízií. `Project.export/retry_export` zostávajú kompatibilné fasády
+pre staršie volania; formátovanie a publikovanie patrí balíku `exports`.
+Tento krok nemení databázové schémy, ID segmentov, ASR protokol, názvy súborov,
+modelové revízie ani používateľské profily a nevyžaduje migráciu projektov.
+
+`core/resources.py` odvodí `src/` zo súboru pri zdrojovom spustení a `_MEIPASS`
+pri frozen behu. Assety a katalógy zostávajú v `src/assets` a `src/locales`.
+Balenie zbiera všetky moduly balíka; `verify_frozen.py` rekurzívne porovnáva
+ich skutočný bytecode vrátane inicializátorov. Test katalógov tiež prechádza
+vnorené zdroje. Testy zostávajú v `tests/`, balenie v `packaging/` a opakovateľné
+nástroje v `scripts/`; tieto už správne oddelené priečinky netreba presúvať.
+
+`tests/test_architecture.py` chráni smer importov: dátové vrstvy nepoužívajú Tk
+ani prezentačnú vrstvu, `core` nezávisí od vyšších vrstiev. Overuje aj studený
+import služieb bez modelových runtime, Unicode zdrojové/frozen cesty a uloženie,
+otvorenie a export projektu cez službu bez prepisu originálu. Regresie sú
+simulované testy pipeline, nie nové meranie reálnej presnosti ASR/GPU.

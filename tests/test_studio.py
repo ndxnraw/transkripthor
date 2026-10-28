@@ -5,11 +5,11 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from prepis import App
-from editor import Editor
-from jobs import job_settings
-from project import Project
-from ui import apply_theme
+from ndtranskripthor.presentation.prepis import App
+from ndtranskripthor.presentation.editor import Editor
+from ndtranskripthor.application.jobs import job_settings
+from ndtranskripthor.projects.project import Project
+from ndtranskripthor.presentation.ui import apply_theme
 
 
 def destroy_window(root):
@@ -55,14 +55,14 @@ class StudioTest(unittest.TestCase):
     def test_new_requires_selection(self):
         self.recording()
         self.app.listbox.selection_clear()
-        with patch('prepis.threading.Thread') as thread, patch('prepis.messagebox.showinfo'):
+        with patch('ndtranskripthor.presentation.prepis.threading.Thread') as thread, patch('ndtranskripthor.presentation.prepis.messagebox.showinfo'):
             self.app.start('new')
         thread.assert_not_called()
 
     def test_resume_uses_project_settings_without_changing_new_job_settings(self):
         item = self.recording()
         item.update(state='interrupted', project=self.project())
-        with patch('prepis.threading.Thread') as thread:
+        with patch('ndtranskripthor.presentation.prepis.threading.Thread') as thread:
             self.app.context_action()
         self.assertEqual(thread.call_args.kwargs['args'][2:4], ('cs-sk', 'medium'))
         self.assertEqual(self.app.language.get(), 'Slovenčina')
@@ -73,7 +73,7 @@ class StudioTest(unittest.TestCase):
         self.recording()
         self.app.cache = self.folder/'no-models'
         self.app.offline.set(True)
-        with patch('prepis.threading.Thread') as thread, patch('prepis.messagebox.showinfo') as info:
+        with patch('ndtranskripthor.presentation.prepis.threading.Thread') as thread, patch('ndtranskripthor.presentation.prepis.messagebox.showinfo') as info:
             self.app.start()
         self.assertFalse(self.app.busy)
         thread.assert_not_called()
@@ -109,7 +109,7 @@ class StudioTest(unittest.TestCase):
         self.assertEqual(str(self.app.progress['mode']), 'determinate')
         self.assertEqual(self.app.percent.get(), '0 %')
 
-    @patch('editor.Editor.load_audio')
+    @patch('ndtranskripthor.presentation.editor.Editor.load_audio')
     def test_inline_edits_paging_search_theme_and_explicit_playback(self, _load):
         editor = Editor(self.app, self.project(), parent=self.app.editor_page)
         self.app.editors.append(editor)
@@ -147,16 +147,16 @@ class StudioTest(unittest.TestCase):
         editor.player.audio = None
         editor.close()
 
-    @patch('model_dialog.inventory', return_value=[])
+    @patch('ndtranskripthor.presentation.model_dialog.inventory', return_value=[])
     def test_model_delete_is_blocked_while_transcribing(self, _inventory):
-        from model_dialog import ModelDialog
-        with patch('model_dialog.threading.Thread'):
+        from ndtranskripthor.presentation.model_dialog import ModelDialog
+        with patch('ndtranskripthor.presentation.model_dialog.threading.Thread'):
             dialog = ModelDialog(self.app, parent=self.app.models_page)
         dialog.busy = False
         dialog.tree.insert('', 'end', iid='small', text='Small')
         dialog.tree.selection_set('small')
         self.app.busy = True
-        with patch('model_dialog.remove_model') as remove, patch('model_dialog.messagebox.askyesno') as ask:
+        with patch('ndtranskripthor.presentation.model_dialog.remove_model') as remove, patch('ndtranskripthor.presentation.model_dialog.messagebox.askyesno') as ask:
             dialog.remove()
         remove.assert_not_called()
         ask.assert_not_called()
@@ -164,10 +164,10 @@ class StudioTest(unittest.TestCase):
 
 
 class StudioScalingTest(unittest.TestCase):
-    @patch('editor.Editor.load_audio')
+    @patch('ndtranskripthor.presentation.editor.Editor.load_audio')
     def test_editor_settings_models_fit_both_themes_and_scales(self, _load):
         from tkinter import ttk
-        from model_dialog import ModelDialog
+        from ndtranskripthor.presentation.model_dialog import ModelDialog
         for scale in (1,1.25,1.5,1.75,2):
             with tempfile.TemporaryDirectory() as folder:
                 root = tk.Tk()
@@ -180,7 +180,7 @@ class StudioScalingTest(unittest.TestCase):
                         project.commit_chunk(0,[dict(start=0,end=1,text='Čitateľný úsek. '*20,words=[],speaker='',language='sk')],'sk')
                     editor = Editor(app, str(target), parent=app.editor_page)
                     app.editors.append(editor)
-                    with patch('model_dialog.threading.Thread'):
+                    with patch('ndtranskripthor.presentation.model_dialog.threading.Thread'):
                         app.model_dialog = ModelDialog(app, parent=app.models_page)
                     editor.tree.selection_set('0')
                     editor.select()

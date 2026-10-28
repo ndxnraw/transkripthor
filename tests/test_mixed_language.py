@@ -4,8 +4,8 @@ from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
 import numpy as np
-import mixed_language as ml
-from speech_models import ModelManager
+from ndtranskripthor.asr import mixed_language as ml
+from ndtranskripthor.asr.speech_models import ModelManager
 
 
 def segment(language, score=-0.2):
@@ -31,8 +31,8 @@ class MixedTest(unittest.TestCase):
             value = scores[index][language] if scores else -0.2
             return iter([segment(language, value)]), None
         model.transcribe.side_effect = transcribe
-        with patch('pcm_audio.decode_audio', return_value=audio), \
-             patch('pcm_audio.speech_spans', return_value=spans):
+        with patch('ndtranskripthor.audio.pcm_audio.decode_audio', return_value=audio), \
+             patch('ndtranskripthor.audio.pcm_audio.speech_spans', return_value=spans):
             result, info = ml.transcribe_mixed(model, 'fixture.wav', stop or threading.Event(),
                                              word_timestamps=True)
             result = list(result)
@@ -104,7 +104,7 @@ class MixedTest(unittest.TestCase):
 
     def test_nonempty_silent_audio(self):
         model = Mock()
-        with patch('pcm_audio.decode_audio', return_value=np.zeros(16000)), \
+        with patch('ndtranskripthor.audio.pcm_audio.decode_audio', return_value=np.zeros(16000)), \
              patch('faster_whisper.vad.get_speech_timestamps', return_value=[]):
             segments, _ = ml.transcribe_mixed(model, 'silence.wav', threading.Event())
             self.assertEqual(list(segments), [])
@@ -117,9 +117,9 @@ class MixedTest(unittest.TestCase):
         self.assertEqual(original.words[0].start, 0.2)
         self.assertAlmostEqual(result.start, 125.5)
 
-    @patch('speech_models.release_memory')
-    @patch('speech_models.device', return_value='cpu')
-    @patch('speech_models.load_backend')
+    @patch('ndtranskripthor.asr.speech_models.release_memory')
+    @patch('ndtranskripthor.asr.speech_models.device', return_value='cpu')
+    @patch('ndtranskripthor.asr.speech_models.load_backend')
     def test_model_reused_in_mixed_mode(self, load, *_):
         manager = ModelManager()
         args = ('small', 'cache', True, Mock(), threading.Event())

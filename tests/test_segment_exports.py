@@ -6,10 +6,10 @@ import zipfile
 from pathlib import Path
 from unittest.mock import patch
 from xml.etree import ElementTree as ET
-from project import Project
-from segment_edit import split, merge, validate
-from export_formats import ExportOptions, FORMATS, export_project, latest_bundle, render, docx
-from subtitles import SubtitleOptions
+from ndtranskripthor.projects.project import Project
+from ndtranskripthor.projects.segment_edit import split, merge, validate
+from ndtranskripthor.exports.export_formats import ExportOptions, FORMATS, export_project, latest_bundle, render, docx
+from ndtranskripthor.exports.subtitles import SubtitleOptions
 import test_editor_speakers
 from test_io_support import save_editor, wait_io
 
@@ -115,7 +115,7 @@ class SegmentEditorTest(unittest.TestCase):
     select = test_editor_speakers.SpeakerEditingTest.select
 
     def test_split_merge_times_undo_save_reopen_and_no_implicit_export(self):
-        from editor import Editor
+        from ndtranskripthor.presentation.editor import Editor
         e=self.editor
         with Project(self.folder) as p:
             p.finish()

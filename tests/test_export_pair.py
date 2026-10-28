@@ -7,10 +7,10 @@ import tkinter as tk
 import unittest
 from unittest.mock import patch
 
-from editor import Editor
-from prepis import App
-from project import Project
-from state import atomic_text
+from ndtranskripthor.presentation.editor import Editor
+from ndtranskripthor.presentation.prepis import App
+from ndtranskripthor.projects.project import Project
+from ndtranskripthor.core.atomic import atomic_text
 from test_studio import destroy_window
 
 
@@ -40,7 +40,7 @@ class ExportPairTest(unittest.TestCase):
                         if path.suffix == '.srt':
                             raise failure
                         atomic_text(path, *args)
-                    with patch('project.atomic_text', side_effect=write):
+                    with patch('ndtranskripthor.projects.project.atomic_text', side_effect=write):
                         with self.assertRaises(OSError):
                             project.retry_export()
                     self.assertEqual(project.get('editor_export')['state'], 'pending')
@@ -63,7 +63,7 @@ class ExportPairTest(unittest.TestCase):
                 raise PermissionError('locked manifest')
             atomic_text(path, *args)
         with Project(self.folder) as project:
-            with patch('project.atomic_text', side_effect=write):
+            with patch('ndtranskripthor.projects.project.atomic_text', side_effect=write):
                 with self.assertRaises(PermissionError):
                     project.retry_export()
         self.assertEqual(self.pointer.read_bytes(), previous)
@@ -104,7 +104,7 @@ class ExportPairTest(unittest.TestCase):
         editor.text.delete('1.0', 'end')
         editor.text.insert('1.0', 'Uložená oprava.')
         with patch.object(Project, 'export', side_effect=PermissionError('access denied')), \
-             patch('editor.show_error') as error:
+             patch('ndtranskripthor.presentation.editor.show_error') as error:
             self.assertTrue(save_editor(editor))
             self.assertFalse(editor.dirty)
             self.assertIn('saved', editor.saved_state.get())
@@ -132,7 +132,7 @@ class ExportPairTest(unittest.TestCase):
             self.assertTrue((location/'titulky.opravene.srt').is_file())
         # A database failure must not claim success or attempt export.
         with patch.object(Project, 'edit', side_effect=OSError('database full')), \
-             patch.object(Project, 'retry_export') as export, patch('editor.show_error'):
+             patch.object(Project, 'retry_export') as export, patch('ndtranskripthor.presentation.editor.show_error'):
             self.assertFalse(save_editor(editor))
             self.assertTrue(editor.dirty)
             export.assert_not_called()

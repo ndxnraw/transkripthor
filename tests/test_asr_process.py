@@ -8,8 +8,8 @@ import wave
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
-from asr_process import Channel, supervise, worker
-from project import Project
+from ndtranskripthor.application.asr_process import Channel, supervise, worker
+from ndtranskripthor.projects.project import Project
 
 
 def hanging(connection, config, stop, run, gate):
@@ -33,9 +33,9 @@ def abandon_parent(connection, config):
 
 
 def fixture(connection, config, stop, run, gate):
-    from asr_batch import BatchRunner
-    from speech_models import GPUError
-    from i18n import set_language
+    from ndtranskripthor.application.asr_batch import BatchRunner
+    from ndtranskripthor.asr.speech_models import GPUError
+    from ndtranskripthor.core.i18n import set_language
     set_language('en')
     gate.wait()
     channel = Channel(connection, run, stop)
@@ -50,8 +50,8 @@ def fixture(connection, config, stop, run, gate):
         if args[3] == 'cuda': raise GPUError('cublas64_12.dll missing')
         return Model()
     try:
-        with (patch('model_catalog.ensure_model'), patch('model_catalog.cached_path', return_value=Path('revision')),
-             patch('speech_models.device', return_value='cuda'), patch('speech_models.load_backend', side_effect=load),
+        with (patch('ndtranskripthor.models.model_catalog.ensure_model'), patch('ndtranskripthor.models.model_catalog.cached_path', return_value=Path('revision')),
+             patch('ndtranskripthor.asr.speech_models.device', return_value='cuda'), patch('ndtranskripthor.asr.speech_models.load_backend', side_effect=load),
              patch('faster_whisper.vad.get_speech_timestamps', return_value=[dict(start=0,end=96000),dict(start=160000,end=256000)])):
             BatchRunner(config, stop, channel).work(*config['arguments'])
     finally:
@@ -194,7 +194,7 @@ class ProcessTest(unittest.TestCase):
 
     def test_window_close_stops_hung_process_and_ignores_stale_ui_message(self):
         import tkinter as tk
-        from prepis import App
+        from ndtranskripthor.presentation.prepis import App
         from test_studio import destroy_window
         root = tk.Tk()
         def cleanup():
@@ -206,7 +206,7 @@ class ProcessTest(unittest.TestCase):
         app.ui_language.set('sk')  # Takes effect after restart, including worker messages.
         def launch(config, stop, events, run, **kwargs):
             supervise(config, stop, events, run, target=hanging, stop_seconds=.3, **kwargs)
-        with patch('asr_process.supervise', side_effect=launch):
+        with patch('ndtranskripthor.application.asr_process.supervise', side_effect=launch):
             app.start()
             self.assertTrue(app.busy)
             self.assertEqual(app.asr_config['ui_language'], 'en')

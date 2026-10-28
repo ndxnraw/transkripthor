@@ -8,9 +8,9 @@ import wave
 from pathlib import Path
 from unittest.mock import patch
 
-from editor import Editor
-from prepis import App
-from project import Project, fingerprint
+from ndtranskripthor.presentation.editor import Editor
+from ndtranskripthor.presentation.prepis import App
+from ndtranskripthor.projects.project import Project, fingerprint
 from test_io_support import save_editor
 from test_studio import destroy_window
 
@@ -72,7 +72,7 @@ class ProjectOpenTest(unittest.TestCase):
         self.assertEqual(app.items, [])
         moved = self.base/'Zvuk na novom mieste.wav'
         self.audio.rename(moved)
-        with patch('editor.show_error'), patch('prepis.filedialog.askopenfilename', return_value=str(self.folder/'projekt.sqlite3')):
+        with patch('ndtranskripthor.presentation.editor.show_error'), patch('ndtranskripthor.presentation.prepis.filedialog.askopenfilename', return_value=str(self.folder/'projekt.sqlite3')):
             app.choose_project()
             editor = app.editors[-1]
             self.wait_audio(root, editor)
@@ -85,21 +85,21 @@ class ProjectOpenTest(unittest.TestCase):
         editor.text.insert('1.0', 'Opravený text bez zvuku.')
         self.assertTrue(save_editor(editor))
         self.assertTrue(editor.close())
-        with patch('editor.show_error'):
+        with patch('ndtranskripthor.presentation.editor.show_error'):
             app.open_project(self.folder)
             editor = app.editors[-1]
             self.wait_audio(root, editor)
         self.assertEqual(editor.segments[0]['text'], 'Opravený text bez zvuku.')
         wrong = self.base/'Nesprávny zvuk.wav'
         wrong.write_bytes(b'x'*moved.stat().st_size)
-        with patch('editor.show_error') as error, patch('editor.filedialog.askopenfilename', return_value=str(wrong)):
+        with patch('ndtranskripthor.presentation.editor.show_error') as error, patch('ndtranskripthor.presentation.editor.filedialog.askopenfilename', return_value=str(wrong)):
             editor.locate_audio()
             self.wait_audio(root, editor)
             error.assert_called_once()
         with Project(self.folder) as project:
             self.assertEqual(project.get('source'), str(self.audio.resolve()))
         self.assertIsNone(editor.player.audio)
-        with patch('editor.filedialog.askopenfilename', return_value=str(moved)):
+        with patch('ndtranskripthor.presentation.editor.filedialog.askopenfilename', return_value=str(moved)):
             editor.locate_audio()
             self.wait_audio(root, editor)
         self.assertIsNotNone(editor.player.audio)

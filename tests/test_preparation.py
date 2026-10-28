@@ -11,8 +11,8 @@ from unittest.mock import Mock, patch
 
 import numpy as np
 
-from jobs import job_settings, transcribe_job
-from project import Project, fingerprint
+from ndtranskripthor.application.jobs import job_settings, transcribe_job
+from ndtranskripthor.projects.project import Project, fingerprint
 
 
 class PreparationTest(unittest.TestCase):
@@ -36,7 +36,7 @@ class PreparationTest(unittest.TestCase):
 
     def resume_and_check(self):
         self.stop.clear()
-        with patch('pcm_audio.decode_audio', return_value=self.audio), \
+        with patch('ndtranskripthor.audio.pcm_audio.decode_audio', return_value=self.audio), \
              patch('faster_whisper.vad.get_speech_timestamps', return_value=self.spans):
             self.assertTrue(self.run_job(resume=True))
         with Project(self.target) as project:
@@ -71,8 +71,8 @@ class PreparationTest(unittest.TestCase):
                 def emit(kind, value):
                     if stage == 'ready' and value == 'Transcribing speech…':
                         self.stop.set()
-                with patch('jobs.fingerprint', side_effect=digest), \
-                     patch('pcm_audio.decode_audio', side_effect=decode), \
+                with patch('ndtranskripthor.application.jobs.fingerprint', side_effect=digest), \
+                     patch('ndtranskripthor.audio.pcm_audio.decode_audio', side_effect=decode), \
                      patch('faster_whisper.vad.get_speech_timestamps', side_effect=vad):
                     self.assertFalse(self.run_job(emit=emit))
                 with Project(self.target) as project:
@@ -89,8 +89,8 @@ class PreparationTest(unittest.TestCase):
 import os, sys, threading
 from unittest.mock import Mock, patch
 import numpy as np
-from jobs import transcribe_job, job_settings
-from project import fingerprint
+from ndtranskripthor.application.jobs import transcribe_job, job_settings
+from ndtranskripthor.projects.project import fingerprint
 stage, source, target = sys.argv[1:]
 def die(): os._exit(17)
 def digest(*args):
@@ -104,7 +104,7 @@ def vad(*args):
     return [dict(start=0, end=96000)]
 def emit(kind, value):
     if stage == 'ready' and value == 'Transcribing speech…': die()
-with patch('jobs.fingerprint', side_effect=digest), patch('pcm_audio.decode_audio', side_effect=decode), patch('faster_whisper.vad.get_speech_timestamps', side_effect=vad):
+with patch('ndtranskripthor.application.jobs.fingerprint', side_effect=digest), patch('ndtranskripthor.audio.pcm_audio.decode_audio', side_effect=decode), patch('faster_whisper.vad.get_speech_timestamps', side_effect=vad):
     transcribe_job(Mock(), source, target, job_settings('small', 'sk'), threading.Event(), emit)
 '''
         for stage in ('hashing', 'decoding', 'vad', 'ready'):
@@ -124,7 +124,7 @@ with patch('jobs.fingerprint', side_effect=digest), patch('pcm_audio.decode_audi
             project.begin_preparation(self.source, self.settings)
         code = '''
 import os, sys
-from project import Project
+from ndtranskripthor.projects.project import Project
 with Project(sys.argv[1]) as project:
     original = project.put
     def put(key, value):
@@ -155,7 +155,7 @@ with Project(sys.argv[1]) as project:
     def test_initial_metadata_crash_rolls_back_and_preserves_existing_data(self):
         code = '''
 import os, sys
-from project import Project
+from ndtranskripthor.projects.project import Project
 with Project(sys.argv[1], create=True) as project:
     original = project.put
     def put(key, value):

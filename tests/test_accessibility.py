@@ -3,7 +3,7 @@ import unittest
 import time
 from unittest.mock import patch
 import test_editor_speakers
-from ui import PALETTES, apply_theme
+from ndtranskripthor.presentation.ui import PALETTES, apply_theme
 
 
 def contrast(a, b):
@@ -105,12 +105,12 @@ class AccessibilityTest(unittest.TestCase):
                 self.assertGreaterEqual(contrast(palette[fg], palette[bg]), 4.5, (fg, bg))
         system = dict(bg='#000000', card='#000000', field='#000000', text='#ffffff', muted='#ffffff',
                       border='#ffffff', blue='#ffff00', accent_text='#000000', info='#000000', disabled='#000000')
-        with patch('accessibility.high_contrast_palette', return_value=system):
+        with patch('ndtranskripthor.presentation.accessibility.high_contrast_palette', return_value=system):
             apply_theme(self.app, 'dark')
             self.editor.apply_theme()
             self.assertEqual(self.app.style.lookup('TLabel', 'foreground'), '#ffffff')
             self.assertNotIn('.round', str(self.app.style.layout('TButton')))
-        with patch('accessibility.high_contrast_palette', return_value=None):
+        with patch('ndtranskripthor.presentation.accessibility.high_contrast_palette', return_value=None):
             apply_theme(self.app, 'light')
             self.assertIn('light.Button.round', str(self.app.style.layout('TButton')))
             self.assertGreaterEqual(contrast(self.app.style.lookup('Accent.TButton', 'focuscolor'), PALETTES['light']['blue']), 3)

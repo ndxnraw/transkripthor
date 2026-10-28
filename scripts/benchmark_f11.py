@@ -31,7 +31,7 @@ def memory():
 
 if __name__ == '__main__' and len(sys.argv) > 1 and sys.argv[1] == '--worker':
     from faster_whisper.audio import decode_audio as legacy
-    from pcm_audio import decode_audio
+    from ndtranskripthor.audio.pcm_audio import decode_audio
     mode, source = sys.argv[2:]
     baseline = memory().working
     started = time.perf_counter()

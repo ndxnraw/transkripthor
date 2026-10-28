@@ -15,8 +15,8 @@ sys.path[:0] = [str(ROOT / 'src'), str(ROOT / 'tests')]
 def main():
     from faster_whisper.audio import decode_audio
     import numpy as np
-    from prepis import App
-    from project import Project
+    from ndtranskripthor.presentation.prepis import App
+    from ndtranskripthor.projects.project import Project
     from test_studio import destroy_window
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--audio', type=Path, required=True)

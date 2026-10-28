@@ -7,11 +7,11 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
 
-import speakers
-from model_catalog import cache_folder, SPEAKER_MODEL, SPEAKER_REVISION
+from ndtranskripthor.asr import speakers
+from ndtranskripthor.models.model_catalog import cache_folder, SPEAKER_MODEL, SPEAKER_REVISION
 import test_editor_speakers
 from test_io_support import save_editor
-from project import Project
+from ndtranskripthor.projects.project import Project
 
 
 class AvailabilityTest(unittest.TestCase):
@@ -30,7 +30,7 @@ class AvailabilityTest(unittest.TestCase):
 
     def test_missing_incomplete_model_does_not_import_optional_runtime(self):
         self.weight.write_bytes(b'')
-        with patch('speakers.importlib.import_module') as load:
+        with patch('ndtranskripthor.asr.speakers.importlib.import_module') as load:
             self.assertIsNone(speakers.availability(self.cache)[0])
             load.assert_not_called()
 
@@ -41,7 +41,7 @@ class AvailabilityTest(unittest.TestCase):
                     def load(module):
                         if module == name: raise error
                         return self.modules[module]
-                    with patch('speakers.importlib.import_module', side_effect=load):
+                    with patch('ndtranskripthor.asr.speakers.importlib.import_module', side_effect=load):
                         path, reason, detail = speakers.availability(self.cache)
                     self.assertIsNone(path)
                     self.assertIn(name, reason)
@@ -49,7 +49,7 @@ class AvailabilityTest(unittest.TestCase):
                     self.assertIn(str(error), detail)
 
     def test_ready_without_loading_weights_and_missing_cpu_provider(self):
-        with patch('speakers.importlib.import_module', side_effect=self.modules.__getitem__):
+        with patch('ndtranskripthor.asr.speakers.importlib.import_module', side_effect=self.modules.__getitem__):
             self.assertEqual(speakers.availability(self.cache)[0], self.folder)
             self.modules['onnxruntime'].get_available_providers = lambda: []
             self.assertIn('CPUExecutionProvider', speakers.availability(self.cache)[2])
@@ -60,7 +60,7 @@ class VoiceControlsTest(unittest.TestCase):
     select = test_editor_speakers.SpeakerEditingTest.select
 
     def check(self, result):
-        with patch('speakers.availability', return_value=result):
+        with patch('ndtranskripthor.asr.speakers.availability', return_value=result):
             self.editor.refresh_voice_availability()
             deadline = time.monotonic()+3
             while self.editor.voice_check is not None:
@@ -75,8 +75,8 @@ class VoiceControlsTest(unittest.TestCase):
         self.assertIn('Missing DLL', self.editor.voice_status.get())
         self.check((self.folder, 'Ready', ''))
         self.assertFalse(self.editor.speaker_button.instate(['disabled']))
-        with patch('speakers.availability', return_value=(None, 'Model removed', '')), \
-             patch('editor.messagebox.askyesno') as confirm:
+        with patch('ndtranskripthor.asr.speakers.availability', return_value=(None, 'Model removed', '')), \
+             patch('ndtranskripthor.presentation.editor.messagebox.askyesno') as confirm:
             self.editor.diarize()
             confirm.assert_not_called()
         self.assertFalse(self.editor.speaker_busy)
@@ -88,7 +88,7 @@ class VoiceControlsTest(unittest.TestCase):
         def check(cache):
             checked.append(threading.get_ident())
             return None, 'Missing model', ''
-        with patch('speakers.availability', side_effect=check):
+        with patch('ndtranskripthor.asr.speakers.availability', side_effect=check):
             self.editor.refresh_voice_availability()
             deadline = time.monotonic()+3
             while self.editor.voice_check is not None:

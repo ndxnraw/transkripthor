@@ -8,10 +8,10 @@ import time
 import unittest
 from unittest.mock import patch, Mock
 
-from ownership import Lease, OwnershipError, ProfileOwner
-from project import Project
-from model_catalog import cache_folder, remove_model, download
-from speech_models import ModelManager
+from ndtranskripthor.core.ownership import Lease, OwnershipError, ProfileOwner
+from ndtranskripthor.projects.project import Project
+from ndtranskripthor.models.model_catalog import cache_folder, remove_model, download
+from ndtranskripthor.asr.speech_models import ModelManager
 
 
 class OwnershipTest(unittest.TestCase):
@@ -45,7 +45,7 @@ class OwnershipTest(unittest.TestCase):
         profile = self.folder/'profile'
         code = '''
 import json, sys, tkinter as tk
-from prepis import App
+from ndtranskripthor.presentation.prepis import App
 root = tk.Tk(); root.withdraw()
 app = App(root, sys.argv[1])
 app.accept_files([sys.argv[2]])
@@ -78,7 +78,7 @@ root.destroy()
         # Windows .venv python.exe is a redirector with a different PID from
         # the interpreter. Killing only Popen's PID can leave the lock owner
         # alive. Crash the actual interpreter without finally/atexit cleanup.
-        child = self.child('from ownership import ProfileOwner; import os, sys; owner=ProfileOwner(sys.argv[1]); print("READY",flush=True); sys.stdin.read(1); os._exit(17)', profile)
+        child = self.child('from ndtranskripthor.core.ownership import ProfileOwner; import os, sys; owner=ProfileOwner(sys.argv[1]); print("READY",flush=True); sys.stdin.read(1); os._exit(17)', profile)
         request = ProfileOwner.submit(profile, [self.folder/'čaká.wav'])
         child.stdin.write('x'); child.stdin.flush()
         self.assertEqual(child.wait(timeout=10), 17)
@@ -117,7 +117,7 @@ root.destroy()
         profile = self.folder/'profile'
         code = '''
 import sys
-from ownership import ProfileOwner, OwnershipError
+from ndtranskripthor.core.ownership import ProfileOwner, OwnershipError
 print('READY', flush=True)
 sys.stdin.readline()
 owner = None
@@ -151,9 +151,9 @@ if owner: owner.close()
     def test_other_process_cannot_open_owned_project_and_crash_releases_it(self):
         folder = self.folder/'project'
         code = '''
-from project import Project
-from prepis import App
-from editor import Editor
+from ndtranskripthor.projects.project import Project
+from ndtranskripthor.presentation.prepis import App
+from ndtranskripthor.presentation.editor import Editor
 from unittest.mock import patch
 from pathlib import Path
 import os, sys, tkinter as tk
@@ -195,7 +195,7 @@ os._exit(17)
         (target/'weights').write_bytes(b'keep')
         manager = ModelManager()
         self.addCleanup(manager.close)
-        with patch('speech_models.load_backend', return_value=object()):
+        with patch('ndtranskripthor.asr.speech_models.load_backend', return_value=object()):
             manager.get('sk', 'tiny', cache, True, Mock(), threading.Event())
         with self.assertRaises(OwnershipError):
             remove_model(cache, 'tiny')
@@ -203,7 +203,7 @@ os._exit(17)
         def transfer(*args):
             with self.assertRaises(OwnershipError):
                 remove_model(cache, 'tiny')
-        with patch('download_transport.supervise', side_effect=transfer):
+        with patch('ndtranskripthor.models.download_transport.supervise', side_effect=transfer):
             download(cache, 'tiny', Mock(), threading.Event())
         remove_model(cache, 'tiny')
         self.assertFalse(target.exists())
@@ -212,7 +212,7 @@ os._exit(17)
         cache = self.folder/'models'
         target = cache_folder(cache, 'tiny')
         target.mkdir(parents=True)
-        code = 'from ownership import Lease; from pathlib import Path; import os, sys; lease=Lease(Path(sys.argv[1])/".models.lock"); print("READY",flush=True); sys.stdin.read(1); os._exit(17)'
+        code = 'from ndtranskripthor.core.ownership import Lease; from pathlib import Path; import os, sys; lease=Lease(Path(sys.argv[1])/".models.lock"); print("READY",flush=True); sys.stdin.read(1); os._exit(17)'
         child = self.child(code, cache)
         with self.assertRaises(OwnershipError):
             remove_model(cache, 'tiny')
