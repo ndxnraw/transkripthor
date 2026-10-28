@@ -631,3 +631,15 @@ jeho skutočný vzhľad pri všetkých systémových DPI sa neoveroval. Existuj�
 Tk matica hlavného rozhrania prešla. Táto dokumentačná úloha neopakuje reálny
 ASR/GPU ani offline merania; uvádza dátum a rozsah už vykonaných skúšok.
 Používateľské dáta a staršia nesúvisiaca unstaged poznámka zostávajú zachované.
+
+Čistý kandidát `1b1b132` (28. 10. 2026, Pre-release) dokončil 293 testov
+za 321,552 s bez preskočenia, s jedným zlyhaním:
+`test_missing_ui_ack_has_deadline` prekročil 20 s a obslužné vlákno sa
+neukončilo. Diagnostika zachytila blokovanie multiprocessing Event.set
+v application/asr_process.py. Obe nové dokumentačné regresie prešli.
+Ide o už zaznamenaný typ neistoty procesového zastavovania; táto úloha
+algoritmus ASR nemení a príčinu nevyhlasuje za opravenú. Po úplnom súhrne
+boli ukončené iba identifikované zaseknuté interpretery tohto testu.
+Povinná brána zablokovala PyInstaller: nový EXE pre úlohu 29 nevznikol,
+commit sa nepushol. Zmeny sú zachované lokálne; vzdialený stav sa musí
+pred ďalšou synchronizáciou znova overiť. Kontroly sa nezoslabovali.
