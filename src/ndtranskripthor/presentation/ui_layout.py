@@ -219,6 +219,7 @@ def build_ui(app, root, languages, models, output, cache):
     help_actions = FlowFrame(settings)
     help_actions.pack(side='bottom', fill='x', pady=4, before=setup)
     ttk.Button(help_actions, text=tr('data.title'), command=app.manage_data).pack(side='left', padx=(0, 8))
+    ttk.Button(help_actions, text=tr('about.title'), command=lambda: show_about(root)).pack(side='left', padx=(0, 8))
     reset = ttk.Button(help_actions, text=tr('ui_layout.build_ui.reset_defaults'), command=app.reset_settings)
     reset.pack(side='left')
     ttk.Button(help_actions, text=tr('accessibility.shortcuts'), command=lambda: messagebox.showinfo(
@@ -267,3 +268,10 @@ def build_ui(app, root, languages, models, output, cache):
     root.geometry(f'{width}x{height}+20+20')
     root.protocol('WM_DELETE_WINDOW', app.close)
     root.after(100, app.poll)
+
+
+def show_about(root):
+    from version import DISPLAY_VERSION, VERSION
+    from ndtranskripthor.presentation.ui import AUTHOR
+    messagebox.showinfo(tr('about.title'),
+        tr('about.body', channel=DISPLAY_VERSION, version=VERSION, author=AUTHOR), parent=root)

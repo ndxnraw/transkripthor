@@ -1,6 +1,6 @@
 # F12 – riadený lokálny proces ASR
 
-Historický záznam. Aktuálne cesty, spúšťanie a výsledky overenia sú v [DEVELOPMENT.md](DEVELOPMENT.md) a [STATUS.md](STATUS.md).
+Historický dokument pre 2.1.3b / vývojové opravy. Posledný evidovaný zápis pred zosúladením návodov: 2026-10-14 (f5377db); nejde o dodatočne určený dátum testovania. Počty testov, cesty a stav publikovania nižšie platia iba pre opísanú historickú zostavu, nie aktuálny pre-release. Aktuálny prehľad: [poznámky k pre-release](RELEASE-NOTES.md).
 
 Vývojový bod návratu `F12-20261014`; verzia ostáva **2.1.3b**, bez publikovania.
 Zachované sú predchádzajúce rozpracované opravy, oba preklady a používateľské dáta.

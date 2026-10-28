@@ -514,5 +514,7 @@
   "data.kind.project_cache": "Project PCM cache",
   "data.state.complete": "measured",
   "data.state.partial": "partial / at least this size",
-  "data.state.missing": "folder does not exist"
+  "data.state.missing": "folder does not exist",
+  "about.title": "About ND TranskripThor",
+  "about.body": "ND TranskripThor — {channel}\nInternal compatibility version: {version}. This is development software, not a new published release.\n\nLocal transcription: faster-whisper and optional Slovak KInIT. CPU is the default; NVIDIA CUDA is an explicit choice. Offline mode requires the selected model revision in the local cache.\n\nSave project preserves editable revisions; export separately selects original or saved revision: TXT, SRT, VTT, DOCX, JSON. Older projects may have no recoverable original.\n\nCZ/SK language switching and voice grouping can be inaccurate. Voice grouping does not identify people or separate overlapping speech. Review transcripts. Local files are not automatically encrypted.\n\n{author}"
 }

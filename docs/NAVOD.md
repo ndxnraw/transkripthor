@@ -29,7 +29,7 @@ pribalené. Nová zdrojová zostava vznikne v `dist/ND TranskripThor`.
 - Editor celého prepisu s časmi, vyhľadávaním, úpravou textu, lokálnym prehrávaním,
   pauzou a posunom. Text sa upravuje priamo vo vybranom bloku. Výber úseku
   nespúšťa zvuk; automatické prehrávanie možno zapnúť v Nastaveniach.
-- TXT/SRT, nastaviteľné titulky, samostatné prevádzkové správy.
+- TXT/SRT/VTT/DOCX/JSON, nastaviteľné titulky, samostatné prevádzkové správy.
 - Zapamätanie nastavení, svetlý/tmavý vzhľad a obnova predvolených hodnôt.
 - Správca modelov: dostupnosť, miesto, sťahovanie a potvrdené odstránenie.
 - Voliteľné lokálne zoskupenie hlasov a ručná oprava/priradenie mien.
@@ -45,7 +45,8 @@ pribalené. Nová zdrojová zostava vznikne v `dist/ND TranskripThor`.
    a uložené nastavenia; čakajúce položky možno presúvať šípkami.
 4. **Otvoriť prepis / Editor** otvorí výsledok na karte Editor. Kliknutím vyberte
    blok a upravte text priamo v ňom. **▶ Úsek** prehrá vybraný interval.
-   **Hľadať** prehľadáva celý prepis; **Ďalší výskyt** prejde na ďalší zhodný úsek.
+   **Hľadať** prehľadáva celý prepis; **Ďalší/Predchádzajúci výskyt** prechádza jednotlivé zvýraznené výskyty.
+   Počet výskytov je oddelený od počtu nájdených úsekov.
    Hovoriaci a nastavenia titulkov sú pod tlačidlom **Úsek, hovoriaci a titulky**.
 5. **Uložiť** uloží projekt; samostatná ponuka **Možnosti exportu** vytvorí vybrané formáty.
    Pôvodný dokončený export zostáva zachovaný. Neuložené úpravy sú viditeľne
@@ -66,7 +67,7 @@ alebo zastavení sa rozpracovaný úsek zopakuje celý. Bezpečne uložené úse
 nespracujú znova. Overuje sa obsah nahrávky aj zhoda nastavení; pri nezhode treba
 obnoviť nastavenia alebo spustiť nový prepis.
 
-SQLite projekt je autoritatívny zdroj. TXT/SRT sú exporty, ktoré možno znovu
+SQLite projekt je autoritatívny zdroj. TXT/SRT/VTT/DOCX/JSON sú exporty, ktoré možno znovu
 vytvoriť; pri páde počas exportu otvorte projekt a zopakujte export bez prepisovania zvuku.
 Staré samotné TXT/SRT z verzie 1.x nemajú checkpoint a nemožno z nich bezpečne
 pokračovať. Zachovajte celý výstupný priečinok aj pôvodnú nahrávku.
@@ -88,7 +89,7 @@ Titulky používajú vety a časové značky slov; predvolene 42 znakov, dva ria
 1–7 sekúnd. Po ručnej zmene textu sa staré zarovnanie slov zneplatní. Bez časov
 slov zostane úsek v pôvodnom intervale; limity sú vtedy mäkké a zobrazí sa
 upozornenie. Slová sa nevynechávajú ani neduplikujú. Neplatné intervaly sa
-odmietnu. Mená hovoriacich sa uchovávajú v projekte; čistý TXT/SRT ich nepridáva.
+odmietnu. Mená hovoriacich sa uchovávajú v projekte; export ich pridá iba pri zapnutej voľbe hovoriacich.
 
 ## Voliteľné hlasy
 
@@ -193,3 +194,43 @@ počty stavov fronty, offline voľbu a anonymné veľkosti úložísk. Neobsahuj
 text prepisu, názvy nahrávok, cesty, logy, databázy, tokeny ani súbory nastavení.
 Ukladá sa presne zobrazený stav; Obnoviť vyžaduje nový náhľad. ZIP ostáva lokálny,
 aplikácia ho nikam neposiela. Pred vlastným zdieľaním skontrolujte jeho obsah.
+
+## Obnova, originál a revízie
+
+**Otvoriť projekt / Open project** umožní vybrať existujúci projekt aj po
+odobratí nahrávky z fronty. Ak zvuk chýba, text sa dá upravovať a exportovať;
+prehrávanie je nedostupné. Vyberte náhradný zvuk: program porovná SHA-256
+obsahu s uloženým odtlačkom a odlišnú nahrávku odmietne.
+
+Po zastavení počas hashovania, dekódovania alebo VAD sa príprava bezpečne
+zopakuje. Pred prvými uloženými úsekmi ešte nie je čo zobraziť v editore.
+Pokračovanie používa pôvodný model, jeho presnú revíziu a dekódovacie nastavenia.
+Chýbajúcu revíziu treba online stiahnuť; offline je potrebné obnoviť jej cache
+alebo zvoliť nový prepis. Zariadenie CPU/GPU možno pri obnove zmeniť.
+
+Pôvodný výsledok modelu a používateľské revízie sa ukladajú oddelene.
+Starší projekt sa migruje so zálohou; ak pôvodný text už nemal, aplikácia
+ho nevymýšľa a originál nie je dostupný na export. Uloženie projektu nie je
+potvrdenie úspechu exportu. Po chybe export zopakujte bez prepisovania zvuku.
+Titulkový profil patrí projektu; jeho samotná zmena je neuloženou úpravou.
+Undo/Redo funguje nad úpravami aj po zmene stránky alebo vyhľadávania.
+
+## Modely, zariadenie a jazyk rozhrania
+
+Predvolené zariadenie je CPU. GPU vyžaduje podporovanú NVIDIA CUDA a jej
+knižnice; pri chybe sa CPU použije až po potvrdení používateľom. Model sa
+nenačítava po samotnej zmene výberu. KInIT je voliteľný iba pre slovenčinu,
+nie pre CZ/SK režim. Modely nie sú súčasťou distribúcie.
+
+Správca rozlišuje nájdenú cache, neúplný model a overenú integritu. Staršiu
+cache bez potvrdenia možno explicitne overiť; nájdený súbor nie je dôkazom
+integrity. Offline režim zakazuje sťahovanie; nepripravený model alebo chýbajúca
+presná revízia potrebuje najprv online stiahnutie/obnovu. Zastavené sťahovanie
+možno zopakovať s využitím bezpečnej čiastočnej cache.
+
+Rozhranie pri prvom spustení používa English. Voľba Language → Slovenčina
+v Nastaveniach sa uplatní po ďalšom spustení. Nemení jazyk nahrávky, text
+ani nastavenia modelu. **O aplikácii / About ND TranskripThor** vysvetľuje
+Pre-release a internú verziu kompatibility; nejde o číslo nového vydania.
+Prehrávač ponúka výstupné zariadenie a 0,75×/1×/1,25×/1,5×. Posun počas
+pauzy zachová pauzu; počas prehrávania pokračuje od novej pozície.

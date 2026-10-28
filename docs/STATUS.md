@@ -1,8 +1,17 @@
 # Stav projektu
 
-Aktuálny zdroj je `src/`, verzia **2.1.3b** z `src/version.py`.
+Aktuálny zdroj je `src/ndtranskripthor`, označenie **Pre-release**.
+`src/version.py` zachováva internú kompatibilnú verziu **2.1.3b**; nejde o nové vydanie.
 Posledné publikované EXE je GitHub Release `v2.1.3b`; novšie zdrojové opravy
 nie sú novým vydaním. SYNC nezvyšuje verziu ani nevytvára tag.
+
+## Ako čítať výsledky
+
+Nasledujúce záznamy sú chronologická história, nie súčet testov ani potvrdenie
+aktuálneho HEAD. Staršie bloky bez presného dátumu patria vývojovej línii
+2.1.3b; ich chýbajúci dátum merania spätne nedopĺňame. Nové merania uvádzajú
+dátum a commit. Minimum 197 je kontrolná hranica, nie aktuálny počet testov.
+Súhrn používateľského stavu: [RELEASE-NOTES.md](RELEASE-NOTES.md).
 
 ## Zachované opravy
 
@@ -598,3 +607,27 @@ Pred synchronizáciou musí presný kandidát prejsť novou úplnou sadou a Wind
 EXE v čistom klone; potvrdenie SHA/zostavy zostane v lokálnom overovacom zázname.
 Verzia, tagy ani GitHub Release sa nemenia. Nesúvisiaca staršia poznámka
 v tomto súbore zostáva unstaged.
+
+## Úloha 29 – návody a informácie o verzii (28. 10. 2026, Pre-release)
+
+README zostáva stručný; RELEASE-NOTES.md opisuje aktuálne funkcie a obmedzenia.
+Návod dopĺňa obnovu prípravy, presnú revíziu modelu, originál a používateľské
+revízie, otvorenie bez fronty/zvuku, exportné formáty, modelový inventár a offline.
+Historické dokumenty označujú verziu a dátum evidencie; neznáme dátumy merania
+sa nevymýšľajú. Historické počty a cesty nie sú predpisom pre aktuálny build.
+Minimum 197 je oddelené od výsledku konkrétneho testovacieho behu.
+
+Nastavenia obsahujú O aplikácii v EN/SK s autoritatívnym Pre-release a internou
+verziou kompatibility. Presné autorstvo je zachované. Verzia sa nemení.
+Dve nové regresie kontrolujú lokálne odkazy a informácie dialógu vrátane
+formátov a autorstva. Prvý úplný beh: 293 testov za 331,583 s, jedna chyba
+novej kontroly starej cesty v DEVELOPMENT; ostatných 292 prešlo. Po oprave
+zálohovacieho pokynu prešli obe nové regresie za 0,013 s. Povinný čistý klon
+musí pred pushom prejsť celou sadou aj novým Windows EXE; konkrétne potvrdenie
+bude viazané na SHA v lokálnom overovacom zázname a závere úlohy.
+
+Obsah natívneho informačného dialógu bol testovaný s nahradeným messagebox;
+jeho skutočný vzhľad pri všetkých systémových DPI sa neoveroval. Existujúca
+Tk matica hlavného rozhrania prešla. Táto dokumentačná úloha neopakuje reálny
+ASR/GPU ani offline merania; uvádza dátum a rozsah už vykonaných skúšok.
+Používateľské dáta a staršia nesúvisiaca unstaged poznámka zostávajú zachované.

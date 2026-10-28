@@ -1,6 +1,6 @@
 # ND TranskripThor analýza a návrh finálnej verzie
 
-Historický záznam. Aktuálne cesty, spúšťanie a výsledky overenia sú v [DEVELOPMENT.md](DEVELOPMENT.md) a [STATUS.md](STATUS.md).
+Historický dokument pre 2.1.3b / vývojové opravy. Posledný evidovaný zápis pred zosúladením návodov: 2026-10-14 (f5377db); nejde o dodatočne určený dátum testovania. Počty testov, cesty a stav publikovania nižšie platia iba pre opísanú historickú zostavu, nie aktuálny pre-release. Aktuálny prehľad: [poznámky k pre-release](RELEASE-NOTES.md).
 
 ND TranskripThor 2.1.3b má použiteľný základ lokálneho prepisu, obnovovania práce a editora. Za finálnu verziu ho zatiaľ neodporúčam označiť: aktuálny audit reprodukoval stratu rozpísanej úpravy, neúplný projekt po skorom zastavení a nedostupné hlavné tlačidlo pri 200 % zväčšení. Prioritou je ochrana práce používateľa, dostupné ovládanie a merateľná kvalita prepisu. Zmena programovacieho jazyka sama tieto chyby neodstráni.
 

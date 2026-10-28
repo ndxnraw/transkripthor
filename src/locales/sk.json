@@ -514,5 +514,7 @@
   "data.kind.project_cache": "PCM cache projektu",
   "data.state.complete": "zmerané",
   "data.state.partial": "čiastočné / aspoň táto veľkosť",
-  "data.state.missing": "priečinok neexistuje"
+  "data.state.missing": "priečinok neexistuje",
+  "about.title": "O aplikácii ND TranskripThor",
+  "about.body": "ND TranskripThor — {channel}\nInterná verzia kompatibility: {version}. Ide o vývojový program, nie nové publikované vydanie.\n\nLokálny prepis: faster-whisper a voliteľný slovenský KInIT. Predvolené je CPU; NVIDIA CUDA sa vyberá výslovne. Offline režim vyžaduje vybranú revíziu modelu v lokálnej cache.\n\nUložiť projekt zachová upraviteľné revízie; export samostatne vyberá originál alebo uloženú revíziu: TXT, SRT, VTT, DOCX, JSON. Staršie projekty nemusia obsahovať obnoviteľný originál.\n\nRozpoznanie CZ/SK aj zoskupovanie hlasov môžu byť nepresné. Zoskupovanie neurčuje identitu osôb ani neoddeľuje prekrývajúcu sa reč. Prepis skontrolujte. Lokálne súbory nie sú automaticky šifrované.\n\n{author}"
 }

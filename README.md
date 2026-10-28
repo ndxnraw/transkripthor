@@ -14,10 +14,10 @@ Podporuje slovenčinu, češtinu, angličtinu, maďarčinu aj zmiešané českos
 
 Modely nie sú pribalené. Pri prvom použití sa vybraný model stiahne; následne môžete pracovať offline. Rýchlosť a presnosť závisia od modelu, počítača a kvality nahrávky. Výsledný text odporúčame skontrolovať.
 
-[Prehľad vydaní](https://github.com/ndxnraw/TranskripThor/releases) · [Používateľský návod](docs/NAVOD.md) · [Vývoj na ďalšom počítači](docs/DEVELOPMENT.md)
+[Poznámky k pre-release](docs/RELEASE-NOTES.md) · [Používateľský návod](docs/NAVOD.md) · [Vývoj na ďalšom počítači](docs/DEVELOPMENT.md)
 
 Pre-release obsahuje novšie úpravy než archívne EXE. [Aktuálny stav a hranice overenia](docs/STATUS.md).
 
-Zo zdrojov na Windows x64 s Python 3.12: `scripts/setup.ps1`, potom `scripts/run.ps1`.
+Zo zdrojov na Windows x64 s Python 3.12.10: `scripts/setup.ps1`, potom `scripts/run.ps1`.
 
 Created by Daniel Návojský (ndxnraw) using Codex | 2026

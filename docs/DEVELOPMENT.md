@@ -283,7 +283,7 @@ vyžadovať opravu pôvodných ciest; aplikácia ich automaticky neprepisuje.
 Modely, projekty, fronta a poverenia sa prenášajú osobitnou súkromnou zálohou,
 nie cez GitHub. Profil používajte na jednom počítači naraz, nekopírujte ho
 počas zápisu. Pred prvým pullom upratovania zálohujte na druhom počítači
-lokálne zmeny aj starý `outputs/zdroj`, najmä ak ste tam vložili vlastné dáta.
+lokálne zmeny aj staršie pracovné priečinky, najmä ak obsahujú vlastné dáta.
 V tomto repozitári neboli sledované modely ani používateľské databázy;
 ignorované lokálne `work/outputs/cache` sa pullom nemažú.
 
@@ -324,7 +324,7 @@ Po práci:
 .\scripts\test.ps1
 git diff --check
 git diff
-git add -- src/konkretny_subor.py tests/konkretny_test.py
+git add -- src/ndtranskripthor/application/konkretny_subor.py tests/konkretny_test.py
 git diff --cached
 git commit -m "Popis konkretnej opravy"
 git fetch origin
@@ -472,3 +472,12 @@ Tiny CPU, revízia `d90ca5fe260221311c53c58e660288d3deb8d356`, 2 úseky, 2,578 s
 Nejde o meranie presnosti ani test KInIT/GPU. Automatické regresie samostatne
 blokujú sieť pri prehľade/diagnostike a pri chýbajúcom offline modeli; UI testy
 používajú izolované profily a obe témy/jazyky pri Tk scaling 100–200 %.
+
+## Informácie o zostave a návody
+
+`src/version.py` rozlišuje zobrazené Pre-release od internej verzie kompatibility.
+O aplikácii používa tieto hodnoty a presný podpis z presentation/ui.py; SYNC ich
+nezvyšuje. Aktuálne používateľské poznámky sú v [RELEASE-NOTES.md](RELEASE-NOTES.md).
+Počet testov uvádzajte vždy s dátumom a commitom; minimum 197 nie je výsledok behu.
+Historické audity sa neprepisujú na nový výsledok. Neznámy dátum merania označte
+ako neznámy; dátum evidencie dokumentu nie je dátum vykonania jeho testov.

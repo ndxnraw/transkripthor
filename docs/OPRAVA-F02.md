@@ -1,6 +1,6 @@
 # F02 – dostupné ovládanie pri vysokom DPI
 
-Historický záznam. Aktuálne cesty, spúšťanie a výsledky overenia sú v [DEVELOPMENT.md](DEVELOPMENT.md) a [STATUS.md](STATUS.md).
+Historický dokument pre 2.1.3b / vývojové opravy. Posledný evidovaný zápis pred zosúladením návodov: 2026-10-14 (f5377db); nejde o dodatočne určený dátum testovania. Počty testov, cesty a stav publikovania nižšie platia iba pre opísanú historickú zostavu, nie aktuálny pre-release. Aktuálny prehľad: [poznámky k pre-release](RELEASE-NOTES.md).
 
 Vývojový bod návratu: `F02-20261009`, verzia aplikácie zostáva **2.1.3b**.
 Nejde o publikované vydanie. Zostava obsahuje aj predchádzajúce rozpracované opravy F01/F03/F04/F05/F06.
