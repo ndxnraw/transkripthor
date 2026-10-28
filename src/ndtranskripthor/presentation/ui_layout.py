@@ -216,8 +216,9 @@ def build_ui(app, root, languages, models, output, cache):
     MessageView(settings, app, text=tr('settings.restart'), lines=2).pack(fill='x')
     ttk.Label(settings, text=tr('ui_layout.build_ui.settings_and_help'), style='Title.TLabel').pack(anchor='w', pady=4)
     ttk.Checkbutton(settings, text=tr('ui_layout.build_ui.play_audio_automatically_when_selecting_an_editor_segment'), variable=app.autoplay).pack(anchor='w', pady=8)
-    help_actions = ttk.Frame(settings)
+    help_actions = FlowFrame(settings)
     help_actions.pack(side='bottom', fill='x', pady=4, before=setup)
+    ttk.Button(help_actions, text=tr('data.title'), command=app.manage_data).pack(side='left', padx=(0, 8))
     reset = ttk.Button(help_actions, text=tr('ui_layout.build_ui.reset_defaults'), command=app.reset_settings)
     reset.pack(side='left')
     ttk.Button(help_actions, text=tr('accessibility.shortcuts'), command=lambda: messagebox.showinfo(

@@ -191,6 +191,14 @@ class App:
             self.listbox.selection_set(index)
         return True
 
+    def manage_data(self):
+        from ndtranskripthor.presentation.data_dialog import DataDialog
+        window = getattr(self, 'data_dialog', None)
+        if window and window.window.winfo_exists():
+            window.window.lift()
+        else:
+            self.data_dialog = DataDialog(self)
+
     def reset_settings(self):
         if self.busy:
             return
@@ -330,7 +338,8 @@ class App:
         if self.busy:
             return
         selected = set(self.listbox.curselection())
-        self.replace_queue([item for index, item in enumerate(self.items) if index not in selected])
+        if self.replace_queue([item for index, item in enumerate(self.items) if index not in selected]):
+            self.status.set(tr('data.queue_removed'))
 
     def move_item(self, direction):
         if self.busy:
@@ -729,6 +738,11 @@ class App:
             self.close_after_asr = True
             self.cancel()
         else:
+            data_dialog = getattr(self, 'data_dialog', None)
+            if data_dialog and data_dialog.window.winfo_exists():
+                data_dialog.close()
+                if data_dialog.window.winfo_exists():
+                    return
             for editor in self.editors:
                 if editor.window.winfo_exists() and not editor.close():
                     return

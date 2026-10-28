@@ -440,3 +440,35 @@ ani prezentačnú vrstvu, `core` nezávisí od vyšších vrstiev. Overuje aj st
 import služieb bez modelových runtime, Unicode zdrojové/frozen cesty a uloženie,
 otvorenie a export projektu cez službu bez prepisu originálu. Regresie sú
 simulované testy pipeline, nie nové meranie reálnej presnosti ASR/GPU.
+
+## Overenie offline a diagnostiky (úloha 28)
+
+`application/local_data.py` meria iba metadata súborov, mimo Tk vlákna.
+Nenasleduje symlinky/reparse body, obmedzuje počet položiek a čas jedného stromu,
+rešpektuje zrušenie a pri neúplnom čítaní vráti explicitný čiastočný stav.
+Prehľad nič neodstraňuje. Diagnostický JSON je nový allowlist snapshot;
+nekopíruje obsah profilov, logov ani projektov. ZIP sa publikuje atómovo až
+po úspešnom dokončení; uložené bajty zodpovedajú náhľadu. Nepribudla závislosť.
+
+Voliteľná praktická skúška z existujúcej cache a oprávnenej nahrávky:
+
+```powershell
+.\.venv\Scripts\python.exe scripts/verify_offline.py --cache 'C:\vlastna-cache' --audio 'C:\vlastna-nahravka.wav' --output 'outputs\offline-novy-pokus'
+```
+
+Výstup musí byť nový priečinok. Nástroj použije skutočný model (predvolene Tiny),
+CPU, uloženú presnú revíziu, produkčné `transcribe_job`, dekódovanie a checkpointy.
+Blokuje a počíta Python sieťové pokusy od začiatku testu a každých približne 50 ms
+meria Windows IPv4/IPv6 TCP tabuľky vlastného procesu. Výsledok musí mať dokončený
+projekt, nulové pokusy/spojenia a úspešné merania. Lokálny výstup obsahuje projekt
+s prepisom; nepatrí do Gitu ani do diagnostického ZIP. Samotný offline-report.json
+obsahuje iba počty a technické výsledky. Ide o meranie jedného procesu, nie packet
+capture; nezachytáva UDP, iné procesy ani spojenie medzi dvomi vzorkami. Tento
+nástroj neoveruje úplnú sieťovú izoláciu celého Windows alebo všetkých backendov.
+
+Dňa 28. 10. 2026 prešla lokálna syntetická nahrávka vytvorená Windows SAPI:
+Tiny CPU, revízia `d90ca5fe260221311c53c58e660288d3deb8d356`, 2 úseky, 2,578 s,
+0 Python sieťových pokusov, 42 TCP vzoriek, maximum 0 spojení, 0 chýb merania.
+Nejde o meranie presnosti ani test KInIT/GPU. Automatické regresie samostatne
+blokujú sieť pri prehľade/diagnostike a pri chýbajúcom offline modeli; UI testy
+používajú izolované profily a obe témy/jazyky pri Tk scaling 100–200 %.

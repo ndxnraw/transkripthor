@@ -165,3 +165,31 @@ Každý export vytvorí samostatný balík v priečinku projektu `exporty`.
 Otvoriť export zobrazí posledný úspešne publikovaný balík. Neúspešný export
 nenaruší uložený projekt ani predchádzajúce exporty. Pôvodné tlačidlo opakovania
 bez zvolených možností naďalej exportuje poslednú uloženú revíziu do TXT/SRT.
+
+## Lokálne dáta a diagnostika
+
+V **Settings → Local data & diagnostics** / **Nastavenia → Lokálne dáta a diagnostika**
+sa zobrazujú umiestnenia a logické veľkosti profilu, modelov, výstupného priečinka,
+známych projektov a PCM cache. Známymi projektmi sú položky fronty a otvorené
+editory; aplikácia nehľadá projekty po celom disku. Priečinky sa môžu prekrývať,
+preto veľkosti nesčítavajte. Výstupný priečinok môže obsahovať aj cudzie súbory.
+Čiastočný výsledok je dolná hranica, nie potvrdenie prázdneho priečinka.
+
+- **Odobrať z fronty** odstráni iba položku zo zoznamu. Súbory a projekty ostávajú.
+- **Odstránenie projektu** znamená stratu databázy s prepisom, opravami, revíziami
+  a postupom aj exportov vo vymazanom priečinku. Prehľad projekty nemaže.
+  Pred samostatnou správou priečinka v Prieskumníkovi vytvorte zálohu a zatvorte
+  editor aj spracovanie. Zdrojový zvuk uchovávajte samostatne.
+- **Odstrániť model** na karte Modely po potvrdení odstráni jeho lokálne váhy.
+  Nahrávky ani prepisy nemaže. Bez váh nebude daný model fungovať offline.
+
+Lokálne spracovanie nie je šifrovanie: aplikácia súbory automaticky nešifruje.
+SQLite a exporty obsahujú čitateľné prepisy, fronta cesty a PCM cache dekódovaný
+zvuk. Zabezpečenie účtu, disku a záloh je samostatná vec. Aktívnu cache nemažte.
+
+**Náhľad diagnostiky** ukazuje celý obsah oboch súborov budúceho ZIP. Až potom
+sa sprístupní uloženie. Balík obsahuje povolené verzie knižníc, Python, platformu,
+počty stavov fronty, offline voľbu a anonymné veľkosti úložísk. Neobsahuje zvuk,
+text prepisu, názvy nahrávok, cesty, logy, databázy, tokeny ani súbory nastavení.
+Ukladá sa presne zobrazený stav; Obnoviť vyžaduje nový náhľad. ZIP ostáva lokálny,
+aplikácia ho nikam neposiela. Pred vlastným zdieľaním skontrolujte jeho obsah.

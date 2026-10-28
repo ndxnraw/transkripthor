@@ -567,3 +567,34 @@ vyššie nenahrádzajú túto bránu. Testovacia matica používa Tk scaling 100
 nie prepínanie systémového Windows DPI. Skutočné modely/GPU, systémový drag
 and drop a posluch na fyzických zariadeniach sa v tejto úlohe znovu nemerali.
 Verzia, tag a GitHub Release sa nemenia.
+
+## Úloha 28 – lokálne dáta a diagnostika (28. 10. 2026)
+
+Nastavenia obsahujú prehľad umiestnení a logických veľkostí profilu, modelov,
+výstupov, známych projektov a PCM cache. Meranie prebieha mimo UI, má limity,
+nenasleduje reparse body a označuje čiastočné výsledky. Prekrývajúce sa
+priečinky sa nesčítavajú. Prehľad nič nemaže; texty odlišujú odobratie z fronty,
+odstránenie priečinka projektu a potvrdené odstránenie modelu. Vysvetľujú aj
+čitateľné lokálne dáta a absenciu automatického šifrovania aplikáciou.
+
+Diagnostický ZIP obsahuje iba allowlist technických údajov a počtov, bez
+zvuku, prepisov, ciest, profilov, projektov a logov. Pred uložením sa zobrazia
+oba celé súbory. Uloženie publikuje presne tento snapshot atómovo; nič sa
+neodosiela. Obnovenie vyžaduje nový náhľad; zatvorenie počká na zápis.
+
+Deväť nových regresií overuje súkromie, presnosť ZIP, chybu publikovania,
+neúplné meranie, offline chýbajúci model, zachovanie súborov po odobratí,
+náhľad a zatvorenie počas zápisu. Celá sada: 291 testov, 245,163 s, OK,
+bez preskočenia. Reálne Tk okná overené v EN/SK, svetlom/tmavom vzhľade,
+pri 640 × 480 a Tk scaling 100/125/150/175/200 %. Nejde o manuálne prepínanie
+systémového Windows DPI ani o test čítačky obrazovky.
+
+Skutočný Tiny CPU prepis vlastnej syntetickej SAPI nahrávky prešiel offline:
+revízia d90ca5fe260221311c53c58e660288d3deb8d356, 2 úseky, 2,578 s,
+0 Python sieťových pokusov, 42 TCP vzoriek, 0 pozorovaných spojení/chýb.
+Rozsah je vlastný proces, nie úplný packet capture, UDP, KInIT alebo GPU.
+Opakovateľný nástroj je scripts/verify_offline.py; lokálne dáta ostali mimo Gitu.
+Pred synchronizáciou musí presný kandidát prejsť novou úplnou sadou a Windows
+EXE v čistom klone; potvrdenie SHA/zostavy zostane v lokálnom overovacom zázname.
+Verzia, tagy ani GitHub Release sa nemenia. Nesúvisiaca staršia poznámka
+v tomto súbore zostáva unstaged.
