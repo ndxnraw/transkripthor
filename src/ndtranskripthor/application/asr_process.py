@@ -30,6 +30,32 @@ def shutdown_all():
 atexit.register(shutdown_all)
 
 
+class StopSignal:
+    """One-way shared byte for Windows x64; no lock can outlive a worker.
+
+    Every writer only stores 1, never clears it. Each run owns a fresh signal.
+    Unlike multiprocessing.Event, reads/writes cannot wait on a dead process.
+    wait() is for download retry backoff, with at most 50 ms polling latency.
+    """
+    def __init__(self, context):
+        self.flag = context.RawValue('b', 0)
+
+    def set(self):
+        self.flag.value = 1
+
+    def is_set(self):
+        return bool(self.flag.value)
+
+    def wait(self, timeout=None):
+        deadline = None if timeout is None else time.monotonic() + max(0, timeout)
+        while not self.is_set():
+            remaining = .05 if deadline is None else min(.05, deadline - time.monotonic())
+            if remaining <= 0:
+                return self.is_set()
+            time.sleep(remaining)
+        return True
+
+
 class ProcessTree:
     """Windows kill-on-close job also contains nested download workers."""
     def __init__(self, pid):
@@ -163,7 +189,7 @@ def supervise(config, stop, events, run, *, target=worker, ack_seconds=ACK_SECON
         events.put(('asr', (run, kind, value)), timeout=1)
     ctx = multiprocessing.get_context('spawn')
     parent, child = ctx.Pipe()
-    child_stop, gate = ctx.Event(), ctx.Event()
+    child_stop, gate = StopSignal(ctx), ctx.Event()
     process = ctx.Process(target=target, args=(child, config, child_stop, run, gate))
     tree = None
     finished = False

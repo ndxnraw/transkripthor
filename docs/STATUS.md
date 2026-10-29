@@ -643,3 +643,28 @@ boli ukončené iba identifikované zaseknuté interpretery tohto testu.
 Povinná brána zablokovala PyInstaller: nový EXE pre úlohu 29 nevznikol,
 commit sa nepushol. Zmeny sú zachované lokálne; vzdialený stav sa musí
 pred ďalšou synchronizáciou znova overiť. Kontroly sa nezoslabovali.
+
+## F30 – overenie a oprava zastavovania ASR (29. 10. 2026, Pre-release)
+
+Kontrola nad F29 (lokálne 1b1b132 + 62a0c9e) potvrdila v zachovanom trace
+blokovanie rodiča v child_stop.set vo finally. Izolovaná reprodukcia s reálnym
+spawn procesom ukázala, že po os._exit(19) počas držania podmienky Event jej
+zámok nie je dostupný ani po ukončení procesu. Konkrétne časovanie pôvodného
+preteku v F29 nie je spätne známe; opustený zámok a blokujúca cesta sú potvrdené.
+
+Iba medziprocesový stop signál používa nový StopSignal: zdieľaný byte bez
+zámku, monotónne 0 → 1, čerstvý pre každý beh. set/is_set nečakajú na zámok
+ukončeného procesu. wait pre sťahovací backoff kontroluje príznak každých
+najviac 50 ms (plánovanie OS môže pridať oneskorenie). Štartovacia brána,
+protokol, GPU súhlas, checkpointy aj časové limity zostávajú nezmenené.
+
+Dve nové regresie overujú timeout/oznámenie a skutočný spawn s pádom aj
+násilným ukončením. Cielených 12 testov prešlo za 16,014 s; pôvodný test
+nepotvrdeného UI prešiel všetkými 10 vopred stanovenými opakovaniami za
+10,309 s. Žiadny limit ani kontrola sa nezoslabili. Tieto testy používajú
+skutočné procesy, ale simulované ASR; nie sú meraním modelu alebo GPU.
+
+Pred pushom musí čistý klon presného kandidáta dokončiť úplnú sadu bez skipov
+aj nový Windows EXE. Finálne SHA a výsledok sú viazané na lokálny overovací
+záznam a záver úlohy. F29 zmeny sa zachovávajú, rovnako staršia nesúvisiaca
+unstaged poznámka. Verzia ani vydanie sa nemenia.

@@ -52,7 +52,8 @@ originál. Staršie aplikácie nemusia otvoriť novú schému; uchovajte migrač
 
 Automatická Tk matica nie je plné overenie Windows DPI, Narratora, systémového
 pretiahnutia z Prieskumníka ani fyzického odpojenia zvukového zariadenia.
-Historické občasné blokovanie ASR stop udalosti je zaznamenané v STATUS;
-úprava dokumentácie ho neopravuje ani nevyhlasuje za vyriešené.
+F30 (29. 10. 2026) nahrádza zámkový ASR stop signál jednosmerným zdieľaným
+príznakom, aby pád procesu nezablokoval jeho zastavenie. Rozsah regresií
+a výsledky konkrétneho kandidáta sú v STATUS; nejde o meranie presnosti ASR.
 
 Created by Daniel Návojský (ndxnraw) using Codex | 2026
