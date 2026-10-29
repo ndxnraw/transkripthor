@@ -668,3 +668,40 @@ Pred pushom musí čistý klon presného kandidáta dokončiť úplnú sadu bez 
 aj nový Windows EXE. Finálne SHA a výsledok sú viazané na lokálny overovací
 záznam a záver úlohy. F29 zmeny sa zachovávajú, rovnako staršia nesúvisiaca
 unstaged poznámka. Verzia ani vydanie sa nemenia.
+
+## F31 – oddelený QML prototyp a rozhodnutie (29. 10. 2026, Pre-release)
+
+Práca je vo vetve `codex/testing-qml-f31`, nad jadrom F30 `fb69872`.
+Pred začiatkom boli overené úspešný čistý F30 build (295 testov bez skipov,
+nový Windows EXE) aj úspešné GitHub CI 40825052960. Nejde o tvrdenie, že
+všetky reálne modely/GPU a systémové scenáre boli certifikované.
+
+`src/prototype_qml` je samostatný adaptér nad StateStore, Project,
+perform_project_io, Player a riadeným ASR procesom. Má vlastný profil,
+otvára pracovné SQLite kópie, zachováva originál a používa existujúce revízie.
+Stabilné Tk rozhranie a jeho funkcie sa nemigrujú. Qt Essentials/shiboken6
+6.12.0 sú voliteľné, uzamknuté vrátane hashov; stabilný EXE ich vylučuje.
+Samostatné setup/run/test/build skripty a QML audit sprístupňujú experiment.
+
+Prvý úplný lokálny regresný beh dokončil 295 testov za 292,345 s bez
+preskočenia, OK. Sedem prvých QML scenárov prešlo vrátane reálnych klávesov,
+10 000 úsekov, zachovania originálu a chyby offline modelu cez skutočný
+proces. Finálnych osem QML testov prešlo za 6,612 s; ôsma kontrola overuje
+QAccessible rolu/názov editora. Pri kontrole rozloženia sa našla a opravila
+cyklická väzba výšky ScrollView; kontrola QML upozornení zostala zachovaná.
+Prakticky bol overený výstup prehrávača syntetickým tichom a pravidlá posunu
+pri pauze/prehrávaní. Nešlo o reálnu ASR inferenciu ani posluch hlasu.
+
+Merania na pevnom primárnom monitore: QML pracovná sada 184,60–234,54 MiB
+pri skutočných pomeroch 100–200 %, oproti približne 48,5 MiB nečinného Tk.
+Nečinná odozva bola podobná; malé teplé vzorky štartu nepreukazujú podstatné
+zrýchlenie. Obe témy, malé/veľké okno a konkrétne snímky boli skontrolované;
+nejde o úplné systémové prepínanie DPI ani potvrdenie Narratora.
+
+Odporúčanie: zatiaľ nemigrovať. Rozsah, reprodukcia, presné metriky,
+obmedzenia funkčnej parity/prístupnosti a ďalšia rozhodovacia brána sú v
+[QML-EXPERIMENT.md](QML-EXPERIMENT.md). Verzia/tag/Release sa nemenia.
+Pred pushom sa musí presný kandidát ešte overiť z čistého klonu celou sadou,
+novým Tk aj QML Windows EXE a ich auditmi; výsledok je viazaný na SHA a
+lokálny záznam. Samostatné QML testy nenahrádzajú povinnú bránu. Staršia
+nesúvisiaca unstaged poznámka sa zachováva mimo tohto commitu.

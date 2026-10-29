@@ -47,6 +47,10 @@ def validate_locks(root=ROOT):
         locked=pins(req/(mode+'.lock'))
         for name,version in pins(req/(mode+'.in'),False).items():
             if locked.get(name)!=version: raise ValueError(f'Input/lock mismatch: {mode}/{name}')
+    if (req/'qml.lock').exists():
+        optional=pins(req/'qml.lock')
+        for name,version in pins(req/'qml.in',False).items():
+            if optional.get(name)!=version: raise ValueError(f'Input/lock mismatch: qml/{name}')
     tree=ast.parse((root/'src/ndtranskripthor/models/download_worker.py').read_text(encoding='utf-8-sig'))
     hub=next(ast.literal_eval(n.value) for n in tree.body if isinstance(n,ast.Assign)
              and any(isinstance(t,ast.Name) and t.id=='HUB_VERSION' for t in n.targets))
@@ -57,6 +61,9 @@ def validate_locks(root=ROOT):
 def check_environment(mode, speakers=False, root=ROOT, installed=None):
     allowed=validate_locks(root)
     allowed.update(pins(root/'requirements/bootstrap.lock'))
+    # Optional experiment: allowed when installed, never required by stable Tk.
+    optional = root/'requirements/qml.lock'
+    if optional.exists(): allowed.update(pins(optional))
     required=pins(root/'requirements'/('build.lock' if mode=='build' else 'runtime.lock'))
     if speakers: required.update(pins(root/'requirements/speakers.lock'))
     required.update(pins(root/'requirements/bootstrap.lock'))
