@@ -720,3 +720,16 @@ Regresia overuje kolíziu ICU v cudzom priečinku a zachováva kontrolu, že
 neúspešné testy zastavia balenie. Osem build-contract testov prešlo za 0,843 s.
 Celá sada po doplnení obsahuje 296 testov; jej úspech pre opravný kandidát
 musí potvrdiť nový čistý beh. Push zostáva podmienený jeho výsledkom.
+
+Čistý kandidát `819abd0` bol 30. 10. 2026 úspešne overený: 296 regresných
+testov za 299,738 s a 8 QML scenárov za 5,358 s, bez preskočenia. Nový Tk
+EXE prešiel auditom 65 modulov a štartom vrátane tkdnd/natívnych importov/
+spawn; nový QML EXE auditom 68 modulov, zhodou QML/logo súborov a skutočnou
+skúškou fronty, kópie projektu, editácie/uloženia, posunu a oboch tém.
+Manifest Tk zostavy aj čistota klonu boli znovu overené. Cudzia ICU DLL sa
+v novom QML balíku nenachádza; ručný zásah do nového balíka nebol potrebný.
+Logická veľkosť celých priečinkov je 1 647 199 411 bajtov (Tk) a
+1 795 612 084 bajtov (QML), rozdiel približne 142 MiB. Nejde o veľkosť ZIP.
+Výsledky sú evidencia uvedeného SHA, nie automatické potvrdenie neskorších
+zmien. Finálny dokumentačný commit musí pred pushom absolvovať rovnaké
+čisté overenie. Odporúčanie nemigrovať sa na základe týchto výsledkov nemení.

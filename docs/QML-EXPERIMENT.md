@@ -135,3 +135,12 @@ pre obe zostavy obmedzuje vyhľadávanie na projektové prostredie, použitý
 Python a systém Windows. Finálne overenie musí použiť celý nový build;
 ručné vyradenie DLL bolo iba diagnostickým potvrdením príčiny. Setup QML
 podporuje rovnaký voliteľný parameter `-Python` ako stabilný setup.
+
+### Úspešná čistá zostava (30. 10. 2026, `819abd0`)
+
+296 regresných testov / 299,738 s a 8 QML testov / 5,358 s: OK, bez skipov.
+Tk aj QML EXE prešli kontrolou pribaleného kódu a reálnym spustením.
+Nový balík už neobsahuje cudziu ICU DLL. Logické veľkosti celých priečinkov:
+Tk **1 647 199 411 B**, QML **1 795 612 084 B**; QML pridáva približne
+**142 MiB (9 %)**. Obe distribúcie obsahujú rovnaké veľké ASR runtime;
+nejde o porovnanie komprimovaných archívov ani optimalizovaných balíkov.
