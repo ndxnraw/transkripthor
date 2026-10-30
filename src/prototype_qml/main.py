@@ -12,7 +12,7 @@ def main():
     from PySide6.QtWidgets import QApplication
     from PySide6.QtQml import QQmlApplicationEngine
     from PySide6.QtQuickControls2 import QQuickStyle
-    from PySide6.QtCore import QUrl
+    from PySide6.QtCore import QUrl, qInstallMessageHandler
     from prototype_qml.controller import Controller
     import prototype_qml
     from ndtranskripthor.core.i18n import set_language
@@ -20,6 +20,12 @@ def main():
     parser.add_argument('--smoke-output',type=Path)
     parser.add_argument('--profile',type=Path,default=Path(os.environ.get('LOCALAPPDATA',Path.home()))/'NDTranskripThor-QML-Testing')
     args=parser.parse_args()
+    if args.smoke_output:
+        args.smoke_output.mkdir(parents=True,exist_ok=True)
+        def diagnostic_message(kind, context, message):
+            with (args.smoke_output/'qml-messages.log').open('a',encoding='utf-8') as stream:
+                stream.write(message+'\n')
+        qInstallMessageHandler(diagnostic_message)
     stable=Path(os.environ.get('LOCALAPPDATA',Path.home()))/'LokalnyPrepis'
     if args.profile.resolve()==stable.resolve():raise SystemExit('Use a separate testing profile')
     set_language('sk');QQuickStyle.setStyle('Material')

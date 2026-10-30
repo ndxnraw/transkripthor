@@ -126,3 +126,12 @@ Primárne zdroje: [PySide6 Essentials](https://github.com/pyside/pyside-setup/bl
 [Qt for Python deployment](https://doc.qt.io/qtforpython-6/deployment/index.html).
 
 Created by Daniel Návojský (ndxnraw) using Codex | 2026
+
+### Zistenie pri prvom balení (30. 10. 2026)
+
+Prvý QML EXE zlyhal pri importe QtWidgets. Potvrdenou príčinou bola nesprávna
+ICU DLL získaná z cudzieho PATH, nie chýbajúci Python modul. `scripts/freeze.py`
+pre obe zostavy obmedzuje vyhľadávanie na projektové prostredie, použitý
+Python a systém Windows. Finálne overenie musí použiť celý nový build;
+ručné vyradenie DLL bolo iba diagnostickým potvrdením príčiny. Setup QML
+podporuje rovnaký voliteľný parameter `-Python` ako stabilný setup.

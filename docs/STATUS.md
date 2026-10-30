@@ -705,3 +705,18 @@ Pred pushom sa musí presný kandidát ešte overiť z čistého klonu celou sad
 novým Tk aj QML Windows EXE a ich auditmi; výsledok je viazaný na SHA a
 lokálny záznam. Samostatné QML testy nenahrádzajú povinnú bránu. Staršia
 nesúvisiaca unstaged poznámka sa zachováva mimo tohto commitu.
+
+Doplnenie 30. 10. 2026: prvé QML balenie prešlo auditom 68 Python modulov,
+ale skutočný štart odhalil nekompatibilnú ICU DLL pribratú z cudzieho PATH.
+Jej exporty mali príponu `_78`, kým Qt požadovalo Windows ICU symboly bez
+prípony. Cesta v Analysis-00.toc a čítanie chybového dialógu potvrdili príčinu.
+Po lokálnej zálohe a diagnostickom vyradení tejto jedinej DLL rovnaké EXE
+prešlo QML/fronta/kópia/editácia/uloženie/posun/témy. Tento zásah nie je
+náhradou čistého zostavenia ani dôkazom finálneho kandidáta.
+
+Zostavovací wrapper teraz obmedzuje PATH na projektové .venv, používaný
+Python a Windows; cudzie knižnice sa nemajú dostať do analýzy závislostí.
+Regresia overuje kolíziu ICU v cudzom priečinku a zachováva kontrolu, že
+neúspešné testy zastavia balenie. Osem build-contract testov prešlo za 0,843 s.
+Celá sada po doplnení obsahuje 296 testov; jej úspech pre opravný kandidát
+musí potvrdiť nový čistý beh. Push zostáva podmienený jeho výsledkom.

@@ -12,6 +12,7 @@ ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT/'scripts'))
 import verify_environment as env
 import build_receipt as receipt
+from freeze import freezer_path
 
 
 class BuildContractTest(unittest.TestCase):
@@ -24,6 +25,18 @@ class BuildContractTest(unittest.TestCase):
         self.assertEqual(pins['huggingface-hub'],'0.36.2')
         self.assertEqual(env.pins(ROOT/'requirements/bootstrap.lock')['pip'],'25.0.1')
         self.assertEqual((ROOT/'.python-version').read_text(encoding='ascii').strip(),'3.12.10')
+
+    def test_freezer_excludes_foreign_native_toolchain_path(self):
+        import os
+        foreign=self.root/'foreign tools';foreign.mkdir()
+        windows=self.root/'Windows';system=windows/'System32';system.mkdir(parents=True)
+        (foreign/'icuuc.dll').write_bytes(b'incompatible')
+        (system/'icuuc.dll').write_bytes(b'windows')
+        with patch.dict(os.environ,{'PATH':str(foreign)}):
+            search=freezer_path(self.root/'venv č',self.root/'Python č/python.exe',windows)
+        self.assertNotIn(str(foreign),search.split(os.pathsep))
+        found=next(Path(p)/'icuuc.dll' for p in search.split(os.pathsep) if (Path(p)/'icuuc.dll').exists())
+        self.assertEqual(found.read_bytes(),b'windows')
 
     def test_unhashed_conflicting_and_recursive_locks_rejected(self):
         a=self.root/'a.lock';b=self.root/'b.lock'
@@ -55,7 +68,7 @@ $ProjectPython='unused'
 function Assert-WindowsPython { param($Executable) }
 function Invoke-ProjectPython {
  param([string[]]$Arguments)
- if ($Arguments -contains 'PyInstaller') { Set-Content -LiteralPath (Join-Path $ProjectRoot 'packager-ran') -Value 'bad' }
+ if (($Arguments -contains 'PyInstaller') -or ($Arguments -match 'freeze.py$')) { Set-Content -LiteralPath (Join-Path $ProjectRoot 'packager-ran') -Value 'bad' }
 }
 ''',encoding='utf-8')
         (scripts/'test.ps1').write_text("throw 'Intentional mandatory test failure'",encoding='utf-8')
