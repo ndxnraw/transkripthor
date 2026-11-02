@@ -733,3 +733,25 @@ Logická veľkosť celých priečinkov je 1 647 199 411 bajtov (Tk) a
 Výsledky sú evidencia uvedeného SHA, nie automatické potvrdenie neskorších
 zmien. Finálny dokumentačný commit musí pred pushom absolvovať rovnaké
 čisté overenie. Odporúčanie nemigrovať sa na základe týchto výsledkov nemení.
+
+## Distribučný kandidát (2. 11. 2026)
+
+Pridané samostatné basic/extended Windows Tk zostavy. Predvolený extended
+zachová KInIT/PyTorch; basic ho vylučuje bez zmeny ASR projektov a pri pokuse
+o KInIT vysvetlí potrebu rozšíreného balíka. Oba buildy majú povinné celé testy,
+audit zdrojov a EXE diagnostiku s odstráneným Pythonom z PATH.
+Balenie nemení overený runtime strom, zbiera aj NOTICE, doplnkové pôvodné
+licencie s URL/SHA-256 a vytvára samostatný manifest všetkých súborov ZIP.
+Nepribaľuje modely ani používateľské dáta. Postup: DISTRIBUTION.md.
+
+Prvý pracovný beh: 301 testov, OK, bez preskočenia. Nové regresie pokrývajú
+NOTICE, chýbajúce oznámenie, bezpečné cesty, chybu KInIT v basic a build gate;
+rozšírený test ZIP overuje hash každého súboru a nemennosť vstupnej zostavy.
+Následné čisté buildy/meranie veľkostí ešte vyžadujú vykonanie a záznam.
+
+Nenašiel sa Code Signing certifikát ani Windows Sandbox/SignTool v PATH.
+Skúška na čistom Windows bez nainštalovaného Pythonu preto nie je potvrdená.
+Aktuálna FFmpeg DLL hlási LGPL version 3 or later; potrebné presné zdroje
+natívnej zostavy a distribučné podmienky aplikácie ostávajú otvorené pred
+publikovaním. Kandidát sa nepovažuje za právne ani systémovo finálne overený.
+Verzia/tag/Release sa nemenia, balíky sa nepublikujú.

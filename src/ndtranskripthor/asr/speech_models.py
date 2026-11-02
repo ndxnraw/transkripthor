@@ -118,8 +118,11 @@ class LocalAdapter:
 
 class SlovakWhisper(LocalAdapter):
     def load(self):
-        import torch
-        from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor, pipeline
+        try:
+            import torch
+            from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor, pipeline
+        except ImportError as exc:
+            raise RuntimeError(tr('distribution.kinit_requires_extended')) from exc
         hub = str(self.cache / 'huggingface')
         opts = dict(cache_dir=hub, local_files_only=self.offline, trust_remote_code=False)
         source = getattr(self, 'snapshot', None) or self.model_id

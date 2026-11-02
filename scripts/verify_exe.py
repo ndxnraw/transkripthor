@@ -1,6 +1,7 @@
 """Model-free frozen startup, Tk/resources and spawned-process smoke test."""
 import argparse
 import json
+import os
 from pathlib import Path
 import subprocess
 import tempfile
@@ -13,8 +14,13 @@ def main():
     with tempfile.TemporaryDirectory(prefix='Thor smoke ') as folder:
         output = Path(folder) / 'overenie s medzerami a diakritikou'
         output.mkdir()
+        environment = dict(os.environ)
+        environment.pop('PYTHONPATH', None)
+        environment.pop('PYTHONHOME', None)
+        environment['PATH'] = os.pathsep.join((str(Path(os.environ['SystemRoot'])/'System32'), os.environ['SystemRoot']))
+        environment['PYTHONNOUSERSITE'] = '1'
         subprocess.run([str(args.exe.resolve()), '--self-test-startup', str(output)],
-                       cwd=folder, check=True, timeout=90)
+                       cwd=folder, env=environment, check=True, timeout=90)
         report = json.loads((output / 'startup.json').read_text(encoding='utf-8'))
         if report['status'] != 'PASS' or report['worker_pid'] == report['parent_pid']:
             raise RuntimeError('Frozen startup/process diagnostic failed')

@@ -115,3 +115,11 @@ function Invoke-ProjectPython {
             with zipfile.ZipFile(output) as archive:
                 self.assertIsNone(archive.testzip())
                 self.assertIn('app/build-manifest.json',archive.namelist())
+                import hashlib
+                manifest=json.loads(archive.read('app/distribution-manifest.json'))
+                for name,row in manifest['files'].items():
+                    data=archive.read('app/'+name)
+                    self.assertEqual(row['bytes'],len(data))
+                    self.assertEqual(row['sha256'],hashlib.sha256(data).hexdigest())
+                self.assertIn('app/LICENCIE/inventory.json',archive.namelist())
+            self.assertFalse((app/'LICENCIE').exists())
