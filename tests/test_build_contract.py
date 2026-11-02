@@ -123,3 +123,7 @@ function Invoke-ProjectPython {
                     self.assertEqual(row['sha256'],hashlib.sha256(data).hexdigest())
                 self.assertIn('app/LICENCIE/inventory.json',archive.namelist())
             self.assertFalse((app/'LICENCIE').exists())
+            from verify_distribution import verify
+            self.assertEqual(verify(output)[0],'app')
+            output.with_suffix('.sha256').write_text('0'*64+'  '+output.name,encoding='ascii')
+            with self.assertRaisesRegex(ValueError,'checksum'): verify(output)

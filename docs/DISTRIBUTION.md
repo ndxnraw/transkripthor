@@ -36,6 +36,25 @@ v basic môže uvádzať aj nepoužité závislosti KInIT. Qt sa do Tk balíkov 
 Skript zachová LICENSE, COPYING aj NOTICE, licenciu Pythonu a dostupné Tcl/Tk
 oznámenia. Doplnkové pôvodné texty majú URL a SHA-256 v `sources.json`.
 
+## Namerané kandidáty (2. 11. 2026, c354e72)
+
+| Variant | ZIP | Rozbalený obsah vrátane oznámení |
+|---|---:|---:|
+| Basic | 118 719 868 B (113,22 MiB) | 277 320 004 B (264,47 MiB) |
+| Extended | 438 054 866 B (417,76 MiB) | 1 651 406 268 B (1,54 GiB) |
+
+Odporúčam dva úplné prenosné ZIP balíky: basic ako menšie stiahnutie a
+extended pre používateľov KInIT. Vyhneme sa ručnej inštalácii Pythonu alebo
+kopírovaniu DLL doplnku. Oba používajú rovnaký profil/projekty; nespúšťajte ich
+s tým istým profilom súčasne. Predvolený vývojový build zostáva extended.
+Modely a disková PCM cache potrebujú ďalšie miesto mimo uvedených veľkostí.
+
+Pre tento SHA prešlo 301 testov v každom builde, audit 65 modulov a model-free
+EXE smoke. Oba ZIP sa rozbalili do izolovaného Unicode priečinka a ich EXE
+prešli štartom s PATH bez Pythonu. Nejde o reálny ASR/GPU test ani čistú VM.
+Veľkosti a výsledky sú historické meranie konkrétneho kandidáta, nie garancia
+každého budúceho zostavenia. Kontrolné súčty konkrétneho ZIP sú v jeho sidecare.
+
 ## Licenčné otvorené položky pred verejným vydaním
 
 Kandidát nie je vyhlásením kompletného právneho preverenia. Aktuálny PyAV wheel
@@ -85,5 +104,14 @@ neautomatizuje: pre podpísané vydanie zaraďte podpis po freeze a pred audit/�
 a vytvorením build manifestu, zaznamenajte overený thumbprint/timestamp do
 distribučného manifestu a až potom vytvorte nové checksumy. Nevypínajte kontrolu
 manifestu ani neoznačujte starý kandidát ako podpísaný.
+
+Kontrola hotového ZIP vrátane rozbalenia do dočasného priečinka a štartu EXE:
+
+```powershell
+.\.venv\Scripts\python.exe scripts/verify_distribution.py 'outputs/ND-TranskripThor-basic-candidate.zip' --startup
+```
+
+Kontrola overí SHA-256 archívu, presný zoznam položiek, veľkosť a SHA-256
+každého súboru. Odmietne duplicitné/nebezpečné cesty pred rozbalením.
 
 Created by Daniel Návojský (ndxnraw) using Codex | 2026

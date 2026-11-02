@@ -747,7 +747,21 @@ Nepribaľuje modely ani používateľské dáta. Postup: DISTRIBUTION.md.
 Prvý pracovný beh: 301 testov, OK, bez preskočenia. Nové regresie pokrývajú
 NOTICE, chýbajúce oznámenie, bezpečné cesty, chybu KInIT v basic a build gate;
 rozšírený test ZIP overuje hash každého súboru a nemennosť vstupnej zostavy.
-Následné čisté buildy/meranie veľkostí ešte vyžadujú vykonanie a záznam.
+Čistý kandidát `c354e72` následne prešiel oboma buildmi: extended 301 testov
+za 227,340 s, basic 301 testov za 299,955 s, oba bez preskočenia. Oba nové EXE
+prešli auditom 65 modulov a štartom Tk/tkdnd/exportov/audio filtra/spawn.
+Basic neobsahuje torch/transformers adresáre. Oba ZIP prešli SHA-256 všetkých
+súborov, kontrolou celého archívu a štartom skutočne rozbaleného EXE z dočasného
+Unicode priečinka s izolovaným PATH. Licenčný inventár nemá chýbajúce texty
+Python distribúcií; otvorené natívne/licenčné podmienky sa tým neuzatvárajú.
+
+Meranie c354e72: basic ZIP 118 719 868 B, rozbalený 277 320 004 B; extended
+ZIP 438 054 866 B, rozbalený 1 651 406 268 B (vrátane manifestov a oznámení).
+Odporúčanie: samostatný basic ZIP a extended ZIP pre KInIT, nie ručné
+kopírovanie runtime doplnkov. Kontrola `verify_distribution.py --startup`
+je opakovateľná a odmieta chybné checksumy, duplicitné a nebezpečné ZIP cesty.
+Tieto výsledky patria uvedenému SHA; finálny dokumentačný/overovací commit
+musí pred pushom znovu prejsť celým čistým buildom.
 
 Nenašiel sa Code Signing certifikát ani Windows Sandbox/SignTool v PATH.
 Skúška na čistom Windows bez nainštalovaného Pythonu preto nie je potvrdená.
