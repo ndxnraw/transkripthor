@@ -668,3 +668,130 @@ Pred pushom musí čistý klon presného kandidáta dokončiť úplnú sadu bez 
 aj nový Windows EXE. Finálne SHA a výsledok sú viazané na lokálny overovací
 záznam a záver úlohy. F29 zmeny sa zachovávajú, rovnako staršia nesúvisiaca
 unstaged poznámka. Verzia ani vydanie sa nemenia.
+
+## F31 – oddelený QML prototyp a rozhodnutie (29. 10. 2026, Pre-release)
+
+Práca je vo vetve `codex/testing-qml-f31`, nad jadrom F30 `fb69872`.
+Pred začiatkom boli overené úspešný čistý F30 build (295 testov bez skipov,
+nový Windows EXE) aj úspešné GitHub CI 40825052960. Nejde o tvrdenie, že
+všetky reálne modely/GPU a systémové scenáre boli certifikované.
+
+`src/prototype_qml` je samostatný adaptér nad StateStore, Project,
+perform_project_io, Player a riadeným ASR procesom. Má vlastný profil,
+otvára pracovné SQLite kópie, zachováva originál a používa existujúce revízie.
+Stabilné Tk rozhranie a jeho funkcie sa nemigrujú. Qt Essentials/shiboken6
+6.12.0 sú voliteľné, uzamknuté vrátane hashov; stabilný EXE ich vylučuje.
+Samostatné setup/run/test/build skripty a QML audit sprístupňujú experiment.
+
+Prvý úplný lokálny regresný beh dokončil 295 testov za 292,345 s bez
+preskočenia, OK. Sedem prvých QML scenárov prešlo vrátane reálnych klávesov,
+10 000 úsekov, zachovania originálu a chyby offline modelu cez skutočný
+proces. Finálnych osem QML testov prešlo za 6,612 s; ôsma kontrola overuje
+QAccessible rolu/názov editora. Pri kontrole rozloženia sa našla a opravila
+cyklická väzba výšky ScrollView; kontrola QML upozornení zostala zachovaná.
+Prakticky bol overený výstup prehrávača syntetickým tichom a pravidlá posunu
+pri pauze/prehrávaní. Nešlo o reálnu ASR inferenciu ani posluch hlasu.
+
+Merania na pevnom primárnom monitore: QML pracovná sada 184,60–234,54 MiB
+pri skutočných pomeroch 100–200 %, oproti približne 48,5 MiB nečinného Tk.
+Nečinná odozva bola podobná; malé teplé vzorky štartu nepreukazujú podstatné
+zrýchlenie. Obe témy, malé/veľké okno a konkrétne snímky boli skontrolované;
+nejde o úplné systémové prepínanie DPI ani potvrdenie Narratora.
+
+Odporúčanie: zatiaľ nemigrovať. Rozsah, reprodukcia, presné metriky,
+obmedzenia funkčnej parity/prístupnosti a ďalšia rozhodovacia brána sú v
+[QML-EXPERIMENT.md](QML-EXPERIMENT.md). Verzia/tag/Release sa nemenia.
+Pred pushom sa musí presný kandidát ešte overiť z čistého klonu celou sadou,
+novým Tk aj QML Windows EXE a ich auditmi; výsledok je viazaný na SHA a
+lokálny záznam. Samostatné QML testy nenahrádzajú povinnú bránu. Staršia
+nesúvisiaca unstaged poznámka sa zachováva mimo tohto commitu.
+
+Doplnenie 30. 10. 2026: prvé QML balenie prešlo auditom 68 Python modulov,
+ale skutočný štart odhalil nekompatibilnú ICU DLL pribratú z cudzieho PATH.
+Jej exporty mali príponu `_78`, kým Qt požadovalo Windows ICU symboly bez
+prípony. Cesta v Analysis-00.toc a čítanie chybového dialógu potvrdili príčinu.
+Po lokálnej zálohe a diagnostickom vyradení tejto jedinej DLL rovnaké EXE
+prešlo QML/fronta/kópia/editácia/uloženie/posun/témy. Tento zásah nie je
+náhradou čistého zostavenia ani dôkazom finálneho kandidáta.
+
+Zostavovací wrapper teraz obmedzuje PATH na projektové .venv, používaný
+Python a Windows; cudzie knižnice sa nemajú dostať do analýzy závislostí.
+Regresia overuje kolíziu ICU v cudzom priečinku a zachováva kontrolu, že
+neúspešné testy zastavia balenie. Osem build-contract testov prešlo za 0,843 s.
+Celá sada po doplnení obsahuje 296 testov; jej úspech pre opravný kandidát
+musí potvrdiť nový čistý beh. Push zostáva podmienený jeho výsledkom.
+
+Čistý kandidát `819abd0` bol 30. 10. 2026 úspešne overený: 296 regresných
+testov za 299,738 s a 8 QML scenárov za 5,358 s, bez preskočenia. Nový Tk
+EXE prešiel auditom 65 modulov a štartom vrátane tkdnd/natívnych importov/
+spawn; nový QML EXE auditom 68 modulov, zhodou QML/logo súborov a skutočnou
+skúškou fronty, kópie projektu, editácie/uloženia, posunu a oboch tém.
+Manifest Tk zostavy aj čistota klonu boli znovu overené. Cudzia ICU DLL sa
+v novom QML balíku nenachádza; ručný zásah do nového balíka nebol potrebný.
+Logická veľkosť celých priečinkov je 1 647 199 411 bajtov (Tk) a
+1 795 612 084 bajtov (QML), rozdiel približne 142 MiB. Nejde o veľkosť ZIP.
+Výsledky sú evidencia uvedeného SHA, nie automatické potvrdenie neskorších
+zmien. Finálny dokumentačný commit musí pred pushom absolvovať rovnaké
+čisté overenie. Odporúčanie nemigrovať sa na základe týchto výsledkov nemení.
+
+## Distribučný kandidát (2. 11. 2026)
+
+Pridané samostatné basic/extended Windows Tk zostavy. Predvolený extended
+zachová KInIT/PyTorch; basic ho vylučuje bez zmeny ASR projektov a pri pokuse
+o KInIT vysvetlí potrebu rozšíreného balíka. Oba buildy majú povinné celé testy,
+audit zdrojov a EXE diagnostiku s odstráneným Pythonom z PATH.
+Balenie nemení overený runtime strom, zbiera aj NOTICE, doplnkové pôvodné
+licencie s URL/SHA-256 a vytvára samostatný manifest všetkých súborov ZIP.
+Nepribaľuje modely ani používateľské dáta. Postup: DISTRIBUTION.md.
+
+Prvý pracovný beh: 301 testov, OK, bez preskočenia. Nové regresie pokrývajú
+NOTICE, chýbajúce oznámenie, bezpečné cesty, chybu KInIT v basic a build gate;
+rozšírený test ZIP overuje hash každého súboru a nemennosť vstupnej zostavy.
+Čistý kandidát `c354e72` následne prešiel oboma buildmi: extended 301 testov
+za 227,340 s, basic 301 testov za 299,955 s, oba bez preskočenia. Oba nové EXE
+prešli auditom 65 modulov a štartom Tk/tkdnd/exportov/audio filtra/spawn.
+Basic neobsahuje torch/transformers adresáre. Oba ZIP prešli SHA-256 všetkých
+súborov, kontrolou celého archívu a štartom skutočne rozbaleného EXE z dočasného
+Unicode priečinka s izolovaným PATH. Licenčný inventár nemá chýbajúce texty
+Python distribúcií; otvorené natívne/licenčné podmienky sa tým neuzatvárajú.
+
+Meranie c354e72: basic ZIP 118 719 868 B, rozbalený 277 320 004 B; extended
+ZIP 438 054 866 B, rozbalený 1 651 406 268 B (vrátane manifestov a oznámení).
+Odporúčanie: samostatný basic ZIP a extended ZIP pre KInIT, nie ručné
+kopírovanie runtime doplnkov. Kontrola `verify_distribution.py --startup`
+je opakovateľná a odmieta chybné checksumy, duplicitné a nebezpečné ZIP cesty.
+Tieto výsledky patria uvedenému SHA; finálny dokumentačný/overovací commit
+musí pred pushom znovu prejsť celým čistým buildom.
+
+Nenašiel sa Code Signing certifikát ani Windows Sandbox/SignTool v PATH.
+Skúška na čistom Windows bez nainštalovaného Pythonu preto nie je potvrdená.
+Aktuálna FFmpeg DLL hlási LGPL version 3 or later; potrebné presné zdroje
+natívnej zostavy a distribučné podmienky aplikácie ostávajú otvorené pred
+publikovaním. Kandidát sa nepovažuje za právne ani systémovo finálne overený.
+Verzia/tag/Release sa nemenia, balíky sa nepublikujú.
+
+
+## Záverečné prijímacie overenie – úloha 32 (5. 11. 2026)
+
+Protokol: [ACCEPTANCE.md](ACCEPTANCE.md). Produkčný základ `52a4f5c`,
+bez zmeny verzie alebo aplikačného kódu. Prvý úplný beh: 301 testov,
+274,107 s, OK, bez preskočenia. Nová regresia skutočného SQLite SQLITE_FULL
+prešla samostatne (1 test, 0,070 s): rollback zachová uloženú revíziu,
+text aj originál; opakovanie po zvýšení kapacity a opätovné otvorenie uspeje.
+Presný synchronizovaný kandidát vyžaduje nový čistý celý test/build;
+staršie výsledky nie sú jeho potvrdením.
+
+Reálny Tiny CPU offline prešiel (0 Python sieťových pokusov a 0 TCP spojení
+v 30 vzorkách); oba existujúce EXE prešli opakovanou inferenciou/exportom.
+Obnova reálneho prepisu zachovala checkpoint a dokončila 12 chunkov /
+24 segmentov. Dvojhodinové dekódovanie: peak RSS 62,76 MiB s diskovou PCM
+oproti 1 150,71 MiB pôvodne. Pri 100k syntetických segmentov odovzdanie
+uloženia pod 1 ms, najväčšia medzera Tk heartbeat 101,91 ms.
+
+Odporúčanie: zatiaľ NEVYDÁVAŤ finálny release. Čistý Windows bez Pythonu,
+reálny systémový drop, systémové DPI/viac monitorov/Narrator, NVIDIA,
+KInIT inferencia, referenčná kvalita a fyzické poruchové scenáre nie sú
+úplne overené. Native licenčné podmienky zostávajú otvorené. Strom UIA
+ukazuje prevažne nepomenované panely; to nie je úspešný test čítačky.
+Automatické testy, simulácie a reálne skúšky sú v protokole oddelené.
+Používateľské dáta, súkromné dôkazy a distribučné balíky sa nepublikujú.

@@ -481,3 +481,13 @@ nezvyšuje. Aktuálne používateľské poznámky sú v [RELEASE-NOTES.md](RELEA
 Počet testov uvádzajte vždy s dátumom a commitom; minimum 197 nie je výsledok behu.
 Historické audity sa neprepisujú na nový výsledok. Neznámy dátum merania označte
 ako neznámy; dátum evidencie dokumentu nie je dátum vykonania jeho testov.
+
+## Voliteľný experiment rozhrania (testing vetva)
+
+Distribučné varianty, licenčný inventár a podpisovací postup sú v
+[DISTRIBUTION.md](DISTRIBUTION.md). Predvolený build zostáva extended/Tk;
+`build.ps1 -Variant basic` meria samostatný balík bez PyTorch/KInIT runtime.
+
+PySide6/QML prototyp má vlastný profil, lock a zostavu. Nenahrádza stabilný
+Tk program. Spustenie, merania, bezpečnosť pracovných kópií a rozhodnutie
+sú v [QML-EXPERIMENT.md](QML-EXPERIMENT.md). Bežný setup/build Qt nevyžaduje.

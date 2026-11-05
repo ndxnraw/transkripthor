@@ -1,0 +1,27 @@
+[
+  {
+    "file": "tokenizers-LICENSE.txt",
+    "url": "https://raw.githubusercontent.com/huggingface/tokenizers/v0.21.4/LICENSE",
+    "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+  },
+  {
+    "file": "ctranslate2-LICENSE.txt",
+    "url": "https://raw.githubusercontent.com/OpenNMT/CTranslate2/v4.8.2/LICENSE",
+    "sha256": "54aa79d9fe3c09e67a16dcd95b9e88676405a6ec174efda31036983cf7672ecb"
+  },
+  {
+    "file": "flatbuffers-LICENSE.txt",
+    "url": "https://raw.githubusercontent.com/google/flatbuffers/v25.12.19/LICENSE",
+    "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+  },
+  {
+    "file": "FFmpeg-COPYING.LGPLv3.txt",
+    "url": "https://raw.githubusercontent.com/FFmpeg/FFmpeg/master/COPYING.LGPLv3",
+    "sha256": "da7eabb7bafdf7d3ae5e9f223aa5bdc1eece45ac569dc21b3b037520b4464768"
+  },
+  {
+    "file": "FFmpeg-COPYING.GPLv3.txt",
+    "url": "https://raw.githubusercontent.com/FFmpeg/FFmpeg/master/COPYING.GPLv3",
+    "sha256": "8ceb4b9ee5adedde47b31e975c1d90c73ad27b6b165a1dcd80c7c545eb65b903"
+  }
+]
