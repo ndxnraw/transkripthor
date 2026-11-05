@@ -769,3 +769,29 @@ Aktuálna FFmpeg DLL hlási LGPL version 3 or later; potrebné presné zdroje
 natívnej zostavy a distribučné podmienky aplikácie ostávajú otvorené pred
 publikovaním. Kandidát sa nepovažuje za právne ani systémovo finálne overený.
 Verzia/tag/Release sa nemenia, balíky sa nepublikujú.
+
+
+## Záverečné prijímacie overenie – úloha 32 (5. 11. 2026)
+
+Protokol: [ACCEPTANCE.md](ACCEPTANCE.md). Produkčný základ `52a4f5c`,
+bez zmeny verzie alebo aplikačného kódu. Prvý úplný beh: 301 testov,
+274,107 s, OK, bez preskočenia. Nová regresia skutočného SQLite SQLITE_FULL
+prešla samostatne (1 test, 0,070 s): rollback zachová uloženú revíziu,
+text aj originál; opakovanie po zvýšení kapacity a opätovné otvorenie uspeje.
+Presný synchronizovaný kandidát vyžaduje nový čistý celý test/build;
+staršie výsledky nie sú jeho potvrdením.
+
+Reálny Tiny CPU offline prešiel (0 Python sieťových pokusov a 0 TCP spojení
+v 30 vzorkách); oba existujúce EXE prešli opakovanou inferenciou/exportom.
+Obnova reálneho prepisu zachovala checkpoint a dokončila 12 chunkov /
+24 segmentov. Dvojhodinové dekódovanie: peak RSS 62,76 MiB s diskovou PCM
+oproti 1 150,71 MiB pôvodne. Pri 100k syntetických segmentov odovzdanie
+uloženia pod 1 ms, najväčšia medzera Tk heartbeat 101,91 ms.
+
+Odporúčanie: zatiaľ NEVYDÁVAŤ finálny release. Čistý Windows bez Pythonu,
+reálny systémový drop, systémové DPI/viac monitorov/Narrator, NVIDIA,
+KInIT inferencia, referenčná kvalita a fyzické poruchové scenáre nie sú
+úplne overené. Native licenčné podmienky zostávajú otvorené. Strom UIA
+ukazuje prevažne nepomenované panely; to nie je úspešný test čítačky.
+Automatické testy, simulácie a reálne skúšky sú v protokole oddelené.
+Používateľské dáta, súkromné dôkazy a distribučné balíky sa nepublikujú.
