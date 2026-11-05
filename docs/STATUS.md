@@ -795,3 +795,15 @@ KInIT inferencia, referenčná kvalita a fyzické poruchové scenáre nie sú
 ukazuje prevažne nepomenované panely; to nie je úspešný test čítačky.
 Automatické testy, simulácie a reálne skúšky sú v protokole oddelené.
 Používateľské dáta, súkromné dôkazy a distribučné balíky sa nepublikujú.
+
+
+## Príprava Pre-release 1 (5. 11. 2026)
+
+Na výslovný pokyn autora je pripravené prvé GitHub pre-release s označením
+`pre-release-1`. README je skrátené na opis, stiahnutie a spustenie.
+Interná verzia a dátové formáty sa nemenia. Rozšírený Windows ZIP obsahuje
+runtime KInIT/PyTorch bez modelových váh; nič z používateľských dát.
+Základ cb8c237 prešiel 302 testami za 302,435 s bez preskočenia, novým EXE
+a reálnym Tiny CPU prepisom dvakrát. Nový dokumentačný kandidát musí pred
+publikovaním opäť prejsť čistým buildom. Otvorené body ACCEPTANCE.md ostávajú
+platné; pre-release nie je potvrdenie finálnej pripravenosti ani podpisu EXE.
