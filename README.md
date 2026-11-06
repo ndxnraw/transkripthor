@@ -1,23 +1,13 @@
-# ND TranskripThor — Pre-release
+# ND TranskripThor
 
-**ND TranskripThor** je aplikácia pre Windows na lokálny prepis zvukových nahrávok do textu a titulkov. Nahrávky ani prepisy neposiela na externé služby a nemá minútové kvóty.
+Prepis zvukových nahrávok do textu a titulkov pre Windows. Spracovanie prebieha na vašom počítači, bez odosielania nahrávok a bez minútových kvót.
 
-Podporuje slovenčinu, češtinu, angličtinu, maďarčinu aj zmiešané československé nahrávky. Ponúka dávkové spracovanie, editor s prehrávaním zvuku a export TXT, SRT, VTT, DOCX a JSON. Rozhranie je anglické alebo slovenské, vo svetlom aj tmavom vzhľade. Aktuálny vývoj je **pre-release**, nie finálne vydanie.
+Podporuje slovenčinu, češtinu, angličtinu a maďarčinu. Prepis môžete upraviť v editore s prehrávaním zvuku a uložiť ako TXT, SRT, VTT, DOCX alebo JSON.
 
-## Stiahnutie a spustenie
+**[Stiahnuť Pre-release 1](https://github.com/ndxnraw/TranskripThor/releases/tag/pre-release-1)**
 
-**[Archív starších zostáv pre Windows](https://github.com/ndxnraw/TranskripThor/releases)** — neobsahuje automaticky aktuálny pre-release. Nová zostava vznikne postupom v dokumentácii; táto synchronizácia nepublikuje vydanie.
+Rozbaľte celý ZIP a spustite **ND TranskripThor.exe**. Priečinok `_internal` nechajte vedľa programu. Model sa pri prvom použití stiahne; potom môžete prepisovať offline. Balík obsahuje aj podporu slovenského modelu KInIT, nie jeho váhy.
 
-1. Rozbaľte celý ZIP.
-2. Spustite **ND TranskripThor.exe**. Priečinok `_internal` ponechajte vedľa neho; Python netreba inštalovať.
-3. Pridajte nahrávku, vyberte jazyk a model a spustite prepis.
-
-Modely nie sú pribalené. Pri prvom použití sa vybraný model stiahne; následne môžete pracovať offline. Rýchlosť a presnosť závisia od modelu, počítača a kvality nahrávky. Výsledný text odporúčame skontrolovať.
-
-[Poznámky k pre-release](docs/RELEASE-NOTES.md) · [Používateľský návod](docs/NAVOD.md) · [Vývoj na ďalšom počítači](docs/DEVELOPMENT.md)
-
-Pre-release obsahuje novšie úpravy než archívne EXE. [Aktuálny stav a hranice overenia](docs/STATUS.md).
-
-Zo zdrojov na Windows x64 s Python 3.12.10: `scripts/setup.ps1`, potom `scripts/run.ps1`.
+Ide o skúšobné vydanie pre Windows x64. [Návod](docs/NAVOD.md) · [Overenie a známe obmedzenia](docs/ACCEPTANCE.md)
 
 Created by Daniel Návojský (ndxnraw) using Codex | 2026
