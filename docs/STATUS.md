@@ -2,8 +2,89 @@
 
 Aktuálny zdroj je `src/ndtranskripthor`, označenie **Pre-release**.
 `src/version.py` zachováva internú kompatibilnú verziu **2.1.3b**; nejde o nové vydanie.
-Posledné publikované EXE je GitHub Release `v2.1.3b`; novšie zdrojové opravy
-nie sú novým vydaním. SYNC nezvyšuje verziu ani nevytvára tag.
+Aktuálne publikované skúšobné vydanie je GitHub `pre-release-1`, publikované
+6. 11. 2026 z commitu `abf0ae8`. Interná verzia zostáva nezmenená.
+SYNC nezvyšuje verziu ani nevytvára tag.
+
+## Synchronizácia a nové EXE (10. 11. 2026)
+
+Na výslovný pokyn autora sa lokálna `main` posunula fast-forward na
+`33bf71319bcf45dd6916ada6fadf525f9fcdfd01`, zhodne s `origin/main`.
+Rozpracovaný obsah tohto dokumentu zostal zachovaný a index zostal prázdny.
+Pred zmenou vznikla lokálna záloha mimo repozitára: história Gitu,
+samostatné staged/unstaged patche a pôvodný súbor STATUS. Používateľské
+nahrávky, profily, projekty a modely sa nemenili ani nemažú.
+
+Nové extended/Tk EXE vzniklo v čistom klone presného existujúceho tagu
+`pre-release-1` / `abf0ae8c73ccd7af71e458d4a59c3ce16a04e439`; jeho Git strom
+bol v čase zostavenia zhodný s main `33bf713`. Nová `.venv` vznikla cez `setup.ps1`
+z uzamknutých Windows závislostí. Úplný `build.ps1` dokončil **302 testov,
+286,494 s, OK, bez preskočenia**, audit 65 pribalených aplikačných modulov,
+štart Tk/tkdnd/prekladov/ikon/natívnych importov a nového procesu.
+Manifest zostavy bol vytvorený úspešne; čistý klon nemal zmeny zdrojov.
+
+ZIP prešiel kontrolou všetkých súborov, SHA-256 a štartom skutočne rozbaleného
+EXE z dočasného Unicode priečinka s PATH bez Pythonu. Nie je to nová skúška
+na čistej Windows VM ani inferencia KInIT/GPU. Predchádzajúce obmedzenia
+ACCEPTANCE.md a nepodpísané EXE zostávajú platné.
+
+- ZIP: `ND-TranskripThor-pre-release-1-Windows-x64.zip`, 438 054 385 B.
+- Rozbalený obsah: 1 651 406 490 B.
+- SHA-256 ZIP: `0dd13879ec70a691a59e76d3aef4fb0df741c88bbc1b3f0259a318e1cf4822ac`.
+- Lokálne `dist/ND TranskripThor` bolo nahradené rovnakou novou zostavou;
+  po kopírovaní znovu prešlo manifestom, auditom zdrojov a štartom EXE.
+  Stará zostava je zálohovaná mimo repozitára a zachovaná aj v lokálnom
+  `dist/ND TranskripThor-before-20261110`.
+- Pôvodný ZIP aj checksum z GitHubu sú zálohované a hashovo overené.
+  Prílohy existujúceho Pre-release 1 boli úspešne nahradené. Obe nové prílohy
+  sa po nahratí znovu stiahli a ich veľkosti/SHA-256 sa zhodovali s lokálnymi.
+  Finálny read-back GitHubu potvrdil presne ZIP a checksum, bez dočasných
+  príloh: ZIP asset `730705286`, checksum asset `730715434`, release
+  `435155379`. Názov, text, tag a príznak pre-release zostali zachované.
+  https://github.com/ndxnraw/TranskripThor/releases/tag/pre-release-1
+
+Verzia, existujúci tag a aplikačné zdroje sa nemenili. Nevzniká nový release.
+Lokálne dôkazy sú v `outputs/sync-pre-release-1-*.log`; nepatria do Gitu.
+
+## Kontrola pred synchronizáciou (10. 11. 2026)
+
+- Overený remote: `https://github.com/ndxnraw/TranskripThor.git`.
+  Pracovná vetva `codex/final-acceptance` aj jej vzdialený náprotivok sú
+  `abf0ae8`; GitHub `main` je `33bf713`. HEAD, tag `pre-release-1` a
+  `origin/main` majú identický Git strom `2e7818d84b817c153c54c3937b5c7791ec2f793d`.
+  Dva dodatočné merge commity teda nemenia obsah. Lokálna vetva `main`
+  zostáva na `fb69872`, deväť commitov za vzdialenou; pri kontrole sa neprepínala.
+- GitHub Windows regression pre `33bf713` úspešne skončil 6. 11. 2026:
+  https://github.com/ndxnraw/TranskripThor/actions/runs/42168704265.
+  Regresná úloha prešla; voliteľná build úloha bola preskočená podľa workflow.
+  Tento CI beh preto sám osebe nie je dôkaz nového EXE.
+- Release `pre-release-1` existuje ako publikované pre-release s Windows ZIP
+  (438 055 221 B) a súborom SHA-256. Tag smeruje na `abf0ae8`.
+  Overené boli metadáta GitHubu; publikovaný ZIP sa pri tejto kontrole
+  nesťahoval ani znovu nespúšťal.
+- Lokálne `dist/ND TranskripThor` nie je synchronizované so zdrojmi.
+  Manifest uvádza základ `fb69872`; `verify_frozen.py` skončil chybou
+  `Frozen code differs: speech_models.py`. Rozdiely vstupov zahŕňajú aj
+  preklady, balenie, skripty a testy. Tento priečinok nemožno považovať za
+  aktuálnu zostavu Pre-release 1; vyžaduje nový overený build.
+- Závislosti: kontrola uzamknutého prostredia potvrdila 45 distribúcií,
+  `pip check` nenašiel porušené požiadavky; Python 3.12.10 x64, Tk 8.6.15.
+  Verzia a Windows metadata sa naďalej odvodzujú zo `src/version.py`;
+  balenie zahŕňa `src/assets` a `src/locales`.
+- Aktuálny úplný beh `scripts/test.ps1` nad `abf0ae8`: **302 objavených
+  a vykonaných testov, 338,039 s, OK, bez preskočenia**, návratový kód 0.
+  Prvý obmedzený beh síce dokončil 302 testov, ale zlyhal pri prístupe
+  k dočasným priečinkom Windows (WinError 5); nepočíta sa za úspech.
+  Uvedený úspech patrí samostatnému opakovaniu s povoleným prístupom.
+  Lokálny log: `outputs/sync-check-2026-11-10-tests-unrestricted.log`.
+  Ide o regresnú sadu, nie nové meranie skutočného ASR/GPU alebo čistý build.
+- Pred kontrolou bola jedinou lokálnou zmenou staršia unstaged poznámka
+  k F24 v tomto dokumente. Zostala zachovaná, index zostal bez zmien.
+  `docs/RELEASE-NOTES.md` je výslovne datovaný historický prehľad z 28. 10.;
+  aktuálne vydanie opisujú README, GitHub Release a tento záznam.
+
+Kontrola nemení aplikačný kód, verziu, vetvu, tag ani publikované balíky.
+Nový build a reálna inferencia modelov/GPU neboli súčasťou tejto kontroly.
 
 ## Ako čítať výsledky
 
