@@ -47,7 +47,7 @@ def begin(app,root=ROOT):
     write(app,dict(schema=1,status='pending'))
 
 
-def create(app,root=ROOT):
+def create(app,root=ROOT,frontend='tk'):
     versions=check_environment('build',root=root)
     expected=(root/'.python-version').read_text(encoding='ascii').strip()
     if platform.python_version()!=expected: raise ValueError('Unexpected Python patch version')
@@ -58,7 +58,7 @@ def create(app,root=ROOT):
     except (OSError,subprocess.CalledProcessError): commit=None
     write(app,dict(schema=1,status='verified',python=expected,python_executable_sha256=digest(Path(sys._base_executable)),
         libraries=versions,inputs=inputs(root),files=tree(app),commit=commit,
-        verification='scripts/build.ps1: full tests, frozen source comparison and startup passed'))
+        verification=('scripts/build-qt.ps1: full tests, production Qt scenarios, frozen source comparison and QML startup passed' if frontend=='qt' else 'scripts/build.ps1: full tests, frozen source comparison and startup passed')))
 
 
 def verify(app,root=ROOT):
@@ -75,6 +75,8 @@ if __name__=='__main__':
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('action',choices=('begin','create','verify'))
     parser.add_argument('app',type=Path)
+    parser.add_argument('--frontend',choices=('tk','qt'),default='tk')
     args=parser.parse_args()
-    globals()[args.action](args.app.resolve())
+    if args.action=='create': create(args.app.resolve(),frontend=args.frontend)
+    else: globals()[args.action](args.app.resolve())
     print('Build manifest:',args.action,'PASS')

@@ -62,6 +62,7 @@ class BuildContractTest(unittest.TestCase):
     def test_real_powershell_test_failure_stops_packaging(self):
         scripts=self.root/'scripts';scripts.mkdir()
         shutil.copy2(ROOT/'scripts/build.ps1',scripts/'build.ps1')
+        shutil.copy2(ROOT/'scripts/build-qt.ps1',scripts/'build-qt.ps1')
         (scripts/'common.ps1').write_text('''$ErrorActionPreference='Stop'
 $ProjectRoot=Split-Path $PSScriptRoot
 $ProjectPython='unused'

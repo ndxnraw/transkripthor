@@ -1,10 +1,10 @@
 # Vývoj na Windows a prenos na ďalší počítač
 
-Aktuálny program je **Pre-release**. Toto označenie používa rozhranie aj
-textové Windows metadata; príznak Windows `VS_FF_PRERELEASE` je zapnutý.
-Interná kompatibilná číselná hodnota `WINDOWS_VERSION` sa nezvyšuje.
-Historické číselné verzie v auditoch a archívnych vydaniach neoznačujú
-aktuálny vývoj za finálny release. SYNC nevytvára tag ani GitHub Release.
+Aktuálny program je **Release v1** (1.0.0). Hlavné rozhranie je QML/Qt Quick.
+`src/version.py` je jediný zdroj zobrazeného označenia, číselnej Windows verzie
+aj príznaku stabilného vydania; generujú sa z neho VERSIONINFO aj assembly manifest.
+Bežný SYNC tieto hodnoty nemení a nevytvára vydanie bez výslovnej požiadavky.
+Historické poznámky Pre-release/Tk opisujú predchádzajúce stavy.
 
 Zostavovanie a testy vyžadujú Windows x64 a presný CPython 3.12.10 s Tk.
 Autoritatívny pin je `.python-version`, ktorý čítajú lokálne skripty aj CI.
@@ -17,6 +17,33 @@ samostatný systémový FFmpeg sa pre aplikáciu nevyžaduje
 vyžadujú Microsoft Visual C++ Redistributable x64; pri chýbajúcej DLL opravte
 jeho inštaláciu zo stránky Microsoftu. Proxy/certifikáty riešte s IT, nikdy
 nevypínajte TLS kontrolu. Skripty rešpektujú politiku spúšťania PowerShellu.
+
+## Aktuálne rozhranie QML
+
+`run.ps1` spúšťa produkčné Qt Quick rozhranie (`src/qml_main.py`), ktoré
+používa existujúci používateľský profil a projektové formáty. Bežné
+ovládanie je na jednej obrazovke bez kariet; editor a doplnkové nástroje
+sa otvárajú podľa potreby. PySide6-Essentials a shiboken6 sú súčasťou
+runtime locku a inštaluje ich štandardný `setup.ps1`.
+
+`test.ps1` je povinná úplná sada; `test-qt.ps1` vykoná navyše produkčné
+Qt scenáre v samostatnom procese, aby sa nemiešali event loopy Tk a Qt.
+Predvolený `build.ps1` deleguje na `build-qt.ps1`, vykoná obe sady,
+porovná všetky pribalené moduly a QML/preklady/assets a spustí reálne
+Windows EXE s izolovaným profilom. Diagnostika skúša projekty na mieste,
+uloženie, päť exportov, nemenný originál, posun zvuku, témy, importy
+ASR knižníc a izolovaný ASR proces pri offline chybe chýbajúceho modelu.
+Nevykonáva inferenciu váh ani meranie GPU.
+
+QML zostava štandardne vzniká v novom `dist/qt-<čas>/ND TranskripThor/`;
+konkrétny cieľ určuje `build.ps1 -OutputDirectory <priečinok>`. Spúšťajte
+EXE spolu s celým priečinkom `_internal`. Manifest obsahuje aj kontrolné
+súčty QML a presný zdroj použitý na zostavenie.
+
+Pôvodné Tk rozhranie zostáva pre historické regresie a explicitné
+`build.ps1 -Frontend tk`. Nasledujúce staršie odseky o Tk diagnostike sa
+týkajú tejto voľby. `prototype_qml` a `build-qml.ps1` sú starší oddelený
+experiment; nepredstavujú aktuálnu QML aplikáciu.
 
 ## Čistý počítač
 
@@ -75,6 +102,234 @@ Voliteľný lokálny ZIP z už overeného buildu (nevytvára GitHub vydanie):
 ```
 
 ## Závislosti a ich udržiavanie
+
+### Bežný prepis na jednej obrazovke
+
+Hlavné okno nepoužíva viditeľné pracovné karty. `ViewStack` zobrazuje jeden
+rámec; interné meno `workspace_tabs` zostáva pre kompatibilitu existujúcich
+príkazov. Jazyk a kvalita sú priamo pri nahrávkach. Krátke názvy kvality
+mapujú na pôvodné stabilné modelové ID, nemenia backend ani uložené nastavenia.
+
+Prázdna plocha má jedinú hlavnú akciu Pridať nahrávky a podporuje pôvodný
+COPY-only FileDrop. Po pridaní sa ten istý ovládač presunie nad zoznam,
+zobrazí sa Spustiť prepis a pri chýbajúcom výbere sa označí prvá nová
+nahrávka. Ukazovatele priebehu sa objavia pri práci, nie ako neaktívna
+technická výbava úvodného okna. Podrobnosti, odobratie a poradie sú natívne
+príkazy ponuky Akcie/Ďalšie možnosti s pôvodnými podmienkami dostupnosti.
+
+Bežný online štart ide rovno do existujúceho workera; chýbajúce súbory
+pripraví ten istý modelový mechanizmus s pôvodnými udalosťami priebehu.
+Správcu modelov netreba otvárať. Ak je uložený režim iba offline a potrebný
+model chýba, jediná otázka ponúkne vypnutie tohto režimu a pokračovanie
+cez internet. Odmietnutie ponechá režim aj hlavnú obrazovku bez spustenia
+workera; prijatie je explicitná voľba používateľa, nie tichý sieťový fallback.
+Kontroly pripnutej revízie a zariadenia zostávajú zachované.
+
+Možnosti obsahujú pokročilé nastavenia, modely, technické podrobnosti,
+výsledky a vzhľad. Doplnkové zobrazenie má Späť na nahrávky; návrat
+editor neničí, neukladá ani znovu nevykresľuje. Ctrl+Tab v editore sa vráti
+do pracovného toku, nepreskakuje cez modely a nastavenia. Technické vnorené
+záložky ostali iba v dobrovoľne otvorených diagnostických nástrojoch.
+
+`test_simple_studio.py` overuje prázdny aj naplnený stav, skutočnú klikateľnosť
+hlavnej akcie, ponukové príkazy a ich busy guards, online štart bez správcu
+modelov, explicitné vypnutie offline režimu aj návrat z neuloženého editora.
+Prázdny stav má samostatnú EN/SK maticu 100–200 % a oboch kontrastných
+paliet; pôvodná matica teraz navyše napĺňa front a zobrazuje priebeh, aby
+naďalej kontrolovala všetky pracovné ovládače, nie iba úvodnú plochu.
+
+### Uvoľňovanie Tk objektov vo vlákne rozhrania
+
+`presentation/tk_lifecycle.py` poskytuje `TkVariables`: drží pôvodné natívne
+StringVar/BooleanVar/DoubleVar do zániku ich konkrétneho okna alebo rámca.
+V Destroy obsluhe vo vlákne rozhrania vykoná pôvodné Tk unset/trace cleanup
+a odpojí premennú od interpretera. Neskorší Python finalizátor už nevolá Tcl.
+Voľby Comboboxu patria samotnému widgetu; premenné exportného dialógu patria
+tomuto dialógu, nie živému editoru. Zrušenie zatvárania nič neuvoľňuje.
+
+Zaniknutý interpreter zostáva dočasne pripnutý, kým hlavné vlákno neuprace
+nepoužívané cykly widgetov a neostanú k nemu ďalšie odkazy. Uvoľnenie sa
+vykoná pri nasledujúcom vytvorení vlastníka alebo pri ukončení procesu.
+Zber pamäte sa globálne nevypína; triedy ani finalizátory tkinter sa
+neprepisujú a výnimky sa nepotláčajú. Implementácia cieli na podporovaný
+CPython 3.12.10 a jeho počítanie odkazov.
+
+Pracovníci lokálnej diagnostiky dostávajú iba snímku vstupov, signál
+zastavenia a front udalostí; neuzatvárajú v sebe dialóg ani aplikáciu.
+`scripts/run_tests.py` stále vypisuje pôvodné ignorované výnimky a zároveň
+ich považuje za zlyhanie celého behu. Samotné unittest OK ich už neprehliadne.
+
+Šesť regresií v `tests/test_tk_lifecycle.py` núti `gc.collect()` v pracovníkovi
+pri živom aj zaniknutom vlastníkovi, kontroluje unset/odstránenie traces
+v UI vlákne, opakované zániky a uvoľnenie interpreterov, odmietnutie
+vytvárania premennej v pracovníkovi a zachovanie rozpracovaného editora,
+zrušeného zatvorenia, Späť/Znova aj pôvodného projektu na disku.
+
+### Prístupnosť a integračné doladenie (fáza 5)
+
+Nastavenia oddeľujú pevný spodný panel pomoci od posúvateľného formulára.
+`ScrollFrame` odvodzuje rozsah od obsahu a po presune fokusu odhalí celé
+pole alebo správu. Koliesko spracúva iba vo vlastnom formulári; textové
+polia, natívne voľby a ostatné karty si zachovávajú vlastné správanie.
+Pri zániku formulára sa odstránia jeho väzby na okno. Voľba automatického
+prehrávania je v spoločnej karte s jazykom rozhrania; jej hodnota a uloženie
+zostávajú pôvodné. Dlhšie vysvetlenia ostávajú iba na čítanie a posúvateľné.
+
+`FlowFrame` prepočíta riadky aj po `<<ThemeChanged>>`, aby zmena rozmerov
+prvkov neorezala tlačidlá. Pri zániku ruší vlastný čakajúci idle callback.
+`MessageView` po zatvorení odregistruje textové pole aj sledovanie hodnoty.
+Vysvetlenia vytvorené cez `DialogPanel.message()` zalamujú podľa aktuálnej
+šírky obsahu, vrátane zúženého chybového okna a nastavení prehrávania.
+Natívne kontrastné checkboxy a prepínače majú explicitné systémové obrysy
+a veľkosť indikátora odvodenú od mierky, takže sú rozlíšiteľné aj bez zaškrtnutia.
+Hlavné okno vlastní jediný plánovaný kontrolný cyklus: pri priamom obnovení
+ho nahradí a pri zániku okna zruší. Zatváranie počas ASR naďalej čaká
+na pôvodné bezpečné ukončenie práce.
+Rovnako vlastní odložené uloženie nastavení: okamžité uloženie aj zánik
+okna rušia pôvodný časovač, aby po zatvorení neostal neplatný Tcl príkaz.
+
+`tests/test_ui_acceptance.py` dopĺňa osem regresií: všetky karty v EN/SK,
+Tk scaling 100/125/150/175/200 %, svetlá/tmavá téma a obe simulované
+kontrastné palety, zatvorenie pred prekreslením, uvoľnenie správ a traces,
+nové rozmery tlačidiel, úzky dialóg, poradie Tab bez zakázaných akcií
+a odhalenie nastavení/pomoci pri presune fokusu v nízkom okne a ukončenie
+kontrolného cyklu hlavného okna. Pôvodné
+regresie editora, neuložených úprav, výstupov, DnD a balenia zostávajú
+súčasťou celého behu. Nejde o fyzické prepínanie Windows DPI/kontrastu
+ani certifikáciu čítačky obrazovky. Závislosti a verzia sa v tejto fáze nemenia.
+
+### Editor a dialógy (fáza 4)
+
+Editor používa spoločné povrchy pre informácie o zdroji a neuloženom stave,
+vyhľadávanie/uloženie a spodné ovládanie. Jedinou vyplnenou hlavnou akciou
+editora je Uložiť projekt. Prehrávanie, segmenty, hlasy, titulkový profil,
+Undo/Redo a export zachovávajú pôvodné príkazy a podmienky dostupnosti.
+Zdrojový názov je v tom istom scrollovateľnom riadku pred stavom audia.
+
+`DialogPanel` v `presentation/responsive.py` zdieľa titulok, povrch a
+priestor pre akcie medzi prehrávaním, voľbami exportu, diagnostikou dát a
+chybovým dialógom. Veľkosť sa obmedzuje rozmermi obrazovky bez vnoreného
+`update_idletasks` počas otvárania. Technické detaily chýb sú naďalej
+zbalené a iba na čítanie. Správa modelov používa rovnaké sekčné a akčné
+štýly. Systémové výbery súborov a pôvodné potvrdenia zostávajú zachované.
+
+ThemeManager sleduje životný cyklus jednotlivých editorov aj mimo zoznamu
+`app.editors`, aby aktualizoval sémantické značky vyhľadávania. Prepnutie
+témy ani vysokého kontrastu nevolá `render`, `capture` či uloženie projektu.
+Existujúce Text widgety, kurzor, výber, posun a história zostávajú na mieste.
+Poslucháči sa pri zániku editora uvoľnia; odložené kreslenie titulnej lišty
+vlastní koreň, takže rýchle zatvorenie dialógu nemaže čakajúci Tcl príkaz.
+Klasické Tk vstupy/tlačidlá v pôvodných jednoduchých otázkach dostávajú
+rovnakú paletu, pričom ttk prvky naďalej používajú svoje ttk štýly.
+
+Regresie `tests/test_editor_theme.py` overujú neuložený text a históriu,
+vyhľadávacie značky, rozpracované voľby prehrávania, čitateľný diagnostický
+náhľad, životný cyklus dialógov a otvorenie z obsluhy udalosti. Používajú
+skutočný Tk a simulované kontrastné palety, nie zmenu nastavení Windows.
+
+### Hlavné pracovné okno (fáza 3)
+
+Karta Nahrávky oddeľuje front so stavmi, kartu Spracovanie a spodný panel
+so spustením/zastavením. Front využíva zostávajúcu výšku; ovládanie aj
+spracovanie majú rezervované miesto. Ukazovatele nahrávky a dávky sú vedľa
+seba, ale naďalej používajú pôvodné nezávislé merania. Technický stav
+zariadenia je dostupný na karte Podrobnosti spracovania.
+
+Spustiť prepis je jediná vyplnená hlavná akcia. Je dostupná pri čakajúcich
+položkách a neprázdnej výstupnej ceste mimo spracovania; kontrola modelu a
+ostatné validačné pravidlá zostávajú zachované. Pokračovanie/opakovanie sa
+naďalej spúšťa kontextovou akciou vybranej položky. Odobrať z fronty odstráni
+iba položku zo zoznamu, nie zdrojový súbor. Rozpracované projekty zostávajú
+dostupné aj cez pôvodnú ponuku Ďalšie možnosti.
+
+Textový stav Pripravené/fáza/Dávka ukončená kopíruje životný cyklus pôvodného
+workera; ukončenie dávky nevyhlasuje všetky položky za úspešné. Počty chýb,
+prerušenia a dokončenia sú stále v súhrne a v riadkoch frontu. Stavy majú
+text aj symbol, nespoliehajú sa na samotnú farbu.
+
+MessageView podporuje povrch `bg` alebo `card` zo spoločnej palety, ktorý
+sa zachováva aj pri zmene témy. Žiadne nové závislosti ani zmena verzie.
+Regresie `tests/test_workspace.py` dopĺňajú pôvodné testy priebehu,
+drag-and-drop, tém a DPI. Náhľad so simulovanými stavmi nie je ASR test.
+
+### Spoločná správa vzhľadu (fáza 2)
+
+Hlavná Tk aplikácia vyžaduje ttkbootstrap 2.2.7 cez `runtime.in` a runtime lock.
+`presentation/theme.py` je jediný zdroj paliet a správca témy pre jeden Tk
+interpreter. Bežné režimy `thor-light`/`thor-dark` vytvára ttkbootstrap;
+existujúce sémantické názvy ttk štýlov zostávajú kompatibilné bez globálneho
+prepisovania widget API. Vlastné obrázkové pozadia `rounded_styles` už hlavná
+aplikácia nepoužíva.
+
+Windows vysoký kontrast má prednosť: správca prečíta `SPI_GETHIGHCONTRAST`
+a `GetSysColor`, aktivuje natívny `clam` bez Bootstrap obrázkov a použije
+systémové farby pre prvky, výber, texty, menu a Combobox popdown. Natívna
+titulná lišta dostane predvolené systémové farby. Stav sa kontroluje pri
+mapovaní/fokuse okien aj každú sekundu. Nastavenia Windows sa nezapisujú.
+Uložená používateľská hodnota `light`/`dark` sa pritom nemení; po vypnutí
+kontrastu sa zvolený režim obnoví. Používateľ môže voľbu zmeniť aj počas
+aktívneho kontrastu pre neskorší návrat.
+
+Nové Tk okná sa farbia pri mapovaní, otvorené okná pri zmene palety.
+Textové polia a menu používajú spoločné pomocné metódy; označené oblasti
+vyhľadávania upravuje editor bez obnovovania textu alebo nastavení projektu.
+Pri Bootstrap theme walk sa zachovávajú existujúce odsadenia a hrúbky okrajov
+Tk Text polí. Zmena témy tak nezväčšuje obsah pevných MessageView rámcov
+a neorezáva stavové správy; samostatná regresia overuje celú výšku riadka.
+Životný cyklus správcu uvoľňuje singleton štýlov/fontov pri zániku koreňa
+vytvoreného cez TkinterDnD aj plain Tk, vrátane testovacích reštartov.
+
+Regresie v `tests/test_theme.py` používajú skutočný Tk a simulované čierne
+aj biele Windows palety. Nenahrádzajú fyzické prepnutie systému ani
+certifikáciu čítačky obrazovky. Kompletnú sadu spúšťa `scripts/test.ps1`.
+Štartová diagnostika nového EXE overuje aj oba režimy témy.
+
+Samostatný výstup hlavnej aplikácie bez prepisu predchádzajúcej distribúcie:
+
+```powershell
+.\scripts\build.ps1 -OutputDirectory "dist\moja-nova-zostava"
+```
+
+### Samostatná vzorka ttkbootstrap (fáza 1)
+
+Vzorka `src/prototype_ttkbootstrap/main.py` má vlastný vstup a nemení bežné
+spustenie aplikácie. Používa projektovú `.venv`, ttkbootstrap 2.2.7 a existujúci
+Pillow 12.3.0. Úplný reťazec a SHA-256 wheelov pre vzorku sú v
+`requirements/ttkbootstrap.lock`. Od fázy 2 je ttkbootstrap aj priamou
+závislosťou hlavnej aplikácie; toto je naďalej samostatná ukážka bez ASR.
+
+```powershell
+.\scripts\setup-ttkbootstrap.ps1
+.\scripts\run-ttkbootstrap.ps1
+.\scripts\test-ttkbootstrap.ps1
+.\scripts\build-ttkbootstrap.ps1
+```
+
+Build najskôr vyžaduje celú stabilnú regresnú sadu a samostatné kompatibilitné
+testy. Výsledok je v novom časovo označenom `dist/ttkbootstrap-*`, takže
+neprepisuje existujúce EXE. Overenie skopíruje zostavu do dočasnej Unicode
+cesty a spustí ju bez Pythonu v PATH. Windows metadata sa generujú z
+`src/version.py`; verzia sa nemení.
+
+Vzorka umožňuje pridať súbory cez výber alebo existujúci COPY-only FileDrop,
+prepínať tému, upravovať skúšobný text a otvoriť vedľajšie okno. Prepisovanie
+je výslovne nedostupné. Používa iba dočasný profil na diagnostiku DnD;
+neotvára používateľské profily, projekty ani modely.
+
+Kompatibilitná skúška zahŕňa skutočné Tk widgety, tkdnd registráciu, doručenie
+Tcl zoznamu ciest do drop handlera, zachovanie textu/výberu, fokus, EN/SK,
+prepínanie tém a tri životné cykly koreňového okna. Tk scaling 100–200 %
+nenahrádza fyzickú skúšku Windows DPI ani ťahanie z Prieskumníka.
+Vysoký kontrast je zatiaľ iba zistený v diagnostike; jeho integrácia patrí
+do ďalšej fázy a vzorka ho ešte nezaručuje.
+
+Pri zmene verzie najskôr získajte čistý Windows resolver report cez projektový
+Python s `pip install --dry-run --ignore-installed --only-binary=:all:` pre
+`requirements/ttkbootstrap.in` a existujúce `requirements/constraints.txt`.
+Do doplnkového locku preneste celý deklarovaný reťazec, presné verzie a
+SHA-256 wheelov z reportu. Report je lokálny výstup, nepatrí do Gitu.
+
+### Stabilný runtime
 
 Používame pip/venv. `.in` sú deklarované priame požiadavky;
 `constraints.txt` je kontrolovaný reťazec verzií; `runtime.lock`,
@@ -408,7 +663,7 @@ ani úpravy `sys.modules` na obchádzanie importov.
 
 | Balík | Zodpovednosť a rozhranie |
 |---|---|
-| `presentation` | Tk okná, editor, dostupnosť, dialógy a preklad zobrazovaných volieb; prácu ukladania odovzdáva službe. |
+| `presentation/qml` | Hlavné QML okno, virtuálne Qt modely, editor a dialógy; Python ovládač používa spoločné aplikačné služby. Staršie Tk moduly zostávajú pre regresie. |
 | `application` | `transcribe_job`, `BatchRunner`, riadený ASR proces, dátové správy, priebeh a `perform_project_io`. |
 | `projects` | `Project`: checkpointy, originál/revízie, transakcie; editácia segmentov, Undo/Redo a vyhľadávanie bez Tk. |
 | `queueing` | `StateStore`: samostatné nastavenia a transakčná fronta, kompatibilita starého profilu. |
@@ -482,12 +737,29 @@ Počet testov uvádzajte vždy s dátumom a commitom; minimum 197 nie je výsled
 Historické audity sa neprepisujú na nový výsledok. Neznámy dátum merania označte
 ako neznámy; dátum evidencie dokumentu nie je dátum vykonania jeho testov.
 
-## Voliteľný experiment rozhrania (testing vetva)
+## Historický experiment rozhrania (testing vetva)
 
 Distribučné varianty, licenčný inventár a podpisovací postup sú v
-[DISTRIBUTION.md](DISTRIBUTION.md). Predvolený build zostáva extended/Tk;
-`build.ps1 -Variant basic` meria samostatný balík bez PyTorch/KInIT runtime.
+[DISTRIBUTION.md](DISTRIBUTION.md). Predvolený build je extended/QML;
+`build.ps1 -Frontend tk -Variant basic` meria historický balík bez PyTorch/KInIT runtime.
 
-PySide6/QML prototyp má vlastný profil, lock a zostavu. Nenahrádza stabilný
-Tk program. Spustenie, merania, bezpečnosť pracovných kópií a rozhodnutie
-sú v [QML-EXPERIMENT.md](QML-EXPERIMENT.md). Bežný setup/build Qt nevyžaduje.
+Starší `prototype_qml` má vlastný profil, lock a zostavu. Nenahrádza aktuálny
+produkčný QML program. Spustenie, merania, bezpečnosť pracovných kópií a rozhodnutie
+sú v [QML-EXPERIMENT.md](QML-EXPERIMENT.md). Bežný setup/build od Release v1 vyžaduje Qt podľa runtime locku.
+
+## Vydanie Release v1
+
+Tag `v1`, zobrazené označenie **Release v1**, číselná verzia **1.0.0**.
+Pred publikovaním treba z čistého klonu presného kandidáta pripraviť `.venv`,
+spustiť `build.ps1` (úplné regresie aj QML scenáre) a skontrolovať nové EXE.
+
+```powershell
+.\scripts\build.ps1 -OutputDirectory dist
+.\.venv\Scripts\python.exe scripts/package.py --app 'dist/ND TranskripThor' --output 'outputs/ND-TranskripThor-v1-Windows-x64.zip' --release-tag v1
+.\.venv\Scripts\python.exe scripts/verify_distribution.py 'outputs/ND-TranskripThor-v1-Windows-x64.zip' --startup
+```
+
+Balenie odmietne nečistý alebo iný commit než ten v overenom build manifeste.
+ZIP obsahuje QML aplikáciu, obe ASR knižnice a licenčný inventár, nie modelové
+váhy ani súkromné dáta. Publikuje sa celý ZIP a jeho `.sha256`. Vydanie sa
+na GitHube označí ako stabilné a najnovšie až po overení nahratých príloh.

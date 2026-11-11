@@ -77,11 +77,15 @@ def transcribe_file(model, source, folder, language, stop, emit):
 class App:
     def __init__(self, root, state_dir=None, owner=None):
         self.root = root
+        self.poll_timer = None
+        self.persist_timer = None
         from ndtranskripthor.core.ownership import ProfileOwner, profile_path
         self.owner = owner or ProfileOwner(state_dir or profile_path())
         def release_owner(event):
             if event.widget == root:
                 try:
+                    self.cancel_poll()
+                    self.cancel_save()
                     if hasattr(self, 'models'):
                         self.models.close()
                 finally:
@@ -98,7 +102,6 @@ class App:
         self.items = self.store.queue()
         self.editors = []
         self.model_dialog = None
-        self.persist_timer = None
         self.batch_ids = []
         self.batch_index = 0
         self.file_progress = 0
@@ -122,6 +125,7 @@ class App:
         self.device_choice.trace_add('write', self.device_changed)
         for variable in (self.language, self.quality, self.offline):
             variable.trace_add('write', lambda *_: self.update_readiness())
+        self.output.trace_add('write', lambda *_: self.update_selection())
         self.update_readiness()
         root.bind('<Configure>', lambda event: self.schedule_save() if event.widget == root else None, add='+')
         from ndtranskripthor.presentation.file_drop import FileDrop
@@ -152,15 +156,19 @@ class App:
         apply_theme(self, settings.get('theme', 'dark'))
         # Start at the existing DPI-aware minimum, regardless of saved geometry.
 
-    def schedule_save(self):
-        if self.persist_timer:
+    def cancel_save(self):
+        if self.persist_timer is not None:
             self.root.after_cancel(self.persist_timer)
+            self.persist_timer = None
+
+    def schedule_save(self):
+        self.cancel_save()
         self.persist_timer = self.root.after(500, self.save_state)
 
     def save_state(self):
+        self.cancel_save()
         if self.owner.lease.closed:
             return False
-        self.persist_timer = None
         try:
             self.store.save_settings(dict(language=self.language.get(), model=self.quality.get(), ui_language=self.ui_language.get(),
                 device=DEVICES.get(self.device_choice.get(), 'cpu'),
@@ -224,6 +232,8 @@ class App:
         selected = self.listbox.curselection()
         item = self.items[selected[0]] if len(selected) == 1 else None
         idle = not self.busy
+        self.start_button.configure(state='normal' if idle and self.output.get().strip()
+                                    and any(row['state'] == 'waiting' for row in self.items) else 'disabled')
         label = tr('prepis.update_selection.open_transcript')
         actionable = bool(item and item.get('project'))
         if item and item['state'] in ('interrupted', 'failed'):
@@ -231,7 +241,9 @@ class App:
         self.context_button.configure(text=label, state='normal' if idle and actionable else 'disabled')
         self.queue_menu.entryconfigure(0, state='normal' if idle and item and item.get('project') and item['state'] in ('interrupted', 'failed') else 'disabled')
         self.queue_menu.entryconfigure(1, state='normal' if idle and selected else 'disabled')
-        self.more_button.configure(state='normal' if idle and selected else 'disabled')
+        # Read-only details/results remain available; individual mutations have guards.
+        self.more_button.configure(state='normal')
+        self.models_action.configure(state='normal' if idle else 'disabled')
         self.info_button.configure(state='normal' if item else 'disabled')
         for button in (self.remove,):
             button.configure(state='normal' if idle and selected else 'disabled')
@@ -293,6 +305,7 @@ class App:
             self.manage_models()
 
     def update_readiness(self):
+        self.update_selection()
         from ndtranskripthor.models.model_catalog import cached_path
         try:
             model = MODELS[self.quality.get()]
@@ -324,8 +337,14 @@ class App:
                 known.add(key)
             except (OSError, ValueError):
                 invalid += 1
-        if added and not self.replace_queue(self.items + added):
-            return False
+        if added:
+            first_added = len(self.items)
+            had_selection = bool(self.listbox.curselection())
+            if not self.replace_queue(self.items + added):
+                return False
+            if not had_selection:
+                self.listbox.selection_set(first_added)
+                self.update_selection()
         self.status.set(tr('prepis.accept_files.added_skipped_duplicates_missing_files_folders_or_invalid_paths', p0=len(added), p1=duplicates + invalid, p2=duplicates, p3=invalid))
         return bool(added or duplicates)
 
@@ -464,9 +483,9 @@ class App:
                     return
             existing_projects = mode != 'new' and all(item.get('project') for item in selected_items)
             if self.offline.get() and not existing_projects and not self.resume_settings and cached_path(self.cache, model) is None:
-                messagebox.showinfo(tr('prepis.start.model_unavailable'), tr('prepis.start.the_selected_model_is_not_stored_on_this_computer'))
-                self.workspace_tabs.select(self.models_page)
-                return
+                if not messagebox.askyesno(tr('prepis.start.model_unavailable'), tr('studio.prepare_online'), parent=self.root):
+                    return
+                self.offline.set(False)
         except Exception as exc:
             messagebox.showinfo(tr('prepis.start.model_selection'), str(exc))
             return
@@ -481,6 +500,8 @@ class App:
         self.clock = ProgressClock(time.monotonic())
         self.batch_measure = BatchProgress(self.batch_ids)
         self.phase = 'probing'
+        from ndtranskripthor.presentation.ui import update_workspace_state
+        update_workspace_state(self, 'probing')
         self.batch_index = self.file_progress = 0
         self.save_state()
         args = ([item['source'] for item in selected_items], self.output.get(), language, model, self.offline.get(), DEVICES.get(self.device_choice.get(), 'cpu'))
@@ -541,6 +562,8 @@ class App:
         if phase != self.phase and self.clock:
             self.clock.samples.clear()
         self.phase = phase
+        from ndtranskripthor.presentation.ui import update_workspace_state
+        update_workspace_state(self, phase)
         self.progress_label.set(tr('ui_layout.build_ui.recording') if phase in ('transcribing', 'saving')
                                 else tr('progress.download' if phase == 'downloading' else 'progress.preparation'))
         self.progress.stop()
@@ -550,7 +573,14 @@ class App:
         if not measured:
             self.progress.start(20)
 
+    def cancel_poll(self):
+        if self.poll_timer is not None:
+            self.root.after_cancel(self.poll_timer)
+            self.poll_timer = None
+
     def poll(self):
+        # Direct refreshes and the scheduled callback share one pending cycle.
+        self.cancel_poll()
         if not self.busy:
             try:
                 self.owner.receive(self.accept_files, self.save_queue)
@@ -713,6 +743,8 @@ class App:
             self.progress.stop()
             self.progress.configure(mode='determinate')
             self.busy = False
+            from ndtranskripthor.presentation.ui import update_workspace_state
+            update_workspace_state(self, 'finished')
             self.clock = None
             self.save_state()
             for widget in (self.add, self.remove, self.browse, self.output_entry, self.offline_box, self.start_button):
@@ -731,7 +763,7 @@ class App:
                 self.root.after_idle(self.close)
         for error in errors:
             show_error(self.root, tr('prepis.labels.transcription_error'), error if isinstance(error, dict) else classify(RuntimeError(error)))
-        self.root.after(50 if self.busy or not self.events.empty() else 250, self.poll)
+        self.poll_timer = self.root.after(50 if self.busy or not self.events.empty() else 250, self.poll)
 
     def close(self):
         if self.busy:

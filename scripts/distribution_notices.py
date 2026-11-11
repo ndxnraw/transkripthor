@@ -13,7 +13,7 @@ def collect(target, installed, root=ROOT):
     target = Path(target)
     target.mkdir(parents=True, exist_ok=True)
     names = set(pins(root/'requirements/runtime.lock')) | set(pins(root/'requirements/speakers.lock'))
-    # Include the bootloader exception and build notices; optional Qt is not shipped.
+    # Include bootloader/build notices; production Qt is in the runtime lock.
     names |= {'pyinstaller', 'setuptools'}
     inventory = []
     for dist in sorted(installed, key=lambda d: d.metadata['Name'].lower()):

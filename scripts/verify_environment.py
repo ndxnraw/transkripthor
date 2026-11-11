@@ -47,10 +47,14 @@ def validate_locks(root=ROOT):
         locked=pins(req/(mode+'.lock'))
         for name,version in pins(req/(mode+'.in'),False).items():
             if locked.get(name)!=version: raise ValueError(f'Input/lock mismatch: {mode}/{name}')
-    if (req/'qml.lock').exists():
-        optional=pins(req/'qml.lock')
-        for name,version in pins(req/'qml.in',False).items():
-            if optional.get(name)!=version: raise ValueError(f'Input/lock mismatch: qml/{name}')
+    for group in ('qml', 'ttkbootstrap'):
+        if not (req/(group+'.lock')).exists(): continue
+        optional=pins(req/(group+'.lock'))
+        for name,version in optional.items():
+            if name in all_pins and all_pins[name]!=version:
+                raise ValueError(f'Optional dependency conflicts with stable runtime: {group}/{name}')
+        for name,version in pins(req/(group+'.in'),False).items():
+            if optional.get(name)!=version: raise ValueError(f'Input/lock mismatch: {group}/{name}')
     tree=ast.parse((root/'src/ndtranskripthor/models/download_worker.py').read_text(encoding='utf-8-sig'))
     hub=next(ast.literal_eval(n.value) for n in tree.body if isinstance(n,ast.Assign)
              and any(isinstance(t,ast.Name) and t.id=='HUB_VERSION' for t in n.targets))
@@ -62,8 +66,9 @@ def check_environment(mode, speakers=False, root=ROOT, installed=None):
     allowed=validate_locks(root)
     allowed.update(pins(root/'requirements/bootstrap.lock'))
     # Optional experiment: allowed when installed, never required by stable Tk.
-    optional = root/'requirements/qml.lock'
-    if optional.exists(): allowed.update(pins(optional))
+    for group in ('qml', 'ttkbootstrap'):
+        optional = root/'requirements'/(group+'.lock')
+        if optional.exists(): allowed.update(pins(optional))
     required=pins(root/'requirements'/('build.lock' if mode=='build' else 'runtime.lock'))
     if speakers: required.update(pins(root/'requirements/speakers.lock'))
     required.update(pins(root/'requirements/bootstrap.lock'))

@@ -44,7 +44,8 @@ def verify(path):
                     raise ValueError('File checksum mismatch: '+name)
             total+=info.file_size
     return parent, dict(zip_bytes=path.stat().st_size, unpacked_bytes=total,
-                       variant=manifest.get('variant'), commit=manifest.get('commit'))
+                       variant=manifest.get('variant'), commit=manifest.get('commit'),frontend=manifest.get('frontend','tk'),
+                       release_tag=manifest.get('release_tag'),version=manifest.get('version'))
 
 
 if __name__=='__main__':
@@ -56,7 +57,10 @@ if __name__=='__main__':
     if args.startup:
         with tempfile.TemporaryDirectory(prefix='Thor extracted č ') as folder:
             with ZipFile(args.zip) as archive: archive.extractall(folder)
-            subprocess.run([sys.executable,str(Path(__file__).with_name('verify_exe.py')),
-                            str(Path(folder)/parent/'ND TranskripThor.exe')],check=True,timeout=120)
+            frontend=report['frontend']
+            if frontend not in ('qml','tk'): raise ValueError('Unknown application frontend')
+            verifier='verify_qt_exe.py' if frontend=='qml' else 'verify_exe.py'
+            subprocess.run([sys.executable,str(Path(__file__).with_name(verifier)),
+                            str(Path(folder)/parent/'ND TranskripThor.exe')],check=True,timeout=150)
         report['extracted_startup']='PASS'
     print(json.dumps(report,indent=2))

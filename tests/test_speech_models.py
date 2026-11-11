@@ -10,6 +10,8 @@ from ndtranskripthor.asr import speech_models as sm
 
 class ModelsTest(unittest.TestCase):
     def setUp(self):
+        from ndtranskripthor.core.i18n import set_language
+        set_language('en')
         self.stop = threading.Event()
         self.messages = []
         self.emit = lambda *a: self.messages.append(a)

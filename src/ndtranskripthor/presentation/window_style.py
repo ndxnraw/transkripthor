@@ -27,7 +27,8 @@ def titlebar(root, dark, background, foreground):
     if result != 0:
         result = set_attr(hwnd, 19, ctypes.byref(enabled), ctypes.sizeof(enabled))
     for attribute, color in [(35, background), (36, foreground)]:
-        value = ctypes.c_uint(int(color[1:3], 16) | int(color[3:5], 16) << 8 | int(color[5:7], 16) << 16)
+        value = ctypes.c_uint(0xffffffff if color is None else
+                             int(color[1:3], 16) | int(color[3:5], 16) << 8 | int(color[5:7], 16) << 16)
         set_attr(hwnd, attribute, ctypes.byref(value), ctypes.sizeof(value))
     if result == 0:
         root._titlebar_signature = signature
@@ -40,7 +41,7 @@ def rounded_styles(app, palette):
     if not hasattr(app, 'round_images'):
         app.round_images = []
         for theme in ('dark', 'light'):
-            from ndtranskripthor.presentation.ui import PALETTES
+            from ndtranskripthor.presentation.theme import PALETTES
             p = PALETTES[theme]
             def tile(fill, border):
                 im = Image.new('RGBA', (64, 64))

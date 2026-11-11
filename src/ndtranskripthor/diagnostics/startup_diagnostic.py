@@ -28,6 +28,15 @@ def run(folder):
         root.withdraw()
         app = App(root, folder / 'profile')
         root.update()
+        from ndtranskripthor.presentation.ui import apply_theme
+        for mode in ('light', 'dark'):
+            apply_theme(app, mode)
+            root.update()
+            expected = 'clam' if app.contrast_palette else 'thor-' + mode
+            if app.style.theme_use() != expected:
+                raise RuntimeError('Bundled theme engine did not activate the requested mode')
+        report['theme_engine'] = 'ttkbootstrap'
+        report['theme_transitions'] = 'PASS'
         root.tk.call('package', 'present', 'tkdnd')
         if len(app.items) != 0:
             raise RuntimeError('Diagnostic profile is not empty')

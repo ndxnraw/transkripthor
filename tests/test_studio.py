@@ -21,8 +21,12 @@ def destroy_window(root):
     widgets = list(descendants(root))
     for timer in root.tk.splitlist(root.tk.call('after', 'info')):
         command = root.tk.call('after', 'info', timer)[0]
-        owner = next((widget for widget in widgets if command in (widget._tclCommands or [])), root)
-        owner.after_cancel(timer)
+        owner = next((widget for widget in widgets if command in (widget._tclCommands or [])), None)
+        if owner is not None:
+            owner.after_cancel(timer)
+        else:
+            # Native ttk scripts can be Tcl lists, not registered Python commands.
+            root.tk.call('after', 'cancel', timer)
     root.destroy()
 
 
@@ -73,12 +77,14 @@ class StudioTest(unittest.TestCase):
         self.recording()
         self.app.cache = self.folder/'no-models'
         self.app.offline.set(True)
-        with patch('ndtranskripthor.presentation.prepis.threading.Thread') as thread, patch('ndtranskripthor.presentation.prepis.messagebox.showinfo') as info:
+        with patch('ndtranskripthor.presentation.prepis.threading.Thread') as thread, patch('ndtranskripthor.presentation.prepis.messagebox.askyesno', return_value=False) as info:
             self.app.start()
         self.assertFalse(self.app.busy)
         thread.assert_not_called()
         info.assert_called_once()
-        self.assertEqual(self.app.workspace_tabs.select(), str(self.app.models_page))
+        self.assertEqual(self.app.workspace_tabs.select(), str(self.app.pages['recordings']))
+        self.assertTrue(self.app.offline.get())
+        self.assertIsNone(self.app.model_dialog)
 
     def test_queue_selection_survives_updates(self):
         item = self.recording()
@@ -174,6 +180,12 @@ class StudioScalingTest(unittest.TestCase):
                 try:
                     root.tk.call('tk','scaling',96/72*scale)
                     app = App(root, folder)
+                    audio = Path(folder)/'Layout fixture.wav'
+                    audio.write_bytes(b'UI fixture, not ASR audio')
+                    app.accept_files([str(audio)])
+                    app.listbox.selection_set(0)
+                    app.update_selection()
+                    app.set_phase('loading')
                     target = Path(folder)/'project'
                     with Project(target, create=True) as project:
                         project.initialize('ukážka.wav',{}, {}, [], 32000)

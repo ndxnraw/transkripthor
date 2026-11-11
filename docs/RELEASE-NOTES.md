@@ -1,3 +1,42 @@
+# ND TranskripThor — Release v1
+
+**1.0.0 · Windows x64 · QML/Qt Quick · tag `v1`**
+
+[Stiahnuť vydanie](https://github.com/ndxnraw/TranskripThor/releases/tag/v1)
+
+QML je od tohto vydania hlavnou aplikáciou. Pridanie nahrávok, jazyk,
+kvalita a spustenie sú na jednej obrazovke bez kariet. Chýbajúce súbory
+modelu sa pripravia automaticky; správcu modelov netreba navštíviť vopred.
+Offline režim vyžaduje výslovný súhlas pred povolením sťahovania.
+
+Zachované sú faster-whisper aj slovenský KInIT, pôvodné profily a projekty,
+checkpointy a obnovenie prepisu. Editor ponúka prehrávanie, Unicode hľadanie,
+Undo/Redo, hovoriacich, delenie/spájanie a časy úsekov, titulky a export
+TXT/SRT/VTT/DOCX/JSON. Neuložené zmeny chráni pri zatvorení aj zmene projektu;
+novšie úpravy počas ukladania zostanú neuložené. Originál zostáva nemenný.
+
+Svetlá/tmavá téma, vysoký kontrast Windows, správa modelov a diagnostika
+majú QML rozhranie. Tk a staršie prototypy zostávajú v zdrojoch pre historické
+regresie a výslovné experimenty; bežné spustenie a zostavenie používajú QML.
+
+Rozbaľte celý ZIP vrátane `_internal` a spustite **ND TranskripThor.exe**.
+Python sa neinštaluje. Modelové váhy, nastavenia, nahrávky a projekty nie sú
+pribalené. Overte priložený `.sha256`; balík nie je digitálne podpísaný.
+Súkromný repozitár vyžaduje prihlásenie a oprávnenie aj pre stiahnutie.
+
+Aktuálne výsledky presného vydania a kontrolný súčet sú pri GitHub Release.
+Predchádzajúca QML implementácia prešla 338 regresiami a 20 Qt scenármi;
+large-v3 na CPU reálne prepísal vlastný syntetický zvuk a uložil opravu bez
+zmeny originálu. Tieto predchádzajúce dôkazy nenahrádzajú finálny release build.
+Reálna KInIT/CUDA inferencia, čistý Windows bez Pythonu, čítačka obrazovky,
+fyzické DPI a presnosť na referenčnom CZ/SK korpuse nie sú týmto potvrdené.
+
+[Návod](NAVOD.md) · [Stav a overenie](STATUS.md) · [Vývoj](DEVELOPMENT.md)
+
+---
+
+## Historické poznámky pred Release v1
+
 # ND TranskripThor — poznámky k pre-release
 
 Stav dokumentácie: **28. 10. 2026**, vývojová línia **Pre-release**.

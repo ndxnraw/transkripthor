@@ -170,11 +170,12 @@ class SegmentEditorTest(unittest.TestCase):
         self.assertTrue(save_editor(e))
         e.export_dialog()
         window=next(w for w in e.window.winfo_children() if isinstance(w,tk.Toplevel))
-        widgets=window.winfo_children()[0].winfo_children()
+        widgets=window.dialog_panel.content.winfo_children()
         for widget in widgets:
             if isinstance(widget,ttk.Checkbutton) and widget.cget('text') in ('VTT','DOCX','JSON','Include speaker labels','Include times in TXT, DOCX and JSON'):
                 widget.invoke()
-        next(w for w in widgets if isinstance(w,ttk.Button)).invoke()
+        next(w for w in window.dialog_panel.actions.winfo_children()
+             if isinstance(w,ttk.Button) and w['style']=='Accent.TButton').invoke()
         wait_io(e)
         self.assertTrue(e.io_success)
         data=json.loads((latest_bundle(self.folder)/'prepis.json').read_text(encoding='utf-8'))
@@ -184,8 +185,10 @@ class SegmentEditorTest(unittest.TestCase):
         self.assertIn('speaker',data['segments'][0])
         self.assertFalse(e.dirty)
 
-    def test_prerelease_label_keeps_numeric_windows_identity(self):
+    def test_release_label_and_numeric_windows_identity(self):
         import version
-        self.assertEqual(version.DISPLAY_VERSION,'Pre-release')
-        self.assertIn('Pre-release',self.app.version_label.cget('text'))
-        self.assertEqual(version.WINDOWS_VERSION,(2,1,3,1))
+        self.assertEqual(version.DISPLAY_VERSION,'Release v1')
+        self.assertIn(version.DISPLAY_VERSION,self.app.version_label.cget('text'))
+        self.assertEqual(version.VERSION,'1.0.0')
+        self.assertEqual(version.WINDOWS_VERSION,(1,0,0,0))
+        self.assertFalse(version.PRERELEASE)

@@ -1,6 +1,12 @@
-param([ValidateSet('extended', 'basic')][string]$Variant = 'extended')
+param([ValidateSet('extended', 'basic')][string]$Variant = 'extended', [string]$OutputDirectory, [ValidateSet('qml','tk')][string]$Frontend = 'qml')
+if ($Frontend -eq 'qml') {
+    if ($Variant -ne 'extended') { throw 'The production QML application includes both ASR backends. Use extended, or explicitly select the legacy Tk frontend for basic.' }
+    & "$PSScriptRoot/build-qt.ps1" -OutputDirectory $OutputDirectory
+    return
+}
 . "$PSScriptRoot/common.ps1"
 $DistributionRoot = if ($Variant -eq 'basic') { Join-Path $ProjectRoot 'dist/basic' } else { Join-Path $ProjectRoot 'dist' }
+if ($OutputDirectory) { $DistributionRoot = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($OutputDirectory) }
 $AppDirectory = Join-Path $DistributionRoot 'ND TranskripThor'
 $Spec = if ($Variant -eq 'basic') { 'Basic.spec' } else { 'TranskripTHOR.spec' }
 if ($env:PYTHONPATH -or $env:PYTHONHOME) { throw 'Remove PYTHONPATH and PYTHONHOME before building.' }

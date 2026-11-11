@@ -12,7 +12,7 @@ from packaging.utils import canonicalize_name
 ROOT = Path(__file__).resolve().parents[1]
 ROOTS = {
     'runtime': ['faster-whisper', 'Pillow', 'sounddevice', 'tkinterdnd2',
-                'torch', 'transformers', 'huggingface-hub'],
+                'torch', 'transformers', 'huggingface-hub', 'ttkbootstrap', 'PySide6-Essentials', 'shiboken6'],
     'speakers': ['kaldi-native-fbank'],
     'build': ['PyInstaller', 'pyinstaller-hooks-contrib'],
 }

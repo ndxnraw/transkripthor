@@ -24,11 +24,13 @@ class DesignTest(unittest.TestCase):
     def test_one_primary_action_and_partial_project_access(self):
         app = self.app
         self.assertEqual(app.start_button['style'], 'Accent.TButton')
-        self.assertNotEqual(app.add['style'], 'Accent.TButton')
+        self.assertEqual(app.add['style'], 'Accent.TButton')
+        self.assertFalse(app.run_panel.winfo_ismapped())
         self.assertFalse(hasattr(app, 'editor_button'))
         audio = Path(self.temp.name)/'reč.wav'
         audio.write_bytes(b'test')
         app.accept_files([str(audio)])
+        self.assertEqual(app.add['style'], 'Secondary.TButton')
         app.listbox.selection_set(0)
         item = app.items[0]
         item.update(project='test-project', state='completed')
@@ -74,10 +76,10 @@ class DesignTest(unittest.TestCase):
             self.assertEqual(self.app.style.lookup('TButton', 'focuscolor'), p['blue'])
             self.assertEqual(self.app.preview['selectforeground'], p['accent_text'])
             self.assertEqual(self.app.preview['selectbackground'], p['blue'])
-            # Focus must be a distinct image state, also on Entry/Combobox backgrounds.
-            spec = self.root.tk.call('ttk::style', 'element', 'names')
-            self.assertIn(f'{theme}.Entry.round', spec)
-            self.app.workspace_tabs.select(self.app.pages['settings'])
+            # Focus remains distinct with the Bootstrap layout, without custom bitmaps.
+            self.assertEqual(self.app.style.theme_use(), f'thor-{theme}')
+            self.assertEqual(self.app.style.lookup('TEntry', 'bordercolor', ('focus',)), p['blue'])
+            self.app.workspace_tabs.select(self.app.pages['recordings'])
             self.root.update()
             self.app.lang_box.focus_force()
             self.root.update()
@@ -100,7 +102,7 @@ class DesignTest(unittest.TestCase):
                     self.assertEqual(brand.winfo_reqheight(), title.winfo_reqheight())
                     self.assertNotEqual(title['text'], tr('ui_layout.build_ui.local_transcription_your_recordings_stay_with_you'))
                     self.assertGreater(title.winfo_rootx(), self.app.icon.winfo_rootx()+self.app.icon.winfo_width())
-                    self.assertLessEqual(title.winfo_rootx()+title.winfo_width(), self.app.theme_button.winfo_rootx())
+                    self.assertLessEqual(title.winfo_rootx()+title.winfo_width(), self.app.utility_button.winfo_rootx())
                     self.assertEqual(self.app.author_label['text'], AUTHOR)
 
     def test_subtitle_does_not_return_after_restart(self):

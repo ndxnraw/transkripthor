@@ -1,10 +1,435 @@
 # Stav projektu
 
-Aktuálny zdroj je `src/ndtranskripthor`, označenie **Pre-release**.
-`src/version.py` zachováva internú kompatibilnú verziu **2.1.3b**; nejde o nové vydanie.
-Aktuálne publikované skúšobné vydanie je GitHub `pre-release-1`, publikované
-6. 11. 2026 z commitu `abf0ae8`. Interná verzia zostáva nezmenená.
-SYNC nezvyšuje verziu ani nevytvára tag.
+Hlavná vývojová a distribučná línia je **Release v1**, verzia **1.0.0**,
+Qt Quick/QML, Windows x64. Autoritatívne označenie a Windows metadata sú
+v `src/version.py`; príznak Pre-release je vypnutý. Výslovná požiadavka
+používateľa na vydanie nahrádza predchádzajúci režim iba SYNC.
+
+[Release v1 a stiahnutie](https://github.com/ndxnraw/TranskripThor/releases/tag/v1).
+Tag `v1` má ukazovať na rovnaký overený commit ako `main`. Repozitár zostáva
+súkromný; prístup k vydaniu a prílohám vyžaduje prístup k repozitáru.
+Pred publikovaním sa vyžaduje úplná regresia bez skipov, produkčné QML
+scenáre, nové Windows EXE z čistého klonu presného kandidáta, porovnanie
+modulov a zdrojov, rozbalenie ZIPu a štart rozbaleného EXE. Konkrétny
+commit, aktuálne počty/výsledky a SHA-256 balíka uvádzajú poznámky GitHub
+Release; priložené build/distribution manifesty identifikujú presné vstupy.
+Nasledujúce merania sú predchádzajúce dôkazy implementácie, nie náhrada
+za overenie presného release commitu.
+
+## Produkčná aplikácia QML (11. 11. 2026)
+
+Na výslovnú požiadavku používateľa nahrádza hlavné rozhranie Qt Quick/QML
+cez PySide6-Essentials 6.12.0 a shiboken6 6.12.0. Je to samostatná aplikácia
+v `src/ndtranskripthor/presentation/qml`, nie starý experiment `prototype_qml`.
+`run.ps1` a predvolený `build.ps1` používajú QML. Historické Tk rozhranie je
+zachované pre regresie a explicitné `build.ps1 -Frontend tk`.
+V čase implementácie sa zachovala verzia **2.1.3b / Pre-release** bez publikovania;
+nasledujúca výslovná požiadavka používateľa ju povýšila na Release v1.
+
+- Hlavná obrazovka nemá karty: pridanie alebo pretiahnutie nahrávok,
+  jazyk, kvalita, spustenie. Chýbajúci model pripravuje existujúci ASR
+  worker automaticky. Offline režim vyžaduje výslovný súhlas s internetom.
+  Doplnkové nástroje sú v ponuke, s návratom na nahrávky alebo do editora.
+- Front, poradie, opakovanie/obnovenie, stavy, podrobnosti, priebeh a stop
+  používajú existujúcu databázu a izolovaný ASR proces. Podporené zostávajú
+  faster-whisper, slovenský KInIT, CPU a CUDA s potvrdením náhrady CPU.
+- Editor otvára pôvodný projekt na mieste so zámkom. Zachováva originál,
+  revízie, neuložené zmeny a históriu. Ponúka vyhľadávanie Unicode,
+  hovoriacich, delenie/spájanie a časy úsekov, titulky, päť exportných
+  formátov, prehrávanie/posun/rýchlosť/výstupné zariadenie a lokálne hlasy.
+  Ukladanie je na pozadí; neskoršie úpravy zostávajú neuložené.
+- Správa modelov, nastavenia, diagnostika s náhľadom pred uložením,
+  prevádzkové správy, svetlá/tmavá téma a živé čítanie vysokého kontrastu
+  Windows majú QML rozhranie. Pri štarte sa neimportuje Tk.
+- Qt závislosti sú presunuté do úplného runtime reťazca s existujúcimi
+  SHA-256 Windows wheelov. Príprava čistého prostredia nevyžaduje
+  inštaláciu voliteľného prototypu. Zdrojom zostávajú výlučne `src/`.
+- Dvadsať produkčných Qt scenárov prešlo bez preskočenia (14,364 s).
+  Zahŕňajú skutočné písanie do okna, klávesové uloženie, výber úsekov,
+  neuložené zmeny, chybu disku, úpravy počas uloženia, všetky exporty,
+  nemenný originál, chýbajúce audio, Unicode a vysoký kontrast.
+  Samostatná diagnostika zdrojovej aplikácie overila aj natívne importy
+  oboch ASR runtime a skutočný izolovaný proces s očakávanou offline
+  chybou chýbajúceho modelu; nejde o inferenciu modelu/GPU.
+- Finálny úplný beh **338 regresií prešiel za 401,319 s**, bez preskočení
+  a bez nezachytených chýb finalizátorov. Nasledovalo všetkých 20 Qt
+  scenárov (14,364 s), tiež bez preskočenia.
+- Reálna inferencia: existujúci overený large-v3/faster-whisper na CPU
+  prepísal offline vlastnú syntetickú nahrávku za 26,063 s presne na
+  „This is a local transcription test. The recording stays on this computer.“
+  Výsledok sa otvoril v produkčnom QML ovládači, prehrávanie bolo dostupné,
+  úprava sa uložila do pôvodného projektu a originál zostal nemenný.
+  Súkromné nahrávky sa nepoužili, váhy sa nesťahovali. Reálna inferencia
+  KInIT ani GPU sa tým netestovala; CUDA zariadenie sa nenašlo.
+- Vizuálne sa skontroloval naplnený front s vybraným jazykom/kvalitou,
+  slovenský editor a jeho nástroje. Pri kontrole Windows výberu súboru
+  pomocník nedokázal spoľahlivo zacieliť pole modálneho dialógu; editor
+  sa preto vizuálne overil na vlastnej fixture. Otváranie projektov,
+  písanie a klávesové uloženie sú pokryté produkčnými Qt scenármi.
+- Nová Windows QML zostava **prešla**: všetkých 74 pribalených modulov
+  sa zhoduje so zdrojom, QML/preklady/assets sú zhodné, skutočné EXE
+  overilo projekt, uloženie, päť exportov, prehrávanie/posun, témy,
+  natívne ASR importy a izolovaný proces. Bez QML upozornení a bez
+  importu Tk. Manifest zostavy je `verified`, všetky kontroly skončili 0.
+  Kandidát: `dist/qt-production-20261111/ND TranskripThor/`.
+  Bežná kópia **`dist/ND TranskripThor/ND TranskripThor.exe` už používa QML**.
+  Pred výmenou sa celá stará zostava skopírovala a overila pomocou SHA-256;
+  pôvodný priečinok je navyše zachovaný v `retired`. Záloha je v lokálnom
+  `outputs/previous-standard-before-qml-20261111-133120/`. Následné overenie
+  manifestu bežnej kópie prešlo: vstupy, súbory aj prostredie sú zhodné
+  s overeným kandidátom. Nahrávky, projekty, profily ani váhy sa nemenili.
+
+## Historický medzikrok Tk: jedna obrazovka (11. 11. 2026)
+
+Medzikrok pred prechodom na QML nad `affb100` menil samotný pracovný postup podľa
+spätnej väzby používateľa. Predchádzajúce lokálne úpravy zostali zachované.
+Verzia 2.1.3b / Pre-release, ASR backendy, závislosti a projektové formáty
+sa nemenia; nevznikol commit, push, tag ani publikované vydanie.
+
+- Hlavné karty Nahrávky/Editor/Modely/Nastavenia/Podrobnosti nahradil
+  skutočný zásobník rámcov `ViewStack`, nie iba prefarbenie alebo skrytie
+  hlavičky Notebooku. Bežný postup je Pridať nahrávku → jazyk/kvalita →
+  Spustiť prepis. Potrebné voľby sú na jednej obrazovke.
+- Prázdna plocha má výrazné pridanie súborov a pôvodný COPY-only FileDrop.
+  Po pridaní sa zobrazí zoznam a spustenie; ak výber chýbal, označí sa
+  prvá nová nahrávka. Technický priebeh sa zobrazí až pri práci.
+  Podrobnosti, odobratie a poradie sú príkazy ponuky so zachovanými
+  kontrolami dostupnosti. Zdrojové súbory sa odobratím z frontu nemažú.
+- Kvalita má stručné názvy, ale používa pôvodné modelové identifikátory.
+  Bežný online štart pripraví chýbajúce súbory v existujúcom workerovi
+  s priebehom na rovnakej obrazovke. Návšteva správcu modelov nie je
+  predpokladom. V režime iba offline zostáva prípadný internet explicitnou
+  voľbou; odmietnutie nič nesťahuje a nepresmeruje do modelov.
+- Možnosti obsahujú pokročilé nastavenia, modely, diagnostiku, výsledky
+  a vzhľad. Doplnkové zobrazenia majú Späť na nahrávky. Návrat z editora
+  zachováva text, kurzor, výber, históriu aj neuložený stav bez zápisu
+  projektu. Ctrl+Tab nevedie cez modely a nastavenia.
+- Vizuálne sa overila úvodná aj naplnená obrazovka a simulovaná príprava
+  súborov bez odchodu do modelov v svetlej/tmavej téme. Nešlo o reálne
+  sťahovanie váh ani inferenciu ASR/GPU. Prázdna plocha má samostatnú
+  EN/SK maticu 100–200 % a čiernej/bielej kontrastnej palety; pôvodná
+  matica navyše testuje naplnený front so zobrazeným priebehom.
+- Cielených 21 skúšok toku/tém/kontrastu prešlo za 67,419 s. Návrat
+  neuloženého editora a úplná matica malých obrazoviek prešli tromi
+  skúškami za 96,219 s. Sú to prekrývajúce sa kontroly, nesčítavajú sa
+  k celému behu. Finálny výsledok po prechode na QML je uvedený vyššie.
+
+Zistenie k spúšťaniu: bežné `dist/ND TranskripThor/ND TranskripThor.exe`
+malo čas zostavenia 10. 11.; novšie fázy boli v samostatných priečinkoch.
+Po overení novej zostavy sa aktualizuje aj bežná cesta s lokálnou zálohou.
+Lokálny finálny log je `outputs/easy-studio-build.log`; nepatrí do Gitu.
+
+## Oprava uvoľňovania Tk premenných (11. 11. 2026)
+
+Aktuálny pracovný strom nad `affb100` odstraňuje príčinu upozornenia
+`Variable.__del__: RuntimeError: main thread is not in main loop` zo záveru
+fázy 5. Predchádzajúce lokálne zmeny zostali zachované. Verzia 2.1.3b /
+Pre-release, závislosti, ASR backendy a projektové formáty sa nemenia.
+Nevznikol commit, push, tag ani vydanie.
+
+- `TkVariables` drží natívne Tk premenné po dobu života konkrétneho okna,
+  rámca alebo Comboboxu. Pri jeho zániku vykoná unset a odstráni traces
+  vo vlákne rozhrania, potom odpojí premennú od interpretera. Neskoršie
+  upratovanie cyklov vo vedľajšom vlákne už nevolá Tcl. Platí to pre
+  hlavné okno, editor, správu modelov, lokálne dáta aj exportný dialóg.
+- Zaniknuté interpretery ostávajú pripnuté, kým hlavné vlákno neuprace
+  staré widgetové cykly a neuvoľní posledné odkazy. Nedochádza k ich
+  zániku vo vlákne, ktoré náhodou spustilo zber pamäte. Regresia kontroluje
+  aj skutočné uvoľnenie, nie iba odloženie do neobmedzeného registra.
+- Pracovníci diagnostiky zachytávajú iba dátové vstupy a front udalostí,
+  nie dialóg ani aplikáciu. Triedy a finalizátory tkinter sa neprepisujú,
+  globálny zber pamäte sa nevypína a pôvodné hlásenia sa nepotláčajú.
+- Šesť nových regresií núti upratovanie v pracovníkovi pri živom aj
+  zaniknutom vlastníkovi, overuje UI vlákno pri unset, odstránenie traces,
+  opakované zatváranie a uvoľnenie interpreterov aj odmietnutie vytvárania
+  premennej mimo UI vlákna. Pri diagnostike a zrušenom zatvorení ostávajú
+  text, kurzor, výber a história editora zachované; Späť/Znova funguje
+  a pôvodný projekt na disku sa nemení.
+- Testovací runner považuje ignorovanú výnimku finalizátora za neúspech
+  celého behu a stále ju vypíše pôvodným spôsobom. Samotné unittest OK
+  už nemôže zakryť pôvodné upozornenie.
+- Cielených 19 skúšok zachovania úprav/exportov/ukladania prešlo za
+  24,309 s; finálnych šesť životných regresií za 5,098 s, OK.
+  Tieto skúšky sa prekrývajú s celou sadou, nesčítavajú sa k nej.
+- **Úplný finálny beh: 330 testov, 421,437 s, OK, bez preskočenia.**
+  Prísna kontrola nehlásila žiadnu ignorovanú výnimku; log neobsahuje
+  pôvodné upozornenie ani chybu Tk callbacku. Záverečné vyhľadanie hlásení
+  Tk/finalizátorov vo finálnom logu: **0**. `git diff --check` prešiel.
+- **Aktuálna overená zostava:**
+  `dist/tk-lifecycle-20261111-092029/ND TranskripThor/ND TranskripThor.exe`.
+  SHA-256 EXE: `f04c0134f41f3fbf8b9c6b5bab5767ef1c8eedc9da8ab470e951ff088e1465d8`.
+  Priečinok vrátane manifestu má 15 398 súborov, 1 648 829 586 B.
+  Úplný `build.ps1 -OutputDirectory` dokončil audit 67 zhodných aplikačných
+  modulov a izolovaný štart Tk/tkdnd/tém/prekladov/ikon/natívnych importov
+  a nového procesu. Create aj následné verify manifestu prešli.
+  Predchádzajúce zostavy zostali zachované.
+
+Lokálny log úplného overenia: `outputs/tk-lifecycle-build.log`; nepatrí
+do Gitu. Postup a vlastníctvo objektov sú opísané v DEVELOPMENT.
+Ide o overenie životného cyklu a existujúcich regresií, nie nový test
+reálnej inferencie ASR/GPU ani čistej Windows VM.
+
+## ttkbootstrap – prístupnosť a integračné doladenie, fáza 5 (11. 11. 2026)
+
+Aktuálny pracovný strom nad `affb100` dopĺňa záverečné doladenie mierky,
+klávesnice a životného cyklu rozhrania. Predchádzajúce lokálne zmeny zostali
+zachované. Verzia 2.1.3b / Pre-release, závislosti, faster-whisper, KInIT
+a projektové formáty sa nemenili. Nevznikol commit, push, tag ani vydanie.
+
+- Nové kontroly preukázali skrytú voľbu automatického prehrávania pri
+  175–200 % na malej obrazovke. Nastavenia teraz používajú posúvateľný
+  formulár a pevné spodné akcie. Presun fokusu odhalí celé pole alebo
+  pomocnú správu; koliesko zostáva obmedzené na tento formulár a nepreberá
+  ovládanie textových polí ani natívnych volieb. Hodnoty a ukladanie
+  nastavení zostali pôvodné. Pri zániku sa odpoja väzby formulára na okno.
+- Riadky akcií prepočítavajú rozmery po zmene témy a pri zatvorení rušia
+  čakajúce prekreslenie. Opakované krátke otvorenie/zatvorenie tak
+  nezanecháva neplatné Tcl príkazy. Správy po zániku odregistrujú textové
+  pole aj sledovanie hodnoty; register nenarastá pri zatváraní dialógov.
+- Vysvetlenia v chybovom okne a nastaveniach prehrávania sa zalamujú
+  podľa aktuálnej šírky. Technické podrobnosti ostali zbalené na požiadanie,
+  iba na čítanie a posúvateľné. Tab poradie zabalených akcií vynecháva
+  zakázané tlačidlá. Kontrastné checkboxy a prepínače majú explicitný
+  systémový obrys a veľkosť indikátora odvodenú od mierky.
+- Úplný beh odhalil aj staršie nezrušené `App.poll` a odložené uloženie
+  nastavení pri zániku hlavného okna. Okno teraz vlastní jediný naplánovaný
+  cyklus, priamym obnovením ho nahradí a pri zániku zruší. Pri okamžitom
+  uložení aj zániku ruší tiež časovač nastavení. Pôvodné bezpečné ukončenie
+  ASR a ochrana neuložených úprav zostávajú zachované. Finálny beh sa dokončil z opravených
+  nemenných zdrojov; medzikandidáty nie sú overenou distribúciou.
+- Osem nových regresií zahŕňa všetky pracovné karty, EN/SK,
+  Tk scaling 100/125/150/175/200 %, svetlú/tmavú a čiernu/bielu kontrastnú
+  paletu, zúžený dialóg, zatváranie, prepočet riadkov, Tab a odhalenie
+  obsahu klávesnicou. Pôvodné testy neuložených úprav, histórie, exportov,
+  prehrávania, DnD a procesov zostali zachované.
+- Vizuálne sa overili Nastavenia pri 200 %, posúvanie celého formulára,
+  čitateľné checkboxy v čiernom kontraste, návrat do tmavej a svetlej témy
+  a úzky chybový dialóg so zbalenými aj rozbalenými podrobnosťami.
+- **Úplný finálny beh: 324 testov, 403,867 s, OK, bez preskočenia.**
+  Zahŕňa osem nových regresií. Samostatných 13 skúšok životného cyklu
+  a ukladania prešlo za 14,454 s; ide o prekrývajúce sa kontroly,
+  nesčítavajú sa k 324. `git diff --check` prešiel.
+- **Aktuálna overená zostava:**
+  `dist/acceptance-phase5-verified-20261111-082430/ND TranskripThor/ND TranskripThor.exe`.
+  SHA-256 EXE: `495e35c83b6927bdf0155a20bfd0910ce4a3b47587e5b183573ab90ccbd5e6c2`.
+  Priečinok vrátane manifestu má 15 398 súborov, 1 648 826 588 B.
+  Úplný `build.ps1 -OutputDirectory` dokončil audit 66 zhodných aplikačných
+  modulov a izolovaný štart Tk/tkdnd/tém/prekladov/ikon/natívnych importov
+  a nového procesu. Create aj následné verify manifestu prešli.
+  Predchádzajúce zostavy zostali zachované.
+
+Pri hromadnom UI teste lokálnych dát log obsahuje ignorované výnimky
+`Variable.__del__: RuntimeError: main thread is not in main loop` pri
+uvoľňovaní Tk premenných vo vedľajšom vlákne. Úplný beh sa dokončil s OK,
+ale nejde o úplne čistý výstup diagnostiky. Ide o historický výsledok
+zostavy fázy 5; uvedené upozornenie odstraňuje oprava opísaná vyššie.
+Samostatná finálna vizuálna ukážka sa ukončila bez týchto hlásení.
+
+Nastavenia Windows sa nemenili. Mierky a kontrastné palety sú simulované
+v skutočnom Tk; nejde o fyzické prepnutie systémového DPI/kontrastu,
+certifikáciu čítačky obrazovky, nový test inferencie ASR/GPU ani čistú VM.
+Lokálny finálny log: `outputs/ttkbootstrap-phase5-verified-build.log`;
+nepatrí do Gitu. Opakovateľný postup a hranice sú v DEVELOPMENT.
+
+## ttkbootstrap – editor a dialógy, fáza 4 (11. 11. 2026)
+
+Aktuálny pracovný strom nad `affb100` zjednocuje editor prepisu a dialógy
+so spoločným vzhľadom ttkbootstrapu. Predchádzajúce lokálne zmeny zostali
+zachované. Verzia 2.1.3b / Pre-release, závislosti, faster-whisper, KInIT
+a projektové formáty sa nemenili. Nevznikol commit, push, tag ani vydanie.
+
+- Editor má spoločné kartové povrchy, prehľadnú hlavičku so zdrojom
+  a stavom uloženia, vyhľadávanie, zvýraznenú akciu Uložiť a zjednotené
+  ovládanie prehrávania, exportu a podrobností. Existujúce príkazy,
+  klávesové skratky, stránkovanie a úpravy blokov zostávajú zachované.
+- Spoločný `DialogPanel` usporadúva nastavenia prehrávania, export,
+  lokálne dáta a chybové hlásenia. Správa modelov používa rovnakú
+  hierarchiu hlavičky a akcií. Technické podrobnosti chyby sú spočiatku
+  zbalené a iba na čítanie. Natívne výbery súborov a existujúce
+  potvrdzovacie dialógy zostávajú zachované.
+- Každý editor sleduje zmenu vzhľadu samostatne; menia sa aj farby
+  vyhľadávania bez nového vykreslenia, zachytávania alebo uloženia textu.
+  Regresie kontrolujú totožnosť textového poľa, neuložený obsah, kurzor,
+  výber, posun, históriu aj následné Späť/Znova. Projekt na disku zostáva
+  nezmenený. Rozpracované voľby dialógov a diagnostický náhľad prežijú
+  prepnutie svetlej/tmavej témy aj čiernej/bielej kontrastnej palety.
+- Zánik editora odregistruje sledovanie. Odložené farbenie titulkov
+  spravuje koreň okna a ruší ho pri ukončení; rýchle zatvorenie dialógu
+  nezanechá neplatný Tcl príkaz. Klasické Tk vstupy a tlačidlá dostávajú
+  paletu bez aplikovania ich volieb na ttk prvky.
+- Vizuálna kontrola odhalila blokovanie otvorenia dialógu pri vnorenom
+  spracovaní nečinných udalostí. `DialogPanel.fit()` teraz iba ohraničí
+  maximálnu veľkosť podľa obrazovky a nechá vykreslenie na hlavný cyklus.
+  Nová regresia otvorenia prehrávania z udalosti a vizuálna kontrola
+  potvrdili vykreslenie aj odozvu dialógu vo vysokom kontraste.
+- **Úplný beh: 316 testov, 321,477 s, OK, bez preskočenia.** Zahŕňa päť
+  nových regresií zachovania stavu editora a dialógov. Cielené behy sa
+  s touto sadou prekrývajú a nesčítavajú sa k 316. Vizuálne sa overil
+  svetlý/tmavý editor, simulovaná čierna kontrastná paleta, nastavenia
+  prehrávania a zbalené/rozbalené podrobnosti chyby.
+- **Aktuálna overená zostava:**
+  `dist/editor-phase4-20261111-072543/ND TranskripThor/ND TranskripThor.exe`.
+  SHA-256 EXE: `cd517a7bd871be52e012808258f6585c3358b4d8bee494e7a62b702ce5260ccb`.
+  Priečinok vrátane manifestu má 15 398 súborov, 1 648 823 456 B.
+  Úplný `build.ps1 -OutputDirectory` dokončil audit 66 zhodných aplikačných
+  modulov a izolovaný štart Tk/tkdnd/tém/prekladov/ikon/natívnych importov
+  a nového procesu. Create aj následné verify manifestu prešli.
+  Predchádzajúce zostavy zostali zachované.
+
+Dôkazy patria tejto zostave a aktuálnym zdrojom. Nastavenia Windows sa
+nemenili; vysoký kontrast a DPI neboli fyzicky prepnuté v systéme.
+Nejde o nový test reálnej inferencie ASR/GPU ani čistej Windows VM.
+Lokálny úplný log: `outputs/ttkbootstrap-phase4-build.log`; nepatrí do Gitu.
+Opis a hranice overenia sú v DEVELOPMENT.
+
+## ttkbootstrap – hlavné pracovné okno, fáza 3 (11. 11. 2026)
+
+Aktuálny pracovný strom nad `affb100` modernizuje hlavnú kartu Nahrávky
+na základe spoločných tém z fázy 2. Predchádzajúce lokálne zmeny zostali
+zachované. Verzia 2.1.3b / Pre-release, závislosti, oba ASR backendy,
+projektové formáty a existujúca distribúcia sa v tejto fáze nemenili.
+Nevznikol commit, push, tag ani nové publikované vydanie.
+
+- Okno oddeľuje front nahrávok, kartu Spracovanie a spodný panel akcií.
+  Hlavička, sekundárne tlačidlá, názvy sekcií, počet súborov a prázdny stav
+  používajú spoločnú vizuálnu hierarchiu. Riadky frontu majú väčšiu výšku;
+  stavy naďalej obsahujú text aj symbol a zachovávajú stabilné ID položiek.
+- Spustiť prepis je jediná vyplnená hlavná akcia. Je dostupná pri čakajúcich
+  položkách a neprázdnej výstupnej ceste mimo práce. Pokračovanie/opakovanie
+  vybranej položky zostáva samostatné a dostupné aj bez čakajúcich položiek.
+  Označenie Odobrať z fronty výslovne odlišuje odobratie položky od zmazania
+  súboru; regresia overila, že pôvodný súbor zostal na disku.
+- Ukazovatele nahrávky a dávky sú vedľa seba a zostali nezávislé. Nový
+  textový štítok preberá fázu workera; Dávka ukončená nevyhlasuje všetky
+  položky za úspešné. Technický stav zariadenia je v Podrobnostiach
+  spracovania. ETA, počty chýb a prerušenia ostávajú v pôvodnom súhrne.
+- Zachované sú dvojklik/Enter, viacnásobný výber, poradie, pôvodná ponuka
+  ďalších možností, editor, otvorenie projektov/výsledkov aj FileDrop.
+  MessageView má spoločné povrchy bg/card, ktoré sa zachovávajú pri zmene
+  témy. Pribudlo päť zhodných kľúčov v EN/SK katalógoch.
+- Cielené testy odhalili nedostatok výšky pri 200 %; kompaktný dvojstĺpcový
+  priebeh, rezervácia miesta pre ovládanie a presun technického stavu ho
+  odstránili. Celá DPI matica oboch jazykov/tém a 100–200 % následne prešla.
+  Vizuálne boli skontrolované prázdne aj naplnené okno, oba režimy a
+  simulovaná čierna vysokokontrastná paleta. Nastavenia Windows sa nemenili.
+- **Posledný úplný beh: 311 testov, 301,196 s, OK, bez preskočenia.**
+  Zahŕňa štyri nové regresie pracovného okna. Samostatné cielené behy
+  (24 testov; 6 testov s DPI; 4 finálne testy pracovného okna) sa s touto
+  sadou prekrývajú, nesčítavajú sa k 311. `git diff --check` prešiel.
+- **Aktuálna overená zostava:**
+  `dist/workspace-phase3-20261111-064433/ND TranskripThor/ND TranskripThor.exe`.
+  SHA-256 EXE: `3574d2b293829cd0afa965b0e9def6504c05f766afde722acd5216f7654d202a`.
+  Priečinok vrátane manifestu má 15 398 súborov, 1 648 820 319 B.
+  Úplný `build.ps1 -OutputDirectory` dokončil audit 66 zhodných aplikačných
+  modulov a izolovaný štart Tk/tkdnd/tém/prekladov/ikon/natívnych importov
+  a nového procesu. Create aj následné verify manifestu prešli.
+
+Dôkazy patria tejto zostave a aktuálnym zdrojom. Nejde o nový test inferencie
+ASR/GPU, fyzického systémového DPI ani zapnutia Windows vysokého kontrastu.
+Lokálny úplný log: `outputs/ttkbootstrap-phase3-build.log`; nepatrí do Gitu.
+Opis ovládania a opakovateľný postup sú v DEVELOPMENT.
+
+## ttkbootstrap – spoločná správa vzhľadu, fáza 2 (10. 11. 2026)
+
+Aktuálny pracovný strom nad `affb100` používa v hlavnej Tk aplikácii
+`presentation/theme.py` / `ThemeManager`. Zostáva Windows x64, CPython
+3.12.10, Tk 8.6.15 a interná verzia 2.1.3b / Pre-release. Predchádzajúce
+lokálne úpravy vrátane fázy 1 zostali zachované; nevznikol commit ani push.
+
+- Témy `thor-light`/`thor-dark` vytvára ttkbootstrap 2.2.7 zo spoločných
+  paliet. Existujúce štýly a uložené hodnoty `light`/`dark` zostávajú
+  kompatibilné; globálne Tk/ttk widget API sa neprepisuje. Hlavná aplikácia
+  už nepoužíva vlastné obrázkové pozadia `rounded_styles`.
+- Windows vysoký kontrast má prednosť: číta sa SPI_GETHIGHCONTRAST a
+  GetSysColor, používa sa natívny clam bez Bootstrap obrázkov a systémové
+  farby vrátane výberu, zakázaných, aktívnych a neaktívnych stavov.
+  Nastavenia Windows sa nemenia. Kontrola beží pri mapovaní/fokuse a každú
+  sekundu; po vypnutí kontrastu sa obnoví zvolený režim. Systémová zmena
+  neprepisuje uloženú voľbu svetlej/tmavej témy.
+- Spoločné farbenie pokrýva editor, menu, Canvas, stavové správy, správu
+  modelov, lokálnych dát a nové/otvorené Tk dialógy. Tcl Combobox popdown
+  dostáva rovnaké farby. Pri zániku koreňa sa uvoľnia singleton štýlov,
+  fonty a systémový kontrolný timer.
+- Vizuálna kontrola odhalila, že Bootstrap theme walk menil odsadenia
+  Tk Text polí a orezával správy: regresia pred opravou namerala 27 px
+  dostupnej výšky oproti 37 px požadovanej. Správca teraz zachováva pôvodné
+  odsadenia a okraje. Celé riadky sú overené novou regresiou a vizuálne
+  v svetlom aj tmavom rozhraní.
+- ttkbootstrap pribudol do runtime.in/constraints/runtime.lock. Čistý
+  Windows resolver a generátor lockov zachovali všetky ostatné verzie
+  a wheel hashe. Kontrola 46 nainštalovaných distribúcií a pip check prešli.
+  Balenie zahŕňa témy, zdroje a metadata knižnice; startup kontroluje oba
+  režimy. Audit hlavnej aplikácie vynecháva samostatnú vzorku fázy 1.
+- **Posledný úplný beh: 307 testov, 297,888 s, OK, bez preskočenia.**
+  Samostatných 14 cielených UI skúšok prešlo za 24,879 s; ide o prekrývajúce
+  sa kontroly, nie prírastok k 307. Testy pokrývajú aj čiernu/bielu systémovú
+  paletu, otvorené aj nové dialógy, zachovanie textu/kurzora/výberu a návrat
+  k uloženej téme. Windows vysoký kontrast nebol fyzicky zapnutý; simulovaná
+  čierna paleta bola navyše vizuálne skontrolovaná vrátane checkboxu.
+- **Aktuálne EXE:**
+  `dist/theme-phase2-reviewed-20261110-151224/ND TranskripThor/ND TranskripThor.exe`.
+  SHA-256: `4d7ece0a72ddfeb05877089e1a40e699dba23a825d8f095b6c9b4a9ebd3382e1`.
+  Priečinok má 15 398 súborov, 1 648 819 075 B vrátane manifestu.
+  Audit zhodných 66 aplikačných modulov, izolovaný štart Tk/tkdnd/tém/
+  prekladov/ikon/natívnych importov a nového procesu aj create/verify
+  manifestu prešli. Predchádzajúca distribúcia sa neprepisovala.
+
+Výsledky patria finálnemu pracovnému stromu, nie starším medzikandidátom
+v `dist/theme-phase2-*`. Reálna inferencia ASR/GPU ani čistá Windows VM
+neboli súčasťou tejto UI úpravy. faster-whisper, KInIT a projektové formáty
+sa nemenili. Úplný lokálny záznam je
+`outputs/ttkbootstrap-phase2-reviewed-build.log`; nepatrí do Gitu.
+Postup a hranice overenia sú v DEVELOPMENT.
+
+## ttkbootstrap – kompatibilitná vzorka, fáza 1 (10. 11. 2026)
+
+V pracovnom strome nad `affb100` vznikla samostatná vzorka
+`src/prototype_ttkbootstrap/main.py`. Bežný vstup aplikácie, oba ASR backendy,
+projektové formáty a verzia 2.1.3b / Pre-release zostávajú zachované.
+Pôvodná lokálna úprava tohto dokumentu zostala zachovaná; nevznikol commit,
+push, tag ani nové vydanie.
+
+- Overený runtime: projektová `.venv`, CPython 3.12.10 x64, Tk 8.6.15,
+  ttkbootstrap **2.2.7**, Pillow **12.3.0**, tkdnd **2.9.4**.
+  Doplnkový lock obsahuje celý deklarovaný reťazec a SHA-256 wheelov z
+  čistého Windows resolver reportu. Kontrola prostredia aj `pip check` prešli.
+- Vzorka má päť pracovných kariet, pridávanie súborov, skutočný COPY-only
+  FileDrop, Treeview, textový editor, Combobox, prepínač, progressbar a
+  vedľajšie okno. Prepisovanie je výslovne nedostupné. Dáta zostávajú iba
+  v pamäti a dočasnej diagnostike; používateľské profily/modely neotvára.
+- Zistené a opravené: zánik TkinterDnD koreňa neuvoľňoval singleton štýlov
+  ttkbootstrapu. Vzorka zrkadlí cleanup `ttk.App.destroy()` verzie 2.2.7.
+  Ďalší test odhalil skrytie spodných ovládačov pri veľkom písme; rozloženie
+  im teraz rezervuje miesto pred rozťahujúcim sa zoznamom.
+- Finálny úplný `scripts/test.ps1`: **302 testov, 323,684 s, OK, bez
+  preskočenia**. Doplnková sada: **3 testy, 7,489 s, OK, bez preskočenia**.
+  Kontroluje EN/SK, tri životné cykly koreňa, témy, Tk scaling 100–200 %,
+  zachovanie textu/výberu/nastavení, fokus, Unicode cesty, duplicity a busy
+  odmietnutie dropu; tiež izoláciu widget API a konflikt doplnkového locku.
+- Nové samostatné EXE je v
+  `dist/ttkbootstrap-20261110-143309/ND TranskripThor ttkbootstrap Preview/`.
+  Celý priečinok má **1 106 súborov, 77 884 597 B**. SHA-256 EXE:
+  `6dd306a0cd150d3f22181c9e90788438262db699498232a16bb38b5d79031933`.
+  Stabilná distribúcia sa neprepisovala. Windows metadata sú z `src/version.py`.
+- Overenie skutočne skopírovaného EXE v Unicode ceste s medzerami a bez
+  Pythonu v PATH prešlo, vrátane tkdnd, tém a troch životných cyklov.
+  Audit PYZ potvrdil neprítomnosť torch/transformers/faster_whisper/
+  ctranslate2 a aplikačného ASR. Pôvodný nadbytočný freezer po zistení
+  nepriamych importov bol zastavený; výsledkom je nová oddelená zostava
+  s explicitnými výnimkami iba pre vzorku, nie zmena stabilného balenia.
+- Vizuálne skontrolované svetlé/tmavé zdrojové okno a spustené finálne EXE.
+  Vysoký kontrast je zatiaľ iba detegovaný; nebol aktívny. Natívna titulná
+  lišta bola pri vizuálnej skúške svetlá aj pri tmavom obsahu; doladenie
+  jej vzhľadu zostáva otvorené pre ďalšiu fázu.
+
+Rozsah dôkazov: doručenie Tcl zoznamu do skutočného drop handlera nie je
+fyzické ťahanie z Prieskumníka; Tk scaling nie je zmena systémového DPI ani
+presun medzi monitormi. Tieto ručné skúšky, systémový vysoký kontrast a
+reálna inferencia ASR/GPU tu nie sú potvrdené. Prvá fáza poskytuje funkčnú
+vzorku a overené základné spolužitie knižníc, nie dokončenú migráciu aplikácie.
+Postup opakovania je v DEVELOPMENT. Lokálne logy sú
+`outputs/ttkbootstrap-build-final.log`, `outputs/ttkbootstrap-package-final.log`
+a `outputs/ttkbootstrap-exe-final.log`; nepatria do Gitu.
 
 ## Synchronizácia a nové EXE (10. 11. 2026)
 
@@ -472,6 +897,19 @@ zachovania textu a zákazu odstránenia používanej cache ostali nezmenené.
 Cielené overenie všetkých ôsmich testov vlastníctva: 2,644 s, OK.
 Tento opravný kandidát pred ďalším pushom opäť vyžaduje celý čistý test/build;
 výsledky konkrétneho SHA sa evidujú v lokálnom potvrdení a závere.
+
+Čistý opravný kandidát `45db861` dokončil všetkých 243 testov za 436,430 s,
+bez preskočenia, s jedným zlyhaním: existujúci
+`test_real_process_crash_checkpoint_and_repeat_resume` pri opätovnom otvorení
+dokončeného projektu prekročil limit 20 s a obslužné vlákno sa neukončilo.
+Diagnostika zachytila blokovanie v `child_stop.set()` vo finally ASR procesu
+(`src/asr_process.py`); presný spúšťač zatiaľ nie je potvrdený. Všetky testy
+vlastníctva aj nové testy vyhľadávania prešli. Po dokončení sady bol ukončený
+iba identifikovaný zaseknutý testovací interpreter. Build sa zastavil pred
+PyInstallerom; pre tento kandidát nové EXE nevzniklo. Commit `45db861` sa
+nepushol. GitHub main zostáva `930b453`, ktorého lokálna zostava prešla,
+ale GitHub CI 39901167888 má vyššie uvedené zlyhanie. Synchronizácia opravy
+a úspešné celkové overenie teda nie sú dokončené; kontroly sa neoslabovali.
 
 
 ## F25 – prehrávanie, výstup a tempo (23. 10. 2026)

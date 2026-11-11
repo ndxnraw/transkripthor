@@ -17,6 +17,17 @@ if __name__ == '__main__':
     print(f'Discovered {count} tests', flush=True)
     if count < 197:
         raise SystemExit('Regression coverage was lost (expected at least 197 tests).')
-    result = unittest.TextTestRunner(verbosity=2).run(suite)
+    unraisable = []
+    original_hook = sys.unraisablehook
+    def record_unraisable(details):
+        unraisable.append(f'{details.exc_type.__name__}: {details.exc_value}')
+        original_hook(details)
+    sys.unraisablehook = record_unraisable
+    try:
+        result = unittest.TextTestRunner(verbosity=2).run(suite)
+    finally:
+        sys.unraisablehook = original_hook
     faulthandler.cancel_dump_traceback_later()
-    raise SystemExit(not result.wasSuccessful() or bool(result.skipped) or result.testsRun != count)
+    if unraisable:
+        print(f'Unhandled finalizer exceptions: {len(unraisable)}', file=sys.stderr)
+    raise SystemExit(not result.wasSuccessful() or bool(result.skipped) or result.testsRun != count or bool(unraisable))

@@ -33,6 +33,12 @@ class SmallScreenTest(unittest.TestCase):
                         with patch.object(root, 'winfo_screenwidth', return_value=screen[0]), \
                              patch.object(root, 'winfo_screenheight', return_value=screen[1]):
                             app = App(root, Path(folder)/'state')
+                        audio = Path(folder)/'Layout fixture.wav'
+                        audio.write_bytes(b'UI fixture, not ASR audio')
+                        app.accept_files([str(audio)])
+                        app.listbox.selection_set(0)
+                        app.update_selection()
+                        app.set_phase('loading')
                         target = Path(folder)/'project'
                         with Project(target, create=True) as project:
                             project.initialize('Dlhý názov nahrávky ' * 12 + '.wav', {}, {}, [], 16000)

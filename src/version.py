@@ -1,4 +1,5 @@
-"""Authoritative application and Windows resource versions; SYNC does not bump."""
-VERSION = '2.1.3b'
-WINDOWS_VERSION = (2, 1, 3, 1)
-DISPLAY_VERSION = 'Pre-release'
+"""Authoritative application and Windows resource versions."""
+VERSION = '1.0.0'
+WINDOWS_VERSION = (1, 0, 0, 0)
+DISPLAY_VERSION = 'Release v1'
+PRERELEASE = False

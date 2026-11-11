@@ -1,12 +1,12 @@
 # ND TranskripThor – používateľský návod
 
-Tento návod opisuje aktuálny **pre-release**. Archívne EXE mu nemusí funkčne zodpovedať; výsledky overenia sú v [STATUS.md](STATUS.md). Číselné údaje v starších záznamoch sú historické.
+Tento návod opisuje **Release v1 (1.0.0)** s hlavným rozhraním QML/Qt Quick.
+[Stiahnuť vydanie](https://github.com/ndxnraw/TranskripThor/releases/tag/v1).
+Staršie Tk/Pre-release zostavy majú odlišné ovládanie.
 
-Aktualizácia rozhrania podľa návrhu Studio, pri zachovaní lokálneho prepisu.
-Samostatné karty **Nahrávky, Editor, Modely, Nastavenia a Podrobnosti spracovania**
-udržujú ovládanie dostupné aj v minimálnom okne. Tmavý aj svetlý vzhľad používajú
-pokojnejšie farby a jednotné písmo; značka a logo zostávajú zachované.
-Okno sa naďalej spúšťa v minimálnej veľkosti podľa mierky rozhrania.
+Hlavná obrazovka nemá karty. Pridanie nahrávok, jazyk, kvalita a spustenie
+sú na jednom mieste. Doplnkové nástroje nájdete v ponuke **⋯ Možnosti**.
+Svetlý/tmavý vzhľad a vysoký kontrast Windows zachovávajú dostupné ovládanie.
 
 Windows aplikácia na **lokálny prepis zvuku do textu a titulkov**, bez minútových
 kvót. Nahrávky ani prepisy sa neposielajú na externé služby. Internet slúži iba
@@ -17,7 +17,8 @@ na stiahnutie vybraných modelov. Po stiahnutí je dostupný režim Iba offline.
 Rozbaľte celý Windows ZIP a spustite **ND TranskripThor.exe**. Priečinok
 `_internal` musí zostať vedľa EXE. Python netreba inštalovať. Modely nie sú
 pribalené. Nová zdrojová zostava vznikne v `dist/ND TranskripThor`.
-[Archív starších zostáv](https://github.com/ndxnraw/TranskripThor/releases) — aktuálny pre-release zostavte podľa DEVELOPMENT.md.
+[Aktuálne stiahnutie a archív](https://github.com/ndxnraw/TranskripThor/releases).
+Pri súkromnom repozitári sa prihláste účtom s prístupom k nemu.
 
 ## Funkcie
 
@@ -30,33 +31,40 @@ pribalené. Nová zdrojová zostava vznikne v `dist/ND TranskripThor`.
   pauzou a posunom. Text sa upravuje priamo vo vybranom bloku. Výber úseku
   nespúšťa zvuk; automatické prehrávanie možno zapnúť v Nastaveniach.
 - TXT/SRT/VTT/DOCX/JSON, nastaviteľné titulky, samostatné prevádzkové správy.
-- Zapamätanie nastavení, svetlý/tmavý vzhľad a obnova predvolených hodnôt.
+- Zapamätanie nastavení, svetlý/tmavý vzhľad a vysoký kontrast Windows.
 - Správca modelov: dostupnosť, miesto, sťahovanie a potvrdené odstránenie.
 - Voliteľné lokálne zoskupenie hlasov a ručná oprava/priradenie mien.
 
 ## Bežný postup
 
-1. Pridajte alebo pretiahnite nahrávky, vyberte jazyk, model a výstupný priečinok.
-2. **Spustiť čakajúce** spracuje čakajúce položky. Vyberte prerušenú/chybnú
-   nahrávku a zvoľte **Pokračovať / Skúsiť znova**. Platný projekt obnoví svoj
-   uložený model, jazyk a nastavenia bez zmeny nastavení pre nové nahrávky.
-3. **Nový prepis** vyžaduje výber položiek a vytvorí nové priečinky.
-   Predchádzajúce výsledky neprepíše. **Podrobnosti** zobrazia zdroj, chybu
-   a uložené nastavenia; čakajúce položky možno presúvať šípkami.
-4. **Otvoriť prepis / Editor** otvorí výsledok na karte Editor. Kliknutím vyberte
-   blok a upravte text priamo v ňom. **▶ Úsek** prehrá vybraný interval.
-   **Hľadať** prehľadáva celý prepis; **Ďalší/Predchádzajúci výskyt** prechádza jednotlivé zvýraznené výskyty.
-   Počet výskytov je oddelený od počtu nájdených úsekov.
-   Hovoriaci a nastavenia titulkov sú pod tlačidlom **Úsek, hovoriaci a titulky**.
-5. **Uložiť** uloží projekt; samostatná ponuka **Možnosti exportu** vytvorí vybrané formáty.
-   Pôvodný dokončený export zostáva zachovaný. Neuložené úpravy sú viditeľne
-   označené; pri zatvorení editor upozorní na ich uloženie.
+1. Kliknite na **Pridať nahrávky** alebo pretiahnite zvuk/video do hlavnej plochy.
+   Vyberte jazyk a kvalitu a stlačte **Spustiť prepis**. Správcu modelov
+   netreba otvárať vopred: potrebné súbory sa pripravia pri prvom použití.
+   V režime iba offline sa internet zapne až po vašom výslovnom súhlase.
+2. Front zobrazuje stav každej nahrávky. Ponuka **⋯** pri položke obsahuje
+   pokračovanie/opakovanie, nový prepis od začiatku, poradie, odobratie
+   z frontu a podrobnosti. Odobratie nemaže nahrávku ani projekt.
+   **Stop** zastaví prácu; uložené checkpointy zostávajú dostupné.
+3. Pri hotovej položke stlačte **Otvoriť prepis**. V editore vyberte úsek
+   v zozname a upravte jeho text vpravo (v úzkom okne pod zoznamom).
+   Výber sám nespustí zvuk, pokiaľ nemáte zapnuté automatické prehrávanie.
+   **▶ Úsek** prehrá interval; posuvník pracuje s časom pôvodnej nahrávky.
+4. **Hľadať** prehľadá celý prepis. Šípky prechádzajú jednotlivé zhody,
+   **Ctrl+F** zameria hľadanie, **F3/Shift+F3** prejde ďalšiu/predošlú zhodu.
+   **Ctrl+Z/Ctrl+Y** v texte vracia/opakuje úpravy. Hovoriaci, delenie,
+   spájanie, časy a titulky sú pod **Úsek, hlasy a titulky**.
+5. **Uložiť projekt / Ctrl+S** uloží zmeny. **Možnosti exportu** vytvoria
+   vybrané TXT/SRT/VTT/DOCX/JSON z originálu alebo uloženej revízie.
+   Neuložené zmeny označuje hviezdička; zatvorenie alebo otvorenie iného
+   projektu vyžiada Uložiť/Zahodiť/Zrušiť. Úpravy počas ukladania zostanú
+   neuložené a možno ich uložiť nasledujúcim príkazom.
 
-Karta Podrobnosti spracovania oddeľuje náhľad od prevádzkových správ. Náhľad má
-obmedzenú históriu; editor používa všetky uložené úseky. Zobrazuje najviac 40
-blokov na stránku, aby dlhé prepisy zbytočne nespomaľovali rozhranie.
-Karta Modely oddeľuje modely prepisu od voliteľného rozlíšenia hlasov. Chýbajúci
-model sa v režime offline oznámi ešte pred spustením prepisu.
+**Späť** v hlavičke vráti nahrávky bez straty rozpracovaného textu.
+Do otvoreného editora sa vrátite cez **⋯ → Vrátiť sa do editora**.
+Ponuka obsahuje aj otvorenie existujúceho `projekt.sqlite3` (**Ctrl+O**),
+pokročilé nastavenia CPU/CUDA, offline, výstupného priečinka, modely,
+lokálne dáta/diagnostiku, prevádzkové správy a vzhľad. Zoznam úsekov
+sa zobrazuje priebežne podľa potreby; neprepína sa cez stránky ani karty.
 
 ## Ukladanie a pokračovanie
 
@@ -95,11 +103,11 @@ odmietnu. Mená hovoriacich sa uchovávajú v projekte; export ich pridá iba pr
 
 V Správcovi modelov stiahnite **WeSpeaker ResNet34-LM**, potom v editore použite
 **Zoskupiť podobné hlasy** (English: **Group similar voices**). Funkcia je
-štandardne vypnutá; bežný prepis model nenačítava. Editor pred sprístupnením
+štandardne vypnutá; bežný prepis model nenačítava. Editor pred spustením
 akcie kontroluje lokálny model aj načítanie voliteľných knižníc. Dôvod
-nedostupnosti zobrazí v podrobnostiach úseku. Zdrojová inštalácia doplní
+nedostupnosti zobrazí v stavovej správe. Zdrojová inštalácia doplní
 knižnice cez `scripts/setup.ps1 -Speakers`; v plnej zostave sú pribalené.
-Návrat k podrobnostiam alebo **Pomoc k hlasom** zopakuje kontrolu.
+Opätovné spustenie akcie zopakuje kontrolu.
 V poli **Hlas úseku** vyberte existujúce označenie alebo napíšte vlastné;
 prázdne pole priradenie odstráni. **Premenovať hlas** zmení všetky výskyty
 označenia, aj mimo aktuálnej stránky či vyhľadávania. Tieto opravy fungujú
@@ -132,14 +140,14 @@ Dlhý zvuk používa diskovú PCM cache a blokové čítanie; large/KInIT stále
 vyžadujú dostatok RAM/VRAM. ASR beží v samostatnom riadenom procese.
 Bezpečne potvrdené checkpointy zostávajú po prerušení dostupné. ETA je hrubý
 odhad, nie sľúbený čas. Fyzické DPI, Explorer drop a screen reader vyžadujú
-manuálnu skúšku; automatická Tk matica ich nenahrádza.
+manuálnu skúšku; automatické geometrické skúšky ich nenahrádzajú.
 
 ## Vývoj a zostavenie
 
 Presné príkazy pre Windows x64/Python 3.12, uzamknuté závislosti, modely,
 nový počítač a pracovný cyklus sú v [DEVELOPMENT.md](DEVELOPMENT.md).
 Používajte `scripts/setup.ps1`, `run.ps1`, `test.ps1` a `build.ps1`.
-Výsledok je `dist/ND TranskripThor`; váhy modelov sa nepribaľujú.
+Cieľ určíte cez `build.ps1 -OutputDirectory dist`; váhy modelov sa nepribaľujú.
 
 Debug CZ/SK: pred spustením nastavte `$env:ND_TRANSKRIPTHOR_DEBUG='1'`.
 Rotovaný log je `%LOCALAPPDATA%\LokalnyPrepis\asr-debug.log`; neobsahuje zvuk ani text prepisu.
@@ -147,7 +155,7 @@ Rotovaný log je `%LOCALAPPDATA%\LokalnyPrepis\asr-debug.log`; neobsahuje zvuk a
 Created by Daniel Návojský (ndxnraw) using Codex | 2026
 
 
-## Úprava úsekov a export v pre-release
+## Úprava úsekov a export
 
 V ponuke editora môžete dokončený prepis rozdeliť pri kurzore v texte,
 zlúčiť s nasledujúcim úsekom alebo ručne upraviť jeho začiatok a koniec.
@@ -169,7 +177,7 @@ bez zvolených možností naďalej exportuje poslednú uloženú revíziu do TXT
 
 ## Lokálne dáta a diagnostika
 
-V **Settings → Local data & diagnostics** / **Nastavenia → Lokálne dáta a diagnostika**
+V **⋯ → Local data & diagnostics** / **⋯ → Lokálne dáta a diagnostika**
 sa zobrazujú umiestnenia a logické veľkosti profilu, modelov, výstupného priečinka,
 známych projektov a PCM cache. Známymi projektmi sú položky fronty a otvorené
 editory; aplikácia nehľadá projekty po celom disku. Priečinky sa môžu prekrývať,
@@ -181,7 +189,7 @@ preto veľkosti nesčítavajte. Výstupný priečinok môže obsahovať aj cudzi
   a postupom aj exportov vo vymazanom priečinku. Prehľad projekty nemaže.
   Pred samostatnou správou priečinka v Prieskumníkovi vytvorte zálohu a zatvorte
   editor aj spracovanie. Zdrojový zvuk uchovávajte samostatne.
-- **Odstrániť model** na karte Modely po potvrdení odstráni jeho lokálne váhy.
+- **Odstrániť model** v správcovi Modely po potvrdení odstráni jeho lokálne váhy.
   Nahrávky ani prepisy nemaže. Bez váh nebude daný model fungovať offline.
 
 Lokálne spracovanie nie je šifrovanie: aplikácia súbory automaticky nešifruje.

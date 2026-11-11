@@ -5,6 +5,7 @@ import sys
 root = Path(SPECPATH).resolve().parent
 source = root / 'src'
 prototype = globals().get('QML_PROTOTYPE', False)
+qt_app = globals().get('QML_APP', False)
 basic = globals().get('BASIC_DISTRIBUTION', False)
 application_name = 'ND TranskripThor QML Testing' if prototype else 'ND TranskripThor'
 sys.path.insert(0, str(source))
@@ -20,11 +21,17 @@ binaries = []
 # Keep evaluation helpers in the frozen source audit as well as source runs.
 from PyInstaller.utils.hooks import collect_submodules
 hiddenimports = collect_submodules('ndtranskripthor')
+if qt_app:
+    datas += [(str(path), 'ndtranskripthor/presentation/qml') for path in (source / 'ndtranskripthor/presentation/qml').glob('*.qml')]
+elif not prototype:
+    hiddenimports = [name for name in hiddenimports if not name.startswith('ndtranskripthor.presentation.qml')]
 if prototype:
     datas += [(str(source / 'prototype_qml/Main.qml'), 'prototype_qml')]
     hiddenimports += ['prototype_qml.controller']
 datas += collect_data_files('certifi')
 datas += collect_data_files('tkinterdnd2')
+datas += collect_data_files('ttkbootstrap')
+datas += copy_metadata('ttkbootstrap')
 if find_spec('kaldi_native_fbank'):
     optional_data, optional_bins, optional_imports = collect_all('kaldi_native_fbank')
     datas += optional_data
@@ -51,7 +58,7 @@ for distribution in (() if basic else ('torch', 'transformers')):
     datas += copy_metadata(distribution, recursive=True)
 
 a = Analysis(
-    [str(source / ('prototype_qml/main.py' if prototype else 'prepis.py'))],
+    [str(source / ('prototype_qml/main.py' if prototype else 'qml_main.py' if qt_app else 'prepis.py'))],
     pathex=[str(source)],
     binaries=binaries,
     datas=datas,
@@ -59,18 +66,22 @@ a = Analysis(
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
-    excludes=['tensorflow'] + (['torch', 'transformers'] if basic else []) + ([] if prototype else ['PySide6', 'shiboken6', 'prototype_qml']),
+    excludes=['tensorflow'] + (['torch', 'transformers'] if basic else []) + ([] if prototype or qt_app else ['PySide6', 'shiboken6']) + ([] if prototype else ['prototype_qml']),
     noarchive=False,
     optimize=0,
 )
 pyz = PYZ(a.pure)
 
-from version import DISPLAY_VERSION, WINDOWS_VERSION
+from version import DISPLAY_VERSION, WINDOWS_VERSION, PRERELEASE
 from PyInstaller.config import CONF
 version_path = Path(CONF['workpath']) / 'version_info.txt'
 version_path.parent.mkdir(parents=True, exist_ok=True)
 version_path.write_text((Path(SPECPATH) / 'version_info.template').read_text(encoding='utf-8')
-                       .replace('@VERSION@', DISPLAY_VERSION).replace('@WINDOWS_VERSION@', repr(WINDOWS_VERSION)), encoding='utf-8')
+                       .replace('@VERSION@', DISPLAY_VERSION).replace('@WINDOWS_VERSION@', repr(WINDOWS_VERSION))
+                       .replace('@VERSION_FLAGS@', '0x2' if PRERELEASE else '0x0'), encoding='utf-8')
+manifest_path = Path(CONF['workpath']) / 'transkripthor.manifest'
+manifest_path.write_text((Path(SPECPATH) / 'transkripthor.manifest').read_text(encoding='utf-8')
+                         .replace('@ASSEMBLY_VERSION@', '.'.join(map(str, WINDOWS_VERSION))), encoding='utf-8')
 
 exe = EXE(
     pyz,
@@ -85,7 +96,7 @@ exe = EXE(
     console=False,
     version=str(version_path),
     icon=str(source / 'assets/transkripthor.ico'),
-    manifest=str(Path(SPECPATH) / 'transkripthor.manifest'),
+    manifest=str(manifest_path),
     disable_windowed_traceback=False,
     argv_emulation=False,
     target_arch=None,

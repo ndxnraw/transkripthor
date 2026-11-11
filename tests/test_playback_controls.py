@@ -144,12 +144,13 @@ class PlaybackEditorTest(unittest.TestCase):
                         e.playback_settings()
                     window = next(w for w in e.window.winfo_children() if isinstance(w, tk.Toplevel))
                     self.root.update()
-                    fields = [w for w in window.winfo_children()[0].winfo_children() if isinstance(w, ttk.Combobox)]
+                    fields = [w for w in window.dialog_panel.content.winfo_children() if isinstance(w, ttk.Combobox)]
                     fields[0].current(1); fields[1].current(2)
                     for field in fields:
                         self.assertTrue(field.winfo_ismapped())
                         self.assertLessEqual(field.winfo_rootx()+field.winfo_width(), window.winfo_rootx()+window.winfo_width())
-                    button = next(w for w in window.winfo_children()[0].winfo_children() if isinstance(w, ttk.Button))
+                    button = next(w for w in window.dialog_panel.actions.winfo_children()
+                                  if isinstance(w, ttk.Button) and w['style']=='Accent.TButton')
                     button.invoke()
                     self.assertEqual(e.player.rate, 1.25)
                     self.assertEqual(e.player.device, device)

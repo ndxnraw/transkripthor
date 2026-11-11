@@ -9,13 +9,14 @@ import queue
 import threading
 from types import MappingProxyType
 from ndtranskripthor.core.ownership import Lease
-from ndtranskripthor.presentation.responsive import MessageView, FlowFrame
+from ndtranskripthor.presentation.responsive import MessageView, FlowFrame, DialogPanel
+from ndtranskripthor.presentation.tk_lifecycle import TkVariables
 import tkinter as tk
 from tkinter import ttk, messagebox, simpledialog, filedialog
 from ndtranskripthor.projects.project import Project, fingerprint
 from ndtranskripthor.audio.playback import Player, RATES, output_devices
 from ndtranskripthor.exports.subtitles import SubtitleOptions, timestamp
-from ndtranskripthor.presentation.ui import palette_for
+from ndtranskripthor.presentation.theme import palette_for
 from ndtranskripthor.projects.edit_history import EditHistory
 from ndtranskripthor.projects.transcript_search import occurrences
 from bisect import bisect_left, bisect_right
@@ -42,6 +43,7 @@ class Editor:
             self.project_lease = Lease(Path(folder)/'.project.lock')
         self.embedded = parent is not None
         self.window = tk.Frame(parent) if self.embedded else tk.Toplevel(app.root)
+        self.variables = TkVariables(self.window)
         self.window.bind('<Destroy>', lambda event: self.project_lease.close() if event.widget == self.window else None, add='+')
         if self.embedded:
             app.editor_empty.pack_forget()
@@ -82,25 +84,26 @@ class Editor:
         self.audio_busy = True
         outer = ttk.Frame(self.window, padding=8)
         outer.pack(fill='both', expand=True)
-        heading = ttk.Frame(outer)
+        heading = ttk.Frame(outer, style='Card.TFrame', padding=6)
         heading.pack(fill='x', pady=(0, 4))
-        self.saved_state = tk.StringVar(value=tr('editor.init.all_changes_saved'))
-        ttk.Label(heading, textvariable=self.saved_state, style='Muted.TLabel').pack(side='right')
+        self.saved_state = self.variables.string(value=tr('editor.init.all_changes_saved'))
+        self.saved_badge = ttk.Label(heading, textvariable=self.saved_state, style='Status.TLabel')
+        self.saved_badge.pack(side='right', padx=(6, 0))
         self.source_suffix = '' if original_available else tr('editor.init.original_transcript_cannot_be_verified')
-        self.source_name = tk.StringVar(value=Path(self.source).name + self.source_suffix)
-        self.audio_status = tk.StringVar(value=tr('project.audio_checking'))
-        self.source_info = tk.StringVar()
+        self.source_name = self.variables.string(value=Path(self.source).name + self.source_suffix)
+        self.audio_status = self.variables.string(value=tr('project.audio_checking'))
+        self.source_info = self.variables.string()
         def update_source_info(*_):
-            self.source_info.set(self.audio_status.get() + '\n' + self.source_name.get())
+            self.source_info.set(self.source_name.get() + ' — ' + self.audio_status.get())
         self.audio_status.trace_add('write', update_source_info)
         self.source_name.trace_add('write', update_source_info)
         update_source_info()
-        self.source_label = MessageView(heading, app, textvariable=self.source_info, lines=1)
+        self.source_label = MessageView(heading, app, textvariable=self.source_info, lines=1, surface='card')
         self.source_label.pack(side='left', fill='x', expand=True)
-        toolbar = ttk.Frame(outer)
-        toolbar.pack(fill='x')
-        self.query = tk.StringVar()
-        ttk.Label(toolbar, text=tr('accessibility.search')).pack(side='left', padx=(0, 4))
+        toolbar = ttk.Frame(outer, style='Card.TFrame', padding=(6, 4))
+        toolbar.pack(fill='x', pady=(0, 4))
+        self.query = self.variables.string()
+        ttk.Label(toolbar, text=tr('accessibility.search'), style='CardMuted.TLabel').pack(side='left', padx=(0, 4))
         search = ttk.Entry(toolbar, textvariable=self.query)
         self.search_entry = search
         search.pack(side='left', fill='x', expand=True)
@@ -112,24 +115,26 @@ class Editor:
         self.match_menu.add_command(label=tr('search.previous'), accelerator='Shift+F3', command=lambda: self.next_match(-1))
         match_button.configure(menu=self.match_menu)
         match_button.pack(side='left')
-        ttk.Button(toolbar, width=0, padding=(8, 2), text=tr('exports.save_project'), style='Accent.TButton', command=self.save).pack(side='right', padx=(8, 0))
+        self.save_button = ttk.Button(toolbar, width=0, padding=(8, 2), text=tr('exports.save_project'), style='Accent.TButton', command=self.save)
+        self.save_button.pack(side='right', padx=(8, 0))
         # Pack fixed controls first so they remain accessible at minimum size.
-        bottom = ttk.Frame(outer)
+        bottom = ttk.Frame(outer, style='Card.TFrame', padding=6)
         bottom.pack(side='bottom', fill='x')
-        self.status = tk.StringVar(value=tr('editor.init.preparing_audio_selecting_a_segment_does_not_start_playback'))
-        self.status_label = MessageView(bottom, app, textvariable=self.status, lines=1)
+        self.status = self.variables.string(value=tr('editor.init.preparing_audio_selecting_a_segment_does_not_start_playback'))
+        self.status_label = MessageView(bottom, app, textvariable=self.status, lines=1, surface='card')
         self.status_label.pack(side='bottom', fill='x', pady=2)
-        self.export_state = tk.StringVar(value=tr('editor.init.export_has_not_been_saved_yet') if not export_request else
+        self.export_state = self.variables.string(value=tr('editor.init.export_has_not_been_saved_yet') if not export_request else
             (tr('editor.init.txt_srt_export_complete') if export_request['state'] == 'complete' else tr('editor.init.project_saved_export_is_pending')))
         if bundle_request:
             source = tr('exports.original') if bundle_request['view'] == 'original' else tr('exports.revision', id=bundle_request['revision'])
             self.export_state.set(source+' — '+tr('exports.done' if bundle_request['state'] == 'complete' else 'exports.incomplete'))
-        export_bar = ttk.Frame(bottom)
+        export_bar = ttk.Frame(bottom, style='Card.TFrame')
         export_bar.pack(side='bottom', fill='x')
         ttk.Button(export_bar, width=0, padding=(8, 2), text=tr('editor.init.retry_export'), command=self.retry_export).pack(side='right')
         ttk.Button(export_bar, width=0, padding=(8, 2), text=tr('editor.init.open_export'), command=self.open_export).pack(side='right', padx=4)
-        ttk.Label(export_bar, textvariable=self.export_state, style='Muted.TLabel').pack(side='left')
-        playback = FlowFrame(bottom)
+        self.export_label = MessageView(export_bar, app, textvariable=self.export_state, lines=1, surface='card')
+        self.export_label.pack(side='left', fill='x', expand=True)
+        playback = FlowFrame(bottom, style='Card.TFrame')
         playback.pack(fill='x', pady=4)
         details_toggle = ttk.Menubutton(heading, width=0, padding=(8, 2), text=tr('editor.init.segment_and_subtitles'))
         self.project_menu = tk.Menu(details_toggle, tearoff=False)
@@ -143,24 +148,24 @@ class Editor:
         self.project_menu.add_command(label=tr('exports.options'), command=self.export_dialog)
         details_toggle.configure(menu=self.project_menu)
         details_toggle.pack(side='right', padx=(4, 0))
-        self.details = ttk.Frame(bottom)
+        self.details = ttk.Frame(bottom, style='Card.TFrame')
         from ndtranskripthor.presentation.transcript_blocks import TranscriptBlocks
         self.tree = TranscriptBlocks(outer, self)
         self.tree.pack(fill='both', expand=True, pady=(8, 0))
-        pages = ttk.Frame(bottom)
+        pages = ttk.Frame(bottom, style='Card.TFrame')
         pages.pack(fill='x')
         ttk.Button(pages, width=0, padding=(8, 2), text=tr('editor.init.previous_segments'), command=lambda: self.change_page(-1)).pack(side='left')
         ttk.Button(pages, width=0, padding=(8, 2), text=tr('editor.init.next_segments'), command=lambda: self.change_page(1)).pack(side='left', padx=5)
         ttk.Button(pages, width=0, padding=(8, 2), text=tr('editor.undo'), command=self.undo).pack(side='left', padx=4)
         ttk.Button(pages, width=0, padding=(8, 2), text=tr('editor.redo'), command=self.redo).pack(side='left')
-        self.page_label = tk.StringVar()
-        MessageView(pages, app, textvariable=self.page_label, lines=1).pack(side='right', fill='x', expand=True)
+        self.page_label = self.variables.string()
+        MessageView(pages, app, textvariable=self.page_label, lines=1, surface='card').pack(side='right', fill='x', expand=True)
         # Replaced by an inline Text when a block is selected.
         self.text = tk.Text(self.window)
-        voice = FlowFrame(self.details)
+        voice = FlowFrame(self.details, style='Card.TFrame')
         voice.pack(fill='x')
-        ttk.Label(voice, text=tr('editor.init.segment_speaker')).pack(side='left')
-        self.speaker = tk.StringVar()
+        ttk.Label(voice, text=tr('editor.init.segment_speaker'), style='CardMuted.TLabel').pack(side='left')
+        self.speaker = self.variables.string()
         self.speaker_entry = ttk.Combobox(voice, textvariable=self.speaker, width=12,
                                         postcommand=self.refresh_speaker_choices)
         self.speaker_entry.pack(side='left')
@@ -169,16 +174,16 @@ class Editor:
         self.speaker_button = ttk.Button(voice, width=0, padding=(8, 2), text=tr('editor.init.group_similar_voices'), command=self.diarize)
         self.speaker_button.pack(side='right')
         self.speaker_button.configure(state='disabled')
-        voice_info = ttk.Frame(self.details)
+        voice_info = ttk.Frame(self.details, style='Card.TFrame')
         voice_info.pack(fill='x')
         ttk.Button(voice_info, width=0, padding=(8, 2), text=tr('voices.help_title'), command=self.voice_help).pack(side='right')
-        self.voice_status = tk.StringVar(value=tr('voices.checking'))
-        MessageView(voice_info, app, textvariable=self.voice_status, lines=1).pack(side='left', fill='x', expand=True)
+        self.voice_status = self.variables.string(value=tr('voices.checking'))
+        MessageView(voice_info, app, textvariable=self.voice_status, lines=1, surface='card').pack(side='left', fill='x', expand=True)
         self.details.bind('<Map>', lambda event: self.refresh_voice_availability() if event.widget == self.details else None)
         ttk.Button(playback, width=0, padding=(8, 2), text=tr('editor.init.segment'), command=self.play_segment).pack(side='left')
         ttk.Button(playback, width=0, padding=(8, 2), text=tr('editor.init.resume'), command=self.play).pack(side='left')
         ttk.Button(playback, width=0, padding=(8, 2), text=tr('editor.init.pause'), command=self.player.pause).pack(side='left')
-        self.position = tk.DoubleVar(value=0)
+        self.position = self.variables.double(value=0)
         self.slider = ttk.Scale(playback, variable=self.position, from_=0, to=1)
         playback.stretch = self.slider
         self.slider.pack(side='left', fill='x', expand=True, padx=8)
@@ -187,23 +192,24 @@ class Editor:
         self.slider.bind('<ButtonRelease-1>', self.seek)
         for key, delta in (('<Left>', -5), ('<Right>', 5)):
             self.slider.bind(key, lambda event, amount=delta: self.keyboard_seek(amount))
-        self.clock = tk.StringVar(value='00:00:00,000')
-        ttk.Label(playback, textvariable=self.clock).pack(side='right')
-        subtitle = FlowFrame(self.details)
+        self.clock = self.variables.string(value='00:00:00,000')
+        ttk.Label(playback, textvariable=self.clock, style='CardMuted.TLabel').pack(side='right')
+        subtitle = FlowFrame(self.details, style='Card.TFrame')
         subtitle.pack(fill='x')
         self.cue_values = []
         for label, default in [(tr('editor.labels.chars_line'), subtitle_options.characters),
                 (tr('editor.labels.lines'), subtitle_options.lines),
                 (tr('editor.init.min_seconds'), subtitle_options.min_duration),
                 (tr('editor.init.max_seconds'), subtitle_options.max_duration)]:
-            ttk.Label(subtitle, text=label).pack(side='left', padx=(0, 4))
-            value = tk.StringVar(value=str(default))
+            ttk.Label(subtitle, text=label, style='CardMuted.TLabel').pack(side='left', padx=(0, 4))
+            value = self.variables.string(value=str(default))
             ttk.Entry(subtitle, textvariable=value, width=4).pack(side='left', padx=(0, 10))
             self.cue_values.append(value)
         self.saved_cue_values = tuple(value.get() for value in self.cue_values)
         for value in self.cue_values:
             value.trace_add('write', self.subtitle_changed)
         self.window.bind('<Configure>', lambda event: self.status_label.configure(wraplength=max(200, event.width-32)) if event.widget == self.window else None)
+        app.theme_manager.watch(self.window, self.apply_theme)
         self.apply_theme()
         self.render()
         self.bind_keys(self.window)
@@ -280,21 +286,15 @@ class Editor:
 
     def apply_theme(self):
         palette = palette_for(self.app)
-        self.project_menu.configure(bg=palette['field'], fg=palette['text'],
-            activebackground=palette['info'], activeforeground=palette['text'], font=(self.app.font, 10))
-        self.match_menu.configure(bg=palette['field'], fg=palette['text'],
-            activebackground=palette['info'], activeforeground=palette['text'], font=(self.app.font, 10))
-        self.window.configure(bg=palette['bg'])
+        manager = self.app.theme_manager
+        manager.style_menu(self.project_menu)
+        manager.style_menu(self.match_menu)
+        manager.style_widget(self.window)
         if self.text.winfo_exists():
-            self.text.configure(bg=palette['field'], fg=palette['text'], insertbackground=palette['text'],
-                                selectbackground=palette['blue'], selectforeground=palette['accent_text'],
-                                highlightbackground=palette['border'], highlightcolor=palette['blue'])
+            manager.style_text(self.text)
             self.text.tag_configure('search_match', background=palette['info'], foreground=palette['text'], underline=True)
             self.text.tag_configure('search_active', background=palette['blue'], foreground=palette['accent_text'], underline=True)
-        self.tree.canvas.configure(bg=palette['bg'])
-        if not self.embedded:
-            from ndtranskripthor.presentation.window_style import titlebar
-            self.window.after_idle(lambda: titlebar(self.window, self.app.theme == 'dark', palette['bg'], palette['text']))
+        manager.style_widget(self.tree.canvas)
 
     def mark_dirty(self):
         self.dirty = True
@@ -588,27 +588,30 @@ class Editor:
             devices.append(self.player.device)
         window = tk.Toplevel(self.window)
         window.title(tr('playback.settings'))
-        body = ttk.Frame(window, padding=16)
-        body.pack(fill='both', expand=True)
-        ttk.Label(body, text=tr('playback.output')).pack(anchor='w')
+        window.transient(self.window.winfo_toplevel())
+        panel = DialogPanel(window, tr('playback.settings'))
+        body = panel.content
+        ttk.Label(body, text=tr('playback.output'), style='CardMuted.TLabel').pack(anchor='w')
         output = ttk.Combobox(body, state='readonly', width=45,
             values=[tr('playback.default')]+[f'{d[1]} ({d[3]})' for d in devices[1:]])
         output.pack(fill='x', pady=4)
         output.current(devices.index(self.player.device) if self.player.device in devices else 0)
-        ttk.Label(body, text=tr('playback.speed')).pack(anchor='w')
+        ttk.Label(body, text=tr('playback.speed'), style='CardMuted.TLabel').pack(anchor='w')
         rate = ttk.Combobox(body, state='readonly', values=[f'{r:g}×' for r in RATES])
         rate.current(RATES.index(self.player.rate))
         rate.pack(fill='x', pady=4)
-        ttk.Label(body, text=tr('playback.help'), wraplength=380).pack(fill='x', pady=8)
+        panel.message(tr('playback.help')).pack(fill='x', pady=8)
         def apply():
             try:
                 self.player.configure(RATES[rate.current()], devices[output.current()])
             except Exception as exc:
                 self.status.set(tr('editor.play.playback_unavailable', p0=exc))
             window.destroy()
-        ttk.Button(body, text=tr('playback.apply'), command=apply).pack(anchor='e')
+        ttk.Button(panel.actions, text=tr('error.close'), command=window.destroy).pack(side='left')
+        ttk.Button(panel.actions, text=tr('playback.apply'), style='Accent.TButton', command=apply).pack(side='left')
         window.bind('<Escape>', lambda event: window.destroy())
         output.focus_set()
+        panel.fit()
 
     def change_structure(self, operation, *, offset=None, seconds=None, start=None, end=None):
         from ndtranskripthor.projects.segment_edit import split, merge, validate
@@ -686,17 +689,20 @@ class Editor:
             return
         window = tk.Toplevel(self.window)
         window.title(tr('exports.options'))
-        body = ttk.Frame(window, padding=12); body.pack(fill='both', expand=True)
-        ttk.Label(body, text=tr('exports.source')).pack(anchor='w')
+        window.transient(self.window.winfo_toplevel())
+        panel = DialogPanel(window, tr('exports.options'))
+        variables = TkVariables(window)
+        body = panel.content
+        ttk.Label(body, text=tr('exports.source'), style='CardMuted.TLabel').pack(anchor='w')
         source = ttk.Combobox(body, state='readonly', values=[tr('exports.original') if v == 'original' else tr('exports.revision', id=r) for v,r in sources])
         source.current(0); source.pack(fill='x')
-        selected = {f:tk.BooleanVar(value=f in ('txt','srt')) for f in FORMATS}
+        selected = {f:variables.boolean(value=f in ('txt','srt')) for f in FORMATS}
         for format, variable in selected.items():
             ttk.Checkbutton(body, text=format.upper(), variable=variable).pack(anchor='w')
-        times, speakers = tk.BooleanVar(value=False), tk.BooleanVar(value=False)
+        times, speakers = variables.boolean(value=False), variables.boolean(value=False)
         ttk.Checkbutton(body, text=tr('exports.times'), variable=times).pack(anchor='w')
         ttk.Checkbutton(body, text=tr('exports.speakers'), variable=speakers).pack(anchor='w')
-        ttk.Label(body, text=tr('exports.help'), wraplength=360).pack(fill='x', pady=8)
+        ttk.Label(body, text=tr('exports.help'), style='CardMuted.TLabel', wraplength=360).pack(fill='x', pady=8)
         def run():
             try:
                 options = ExportOptions(tuple(f for f,v in selected.items() if v.get()), times.get(), speakers.get())
@@ -706,9 +712,11 @@ class Editor:
                 window.destroy()
             except Exception as exc:
                 messagebox.showerror(tr('exports.options'), str(exc), parent=window)
-        ttk.Button(body, text=tr('exports.run'), command=run).pack(anchor='e')
+        ttk.Button(panel.actions, text=tr('error.close'), command=window.destroy).pack(side='left')
+        ttk.Button(panel.actions, text=tr('exports.run'), style='Accent.TButton', command=run).pack(side='left')
         window.bind('<Escape>', lambda event: window.destroy())
         source.focus_set()
+        panel.fit()
 
     def save(self):
         if self.io_busy:

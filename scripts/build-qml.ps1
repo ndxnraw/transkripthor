@@ -1,6 +1,6 @@
 param()
 # Stable build is a mandatory full regression gate, including its new Windows EXE.
-& "$PSScriptRoot/build.ps1"
+& "$PSScriptRoot/build.ps1" -Frontend tk
 & "$PSScriptRoot/test-qml.ps1"
 . "$PSScriptRoot/common.ps1"
 Invoke-ProjectPython -Arguments @((Join-Path $PSScriptRoot 'freeze.py'),'--noconfirm','--clean','--distpath',(Join-Path $ProjectRoot 'dist'),'--workpath',(Join-Path $ProjectRoot 'build/qml'),(Join-Path $ProjectRoot 'packaging/QmlTesting.spec'))

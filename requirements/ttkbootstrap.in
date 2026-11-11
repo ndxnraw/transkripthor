@@ -1,0 +1,2 @@
+# Optional phase-one UI prototype; stable Tk entry point remains unchanged.
+ttkbootstrap==2.2.7

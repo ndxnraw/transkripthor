@@ -1,6 +1,8 @@
 # ND TranskripThor – pravidlá práce
 
-- Podporovaná platforma je Windows x64, Python 3.12 s Tk. Neobnovovať Linux
+- Podporovaná platforma je Windows x64, Python 3.12 s Qt Quick/QML.
+  Od Release v1 je QML hlavné rozhranie; Tk zostáva pre historické regresie.
+  Projektový Python preto naďalej obsahuje Tcl/Tk. Neobnovovať Linux
   ani odstránené ASR backendy. Zachovať faster-whisper a slovenský KInIT.
 - `src/` je jediný zdroj aplikácie; `src/assets/` a `src/locales/` patria
   do EXE. `tests/` obsahuje všetky regresie; `packaging/` balenie;

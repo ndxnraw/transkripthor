@@ -72,6 +72,9 @@ class DesktopTest(unittest.TestCase):
 
     @unittest.skipUnless(sys.platform == 'win32', 'Native Windows painting')
     def test_native_painting_survives_window_restore_and_theme_changes(self):
+        path = Path(self.folder.name)/'Painting fixture.wav'
+        path.write_bytes(b'UI fixture, not ASR audio')
+        self.app.accept_files([str(path)])
         from ctypes import wintypes
         from ndtranskripthor.presentation.window_style import titlebar
         user = ctypes.windll.user32
@@ -177,6 +180,5 @@ class ScalingTest(unittest.TestCase):
                                 inspect(child)
                         inspect(window)
                 finally:
-                    for timer in window.tk.splitlist(window.tk.call('after', 'info')):
-                        window.after_cancel(timer)
-                    window.destroy()
+                    from test_studio import destroy_window
+                    destroy_window(window)

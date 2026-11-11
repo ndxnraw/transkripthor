@@ -6,9 +6,9 @@ from tkinter import ttk, filedialog
 from ndtranskripthor.core.i18n import tr
 from ndtranskripthor.core.app_errors import classify
 from ndtranskripthor.presentation.error_dialog import show_error
-from ndtranskripthor.presentation.responsive import FlowFrame
+from ndtranskripthor.presentation.responsive import FlowFrame, MessageView, DialogPanel
 from ndtranskripthor.presentation.accessibility import text_navigation
-from ndtranskripthor.presentation.ui import palette_for
+from ndtranskripthor.presentation.tk_lifecycle import TkVariables
 from ndtranskripthor.application.local_data import inventory, diagnostic_snapshot, save_bundle, NOTICE
 
 
@@ -16,28 +16,29 @@ class DataDialog:
     def __init__(self, app):
         self.app = app
         self.window = tk.Toplevel(app.root)
+        self.variables = TkVariables(self.window)
         self.window.title(tr('data.title'))
         self.window.transient(app.root)
         self.window.protocol('WM_DELETE_WINDOW', self.close)
         self.window.geometry(f'{min(900, app.root.winfo_screenwidth()-60)}x{min(650, app.root.winfo_screenheight()-80)}')
+        panel = DialogPanel(self.window, tr('data.title'))
         self.events = queue.Queue()
         self.stop = threading.Event()
         self.saving = False
         self.snapshot = None
         self.rows = []
-        actions = FlowFrame(self.window)
-        actions.pack(side='bottom', fill='x', padx=12, pady=8)
+        actions = panel.actions
         self.refresh_button = ttk.Button(actions, text=tr('data.refresh'), command=self.refresh)
         self.refresh_button.pack(side='left', padx=4)
         self.preview_button = ttk.Button(actions, text=tr('data.preview'), command=self.preview, state='disabled')
         self.preview_button.pack(side='left', padx=4)
-        self.save_button = ttk.Button(actions, text=tr('data.save'), command=self.save, state='disabled')
+        self.save_button = ttk.Button(actions, style='Accent.TButton', text=tr('data.save'), command=self.save, state='disabled')
         self.save_button.pack(side='left', padx=4)
         ttk.Button(actions, text=tr('error.close'), command=self.close).pack(side='left', padx=4)
-        self.status = tk.StringVar()
-        ttk.Label(self.window, textvariable=self.status, wraplength=600).pack(side='bottom', fill='x', padx=12)
-        self.tabs = ttk.Notebook(self.window)
-        self.tabs.pack(fill='both', expand=True, padx=12, pady=12)
+        self.status = self.variables.string()
+        MessageView(panel.content, app, textvariable=self.status, lines=1, surface='card').pack(side='bottom', fill='x', pady=(8, 0))
+        self.tabs = ttk.Notebook(panel.content)
+        self.tabs.pack(fill='both', expand=True)
         self.tabs.enable_traversal()
         self.overview = self.text_page(tr('data.overview'))
         self.preview_text = self.text_page(tr('data.preview'))
@@ -57,9 +58,8 @@ class DataDialog:
         return text
 
     def display(self, widget, value):
-        colors = palette_for(self.app)
-        widget.configure(state='normal', bg=colors['field'], fg=colors['text'], insertbackground=colors['text'],
-                         selectbackground=colors['blue'], selectforeground=colors['accent_text'])
+        self.app.theme_manager.style_text(widget)
+        widget.configure(state='normal')
         widget.delete('1.0', 'end')
         widget.insert('1.0', value)
         widget.configure(state='disabled')
@@ -78,12 +78,13 @@ class DataDialog:
         args = (self.app.store.folder, self.app.cache, self.app.output.get(), projects, self.stop)
         states = [item.get('state') for item in self.app.items]
         offline = self.app.offline.get()
+        events = self.events
         def run():
             try:
                 rows = inventory(*args)
-                self.events.put(('inventory', (rows, diagnostic_snapshot(rows, states, offline))))
+                events.put(('inventory', (rows, diagnostic_snapshot(rows, states, offline))))
             except Exception as exc:
-                self.events.put(('error', classify(exc, 'disk')))
+                events.put(('error', classify(exc, 'disk')))
         threading.Thread(target=run, daemon=True).start()
 
     def preview(self):
@@ -107,12 +108,13 @@ class DataDialog:
         self.status.set(tr('data.saving'))
         for button in (self.save_button, self.refresh_button, self.preview_button):
             button.configure(state='disabled')
+        events = self.events
         def run():
             try:
                 save_bundle(destination, snapshot)
-                self.events.put(('saved', None))
+                events.put(('saved', None))
             except Exception as exc:
-                self.events.put(('error', classify(exc, 'disk')))
+                events.put(('error', classify(exc, 'disk')))
         threading.Thread(target=run, daemon=False).start()
 
     def poll(self):

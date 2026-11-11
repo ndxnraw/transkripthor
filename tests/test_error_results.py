@@ -120,14 +120,13 @@ class ErrorUiTest(unittest.TestCase):
     def test_technical_details_are_collapsed_and_read_only(self):
         from ndtranskripthor.presentation.error_dialog import show_error
         from tkinter import Toplevel, Text
-        show_error(self.root, 'Fixture', classify(PermissionError('fixture details')))
-        window = next(w for w in self.root.winfo_children() if isinstance(w, Toplevel))
-        body = next(w for w in window.winfo_children() if any(isinstance(c, Text) for c in w.winfo_children()))
+        window = show_error(self.root, 'Fixture', classify(PermissionError('fixture details')))
+        text = window.details_text
+        body = text.master
         self.assertEqual(body.winfo_manager(), '')
-        button = next(w for w in window.winfo_children() if 'text' in w.keys() and w['text'] == 'Technical details')
+        button = window.details_button
         button.invoke()
         self.assertEqual(body.winfo_manager(), 'pack')
-        text = next(w for w in body.winfo_children() if isinstance(w, Text))
         self.assertEqual(str(text['state']), 'disabled')
         self.assertIn('fixture details', text.get('1.0', 'end'))
         window.destroy()

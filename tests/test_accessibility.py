@@ -53,7 +53,7 @@ class AccessibilityTest(unittest.TestCase):
             self.key(e.text, '<Control-s>')
             save.assert_called_once()
             self.app.workspace_tabs.select(self.app.pages['settings'])
-            self.key(self.app.lang_box, '<Control-s>')
+            self.key(self.app.device_box, '<Control-s>')
             save.assert_called_once()
 
     def test_typing_tab_and_playback_guards(self):
@@ -97,7 +97,7 @@ class AccessibilityTest(unittest.TestCase):
         self.key(e.text, '<Shift-Tab>')
         self.assertEqual(self.root.focus_get(), previous)
         self.key(e.text, '<Control-Tab>')
-        self.assertEqual(self.app.workspace_tabs.select(), str(self.app.pages['models']))
+        self.assertEqual(self.app.workspace_tabs.select(), str(self.app.pages['recordings']))
 
     def test_contrast_and_system_palette_without_changing_windows(self):
         for palette in PALETTES.values():
@@ -112,7 +112,8 @@ class AccessibilityTest(unittest.TestCase):
             self.assertNotIn('.round', str(self.app.style.layout('TButton')))
         with patch('ndtranskripthor.presentation.accessibility.high_contrast_palette', return_value=None):
             apply_theme(self.app, 'light')
-            self.assertIn('light.Button.round', str(self.app.style.layout('TButton')))
+            self.assertEqual(self.app.style.theme_use(), 'thor-light')
+            self.assertEqual(self.app.style.lookup('TEntry', 'bordercolor', ('focus',)), PALETTES['light']['blue'])
             self.assertGreaterEqual(contrast(self.app.style.lookup('Accent.TButton', 'focuscolor'), PALETTES['light']['blue']), 3)
 
 

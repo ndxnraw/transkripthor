@@ -50,13 +50,13 @@ class TranscriptBlocks(ttk.Frame):
         self.headings.clear()
         for index in indices:
             item = self.editor.segments[index]
-            card = ttk.Frame(self.body, style='Panel.TFrame', padding=12)
+            card = ttk.Frame(self.body, style='Panel.TFrame', padding=10)
             card.pack(fill='x', pady=(0, 8), padx=2)
             heading = ttk.Label(card, text=self.metadata(item), style='CardMuted.TLabel')
             self.headings[str(index)] = heading
             heading.pack(anchor='w')
             content = ttk.Frame(card, style='Card.TFrame')
-            content.pack(fill='x', pady=(8, 0))
+            content.pack(fill='x', pady=(6, 0))
             label = ttk.Label(content, text=item['text'], style='Transcript.TLabel', wraplength=max(100, self.canvas.winfo_width()-48), takefocus=True)
             label.pack(fill='x')
             self.blocks[str(index)] = (card, content, label)

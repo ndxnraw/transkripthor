@@ -10,6 +10,7 @@ def check():
     import faster_whisper
     import sounddevice
     import tkinterdnd2
+    import ttkbootstrap
     print('Local model runtimes available; distribution:', 'basic' if basic else 'extended')
 
 if __name__ == '__main__':

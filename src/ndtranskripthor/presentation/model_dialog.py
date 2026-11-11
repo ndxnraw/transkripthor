@@ -7,6 +7,7 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 from ndtranskripthor.models.model_catalog import inventory, download, remove_model, verify_model
 from ndtranskripthor.presentation.responsive import MessageView, FlowFrame
+from ndtranskripthor.presentation.tk_lifecycle import TkVariables
 
 
 class ModelDialog:
@@ -14,6 +15,7 @@ class ModelDialog:
         self.app = app
         self.embedded = parent is not None
         self.window = tk.Frame(parent) if self.embedded else tk.Toplevel(app.root)
+        self.variables = TkVariables(self.window)
         if self.embedded:
             self.window.pack(fill='both', expand=True)
         else:
@@ -23,19 +25,16 @@ class ModelDialog:
         scale = max(1,app.root.winfo_fpixels('1i')/96)
         if not self.embedded:
             self.window.geometry(f'{min(round(1000*scale),app.root.winfo_screenwidth()-40)}x{min(round(450*scale),app.root.winfo_screenheight()-80)}+20+20')
-        from ndtranskripthor.presentation.ui import palette_for
-        from ndtranskripthor.presentation.window_style import titlebar
-        palette = palette_for(app)
-        self.window.configure(bg=palette['bg'])
-        if not self.embedded:
-            self.window.after_idle(lambda: titlebar(self.window,app.theme=='dark',palette['bg'],palette['text']))
+        app.theme_manager.style_widget(self.window)
         self.events = queue.Queue()
         self.stop = threading.Event()
         self.busy = False
         self.refresh_pending = False
-        actions = FlowFrame(self.window)
+        actions = FlowFrame(self.window, style='Card.TFrame')
         actions.pack(side='bottom', fill='x', padx=12, pady=6)
-        ttk.Label(self.window, text=tr('model_dialog.init.models_on_this_computer'), style='Title.TLabel').pack(anchor='w', padx=12, pady=12)
+        header = ttk.Frame(self.window, style='Card.TFrame', padding=(8, 6))
+        header.pack(fill='x', padx=12, pady=(6, 8))
+        ttk.Label(header, text=tr('model_dialog.init.models_on_this_computer'), style='Section.TLabel').pack(anchor='w')
         self.tree = ttk.Treeview(self.window, columns=('state', 'size'), height=9)
         self.tree.heading('#0', text=tr('model_dialog.init.model'))
         for key, text in [('state', tr('model_dialog.init.local_availability')), ('size', tr('model_dialog.labels.size'))]:
@@ -44,19 +43,19 @@ class ModelDialog:
         self.tree.column('state', width=round(150*scale), stretch=False)
         self.tree.column('size', width=round(100*scale), stretch=False)
         self.tree.pack(fill='both', expand=True, padx=12, pady=12)
-        self.description = tk.StringVar(value=tr('model_dialog.init.select_a_model_normal_transcription_does_not_require_a'))
+        self.description = self.variables.string(value=tr('model_dialog.init.select_a_model_normal_transcription_does_not_require_a'))
         self.description_label = MessageView(self.window, app, textvariable=self.description, lines=2)
         self.description_label.pack(fill='x', padx=12, pady=8)
         self.tree.bind('<<TreeviewSelect>>', self.select)
         self.buttons = []
         for label, command in [(tr('model_dialog.init.download'), self.download), (tr('integrity.verify'), self.verify), (tr('model_dialog.init.remove'), self.remove), (tr('model_dialog.init.refresh'), self.refresh), (tr('pcm.release_model'), self.release_model)]:
-            button = ttk.Button(actions, text=label, command=command)
+            button = ttk.Button(actions, style='Secondary.TButton' if command == self.download else 'TButton', text=label, command=command)
             button.pack(side='left', padx=4)
             self.buttons.append(button)
-        ttk.Button(actions, text=tr('model_dialog.init.stop_download'), command=self.stop.set).pack(side='right')
+        ttk.Button(actions, style='Stop.TButton', text=tr('model_dialog.init.stop_download'), command=self.stop.set).pack(side='right')
         self.progress = ttk.Progressbar(self.window, mode='indeterminate')
         self.progress.pack(fill='x', padx=12, pady=(8, 0))
-        self.status = tk.StringVar(value=tr('model_dialog.init.reading_local_cache'))
+        self.status = self.variables.string(value=tr('model_dialog.init.reading_local_cache'))
         MessageView(self.window, app, textvariable=self.status, lines=3).pack(fill='x', padx=12, pady=6)
         self.refresh()
         self.poll_timer = self.window.after(100, self.poll)

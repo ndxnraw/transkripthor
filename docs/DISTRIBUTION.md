@@ -1,3 +1,31 @@
+# Distribúcia Release v1
+
+Hlavné vydanie je **Release v1 (1.0.0)**, QML/Qt Quick, Windows x64,
+plný variant s faster-whisper aj podporou KInIT. Modelové váhy sa nepribaľujú.
+[Stiahnutie](https://github.com/ndxnraw/TranskripThor/releases/tag/v1).
+Súkromný repozitár vyžaduje prístup aj pri sťahovaní vydania.
+
+Pred publikovaním sa zostaví presný commit z čistého klonu cez
+`build.ps1 -OutputDirectory dist`. Všetky regresie a produkčné Qt scenáre
+musia prejsť bez preskočenia. `package.py --release-tag v1` vyžaduje čistý
+commit zhodný s overeným manifestom. `verify_distribution.py --startup`
+overí SHA-256 každého člena ZIPu, rozbalí ho a spustí správny QML verifier.
+
+Publikuje sa celý `ND-TranskripThor-v1-Windows-x64.zip` a jeho `.sha256`.
+ZIP obsahuje úplný priečinok aplikácie vrátane `_internal`, licenčné texty,
+verzie knižníc a build/distribution manifesty. Neobsahuje profil, nahrávky,
+projekty, exporty, váhy, tokeny ani súkromné logy. Používateľovi stačí
+rozbaliť celý archív a otvoriť EXE; Python sa neinštaluje.
+
+Inventár licencií otvorene ponecháva nevykonané právne/čisté Windows
+kontroly; zverejnenie Release v1 nie je tvrdenie o digitálnom podpise ani
+úplnom právnom preverení. Binárka nie je digitálne podpísaná. Historické
+odseky nižšie sa týkajú starších Tk kandidátov, nie aktuálneho rozhrania.
+
+---
+
+## Historický distribučný postup pred Release v1
+
 # Windows distribučný kandidát – Pre-release
 
 Tento postup nevytvára tag ani GitHub Release. Distribúcia používa stabilné

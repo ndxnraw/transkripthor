@@ -27,6 +27,9 @@ jobs:
       - name: All regression tests (no skipped tests)
         shell: pwsh
         run: ./scripts/test.ps1
+      - name: Production QML scenarios
+        shell: pwsh
+        run: ./scripts/test-qt.ps1
   build:
     if: github.event_name == 'workflow_dispatch' && inputs.build
     runs-on: windows-latest
@@ -40,4 +43,4 @@ jobs:
       - shell: pwsh
         run: ./scripts/setup.ps1 -Mode build -Python (Get-Command python).Source
       - shell: pwsh
-        run: ./scripts/build.ps1
+        run: ./scripts/build.ps1 -OutputDirectory dist

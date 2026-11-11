@@ -21,6 +21,8 @@ def text_navigation(widget):
 def cycle_tab(event, direction):
     parent = event.widget.master
     while parent is not None:
+        if hasattr(parent, 'cycle'):
+            return parent.cycle(direction)
         if parent.winfo_class() == 'TNotebook':
             tabs = [tab for tab in parent.tabs() if parent.tab(tab, 'state') == 'normal']
             if tabs:
