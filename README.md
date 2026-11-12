@@ -14,8 +14,6 @@ Rozbaľte celý ZIP a spustite **ND TranskripThor.exe**. Priečinok `_internal` 
 
 Pri prvom použití sa stiahne potrebný model. Potom môžete prepisovať aj offline.
 
-Na stiahnutie potrebujete prístup k tomuto súkromnému repozitáru.
-
 ## Použité projekty
 
 - Prepis: [Whisper](https://github.com/openai/whisper), [faster-whisper](https://github.com/SYSTRAN/faster-whisper), [CTranslate2](https://github.com/OpenNMT/CTranslate2), [Transformers](https://github.com/huggingface/transformers), [PyTorch](https://github.com/pytorch/pytorch), [Hugging Face Hub](https://github.com/huggingface/huggingface_hub).

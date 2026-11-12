@@ -10,7 +10,8 @@ Tag `v1.0.0` zostáva na vydanom commite `b10948e`; `main` môže pokračovať
 úpravami dokumentácie. README má stručnú slovenskú a anglickú verziu
 (`README.md`, `README.en.md`) s odkazmi na použité projekty. Verzia aplikácie
 ani vydaný balík sa tým nemenia.
-Repozitár zostáva súkromný; prístup k vydaniu a prílohám vyžaduje prístup k repozitáru.
+Repozitár je aktuálne verejný; v README sa už neuvádza potreba prístupu
+k súkromnému repozitáru. Odkazy na použité projekty boli overené cez GitHub.
 Pred publikovaním sa vyžaduje úplná regresia bez skipov, produkčné QML
 scenáre, nové Windows EXE z čistého klonu presného kandidáta, porovnanie
 modulov a zdrojov, rozbalenie ZIPu a štart rozbaleného EXE. Konkrétny

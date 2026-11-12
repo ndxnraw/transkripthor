@@ -14,8 +14,6 @@ Extract the entire ZIP and run **ND TranskripThor.exe**. Keep the `_internal` fo
 
 The required model downloads on first use. After that, you can transcribe offline.
 
-Access to this private repository is required to download the app.
-
 ## Projects used
 
 - Transcription: [Whisper](https://github.com/openai/whisper), [faster-whisper](https://github.com/SYSTRAN/faster-whisper), [CTranslate2](https://github.com/OpenNMT/CTranslate2), [Transformers](https://github.com/huggingface/transformers), [PyTorch](https://github.com/pytorch/pytorch), [Hugging Face Hub](https://github.com/huggingface/huggingface_hub).
