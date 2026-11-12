@@ -6,12 +6,13 @@ from PyInstaller.utils.hooks import collect_data_files, copy_metadata
 root = Path(SPECPATH).resolve().parent
 source = root / 'src'
 sys.path.insert(0, str(source))
-from version import DISPLAY_VERSION, WINDOWS_VERSION
+from version import DISPLAY_VERSION, WINDOWS_VERSION, PRERELEASE
 from PyInstaller.config import CONF
 version_path = Path(CONF['workpath']) / 'version_info.txt'
 version_path.parent.mkdir(parents=True, exist_ok=True)
 version_path.write_text((Path(SPECPATH) / 'version_info.template').read_text(encoding='utf-8')
                        .replace('@VERSION@', DISPLAY_VERSION).replace('@WINDOWS_VERSION@', repr(WINDOWS_VERSION))
+                       .replace('@VERSION_FLAGS@', '0x2' if PRERELEASE else '0x0')
                        .replace('ND TranskripThor.exe', 'ND TranskripThor ttkbootstrap Preview.exe'), encoding='utf-8')
 a = Analysis([str(source / 'prototype_ttkbootstrap/main.py')], pathex=[str(source)],
              datas=[(str(source / 'assets'), 'assets'), (str(source / 'locales'), 'locales')]

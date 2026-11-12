@@ -1,7 +1,7 @@
 # ND TranskripThor – používateľský návod
 
 Tento návod opisuje **Release v1 (1.0.0)** s hlavným rozhraním QML/Qt Quick.
-[Stiahnuť vydanie](https://github.com/ndxnraw/TranskripThor/releases/tag/v1).
+[Stiahnuť vydanie](https://github.com/ndxnraw/TranskripThor/releases/tag/v1.0.0).
 Staršie Tk/Pre-release zostavy majú odlišné ovládanie.
 
 Hlavná obrazovka nemá karty. Pridanie nahrávok, jazyk, kvalita a spustenie

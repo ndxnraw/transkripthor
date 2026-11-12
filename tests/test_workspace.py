@@ -15,6 +15,9 @@ class WorkspaceTest(unittest.TestCase):
         self.addCleanup(self.temp.cleanup)
         self.root = tk.Tk()
         self.addCleanup(destroy_window, self.root)
+        # Tk's display scaling can survive an earlier interpreter on Windows.
+        # This action/theme fixture uses 100%; DPI matrices set their own scale.
+        self.root.tk.call('tk', 'scaling', 96 / 72)
         self.app = App(self.root, Path(self.temp.name)/'profile')
 
     def add_audio(self):
@@ -76,7 +79,8 @@ class WorkspaceTest(unittest.TestCase):
             self.assertEqual(app.status_view.text['background'], app.theme_manager.palette['card'])
             self.assertEqual(app.readiness_label.text['background'], app.theme_manager.palette['card'])
             for widget in (app.listbox, app.start_button, app.stop_button, app.context_button):
-                self.assertTrue(widget.winfo_ismapped())
+                self.assertTrue(widget.winfo_ismapped(),
+                                (str(widget), widget.winfo_geometry(), self.root.winfo_geometry()))
             self.assertLess(app.listbox.winfo_rooty(), app.processing_panel.winfo_rooty())
             self.assertLess(app.processing_panel.winfo_rooty(), app.run_panel.winfo_rooty())
             self.assertEqual(app.start_button['style'], 'Accent.TButton')

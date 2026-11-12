@@ -5,8 +5,8 @@ Qt Quick/QML, Windows x64. Autoritatívne označenie a Windows metadata sú
 v `src/version.py`; príznak Pre-release je vypnutý. Výslovná požiadavka
 používateľa na vydanie nahrádza predchádzajúci režim iba SYNC.
 
-[Release v1 a stiahnutie](https://github.com/ndxnraw/TranskripThor/releases/tag/v1).
-Tag `v1` má ukazovať na rovnaký overený commit ako `main`. Repozitár zostáva
+[Release v1 a stiahnutie](https://github.com/ndxnraw/TranskripThor/releases/tag/v1.0.0).
+Tag `v1.0.0` má ukazovať na rovnaký overený commit ako `main`. Repozitár zostáva
 súkromný; prístup k vydaniu a prílohám vyžaduje prístup k repozitáru.
 Pred publikovaním sa vyžaduje úplná regresia bez skipov, produkčné QML
 scenáre, nové Windows EXE z čistého klonu presného kandidáta, porovnanie
@@ -15,6 +15,23 @@ commit, aktuálne počty/výsledky a SHA-256 balíka uvádzajú poznámky GitHub
 Release; priložené build/distribution manifesty identifikujú presné vstupy.
 Nasledujúce merania sú predchádzajúce dôkazy implementácie, nie náhrada
 za overenie presného release commitu.
+
+## Dokončenie vydania a izolácia historických testov (12. 11. 2026)
+
+Pôvodný kandidát `e4c1820` a jeho tag `v1` zostávajú zachované; história
+ani tag sa neprepisujú. Finálny tag Release v1 je `v1.0.0`, verzia aplikácie
+zostáva 1.0.0 a hlavným rozhraním zostáva QML. Pôvodný GitHub draft sa
+nepovažuje za publikované vydanie.
+
+Lokálny čistý klon pôvodného kandidáta prešiel 338 regresiami a 20 QML
+scenármi, novým EXE aj rozbaleným ZIPom. GitHub však odhalil neizolovaný
+historický Tk test: predchádzajúce skúšky DPI nechali display scaling 200 %,
+ktoré nový Tk interpreter prebral. Na menšej obrazovke runnera potom zoznam
+nezostal zobrazený. Reprodukcia potvrdila rozdiel pri 1280×720 / 200 %.
+Test akcií a tém teraz výslovne začína pri 100 %; všetky pôvodné kontroly
+zostali a matice DPI naďalej testujú vlastné mierky. Produkčný QML kód sa
+nemenil. Finálny commit opäť vyžaduje celý čistý build a úspešný GitHub beh;
+konkrétne výsledky identifikujú release poznámky a manifesty balíka.
 
 ## Produkčná aplikácia QML (11. 11. 2026)
 

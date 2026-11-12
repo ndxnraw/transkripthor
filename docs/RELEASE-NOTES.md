@@ -1,8 +1,8 @@
 # ND TranskripThor — Release v1
 
-**1.0.0 · Windows x64 · QML/Qt Quick · tag `v1`**
+**1.0.0 · Windows x64 · QML/Qt Quick · tag `v1.0.0`**
 
-[Stiahnuť vydanie](https://github.com/ndxnraw/TranskripThor/releases/tag/v1)
+[Stiahnuť vydanie](https://github.com/ndxnraw/TranskripThor/releases/tag/v1.0.0)
 
 QML je od tohto vydania hlavnou aplikáciou. Pridanie nahrávok, jazyk,
 kvalita a spustenie sú na jednej obrazovke bez kariet. Chýbajúce súbory

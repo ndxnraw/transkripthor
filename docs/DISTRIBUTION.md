@@ -2,12 +2,12 @@
 
 Hlavné vydanie je **Release v1 (1.0.0)**, QML/Qt Quick, Windows x64,
 plný variant s faster-whisper aj podporou KInIT. Modelové váhy sa nepribaľujú.
-[Stiahnutie](https://github.com/ndxnraw/TranskripThor/releases/tag/v1).
+[Stiahnutie](https://github.com/ndxnraw/TranskripThor/releases/tag/v1.0.0).
 Súkromný repozitár vyžaduje prístup aj pri sťahovaní vydania.
 
 Pred publikovaním sa zostaví presný commit z čistého klonu cez
 `build.ps1 -OutputDirectory dist`. Všetky regresie a produkčné Qt scenáre
-musia prejsť bez preskočenia. `package.py --release-tag v1` vyžaduje čistý
+musia prejsť bez preskočenia. `package.py --release-tag v1.0.0` vyžaduje čistý
 commit zhodný s overeným manifestom. `verify_distribution.py --startup`
 overí SHA-256 každého člena ZIPu, rozbalí ho a spustí správny QML verifier.
 

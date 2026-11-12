@@ -749,13 +749,13 @@ sú v [QML-EXPERIMENT.md](QML-EXPERIMENT.md). Bežný setup/build od Release v1 
 
 ## Vydanie Release v1
 
-Tag `v1`, zobrazené označenie **Release v1**, číselná verzia **1.0.0**.
+Tag `v1.0.0`, zobrazené označenie **Release v1**, číselná verzia **1.0.0**.
 Pred publikovaním treba z čistého klonu presného kandidáta pripraviť `.venv`,
 spustiť `build.ps1` (úplné regresie aj QML scenáre) a skontrolovať nové EXE.
 
 ```powershell
 .\scripts\build.ps1 -OutputDirectory dist
-.\.venv\Scripts\python.exe scripts/package.py --app 'dist/ND TranskripThor' --output 'outputs/ND-TranskripThor-v1-Windows-x64.zip' --release-tag v1
+.\.venv\Scripts\python.exe scripts/package.py --app 'dist/ND TranskripThor' --output 'outputs/ND-TranskripThor-v1-Windows-x64.zip' --release-tag v1.0.0
 .\.venv\Scripts\python.exe scripts/verify_distribution.py 'outputs/ND-TranskripThor-v1-Windows-x64.zip' --startup
 ```
 

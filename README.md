@@ -2,7 +2,7 @@
 
 Lokálny prepis zvuku a videa pre Windows x64. Nahrávky zostávajú vo vašom počítači, bez odosielania na server a bez minútových kvót.
 
-**[Stiahnuť Release v1](https://github.com/ndxnraw/TranskripThor/releases/tag/v1)** · [ZIP pre Windows x64](https://github.com/ndxnraw/TranskripThor/releases/download/v1/ND-TranskripThor-v1-Windows-x64.zip)
+**[Stiahnuť Release v1](https://github.com/ndxnraw/TranskripThor/releases/tag/v1.0.0)** · [ZIP pre Windows x64](https://github.com/ndxnraw/TranskripThor/releases/download/v1.0.0/ND-TranskripThor-v1-Windows-x64.zip)
 
 Rozbaľte celý ZIP a spustite **ND TranskripThor.exe**. Priečinok `_internal` nechajte vedľa programu; Python netreba inštalovať. Kontrolný súčet SHA-256 je priložený k vydaniu. Súkromný repozitár vyžaduje prihlásenie a prístup aj pri sťahovaní.
 
